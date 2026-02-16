@@ -1,0 +1,7 @@
+export {default as PieceReceipt} from './PieceReceipt/index.jsx'
+export {default as TableLotAllot} from './TableandLotAllocation/TableLotAllot.jsx'
+export {default as DefectEntry} from './DefectEntry/DefectEntry.jsx'
+export {default as FoldingPendingList} from './FoldingPendingList/FoldingPendingList.jsx'
+export {default as PieceFoldingEntry} from './PieceFoldingEntry/PieceFoldingEntry.jsx'
+export {default as PackingSlip} from './PackingSlip/index.jsx'
+export {default as PieceVerification} from './Pieceverification/index.jsx'

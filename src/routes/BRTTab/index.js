@@ -1,0 +1,1 @@
+export {default as pieceReceipt} from './pieceReceipt.route.js'

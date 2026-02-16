@@ -1,0 +1,17 @@
+/* Add this CSS to your styles */
+.blink {
+    animation: blink-animation 1s steps(5, start) infinite;
+    -webkit-animation: blink-animation 1s steps(5, start) infinite;
+}
+
+@keyframes blink-animation {
+    50% {
+        opacity: 0;
+    }
+}
+
+@-webkit-keyframes blink-animation {
+    50% {
+        opacity: 0;
+    }
+}
