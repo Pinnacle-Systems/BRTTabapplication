@@ -67,6 +67,8 @@ const PieceReceipt = ({
   console.log(lotItems, "dataCheck");
 
   useEffect(() => {
+    setLotItems([]);
+
     if (selectedClothId && singleData?.data) {
       syncFormWithDb(singleData.data);
     }
@@ -529,103 +531,124 @@ const PieceReceipt = ({
             </div>
           </div>
         </form>
-        <div className="w-[70vw] lg:w-[30vw] rounded-lg overflow-hidden mt-2 p-2">
-          <div className="max-h-[35vh] overflow-y-auto overflow-x-auto">
-            <table className="min-w-full text-sm border-collapse table-fixed">
-              <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
-                <tr>
-                  <th className="px-2 py-2 border w-4 text-center">S.No</th>
-                  <th className="px-2 py-2 border w-28 text-center">
-                    Piece No
-                  </th>
-                  <th className="px-2 py-2 border text-center w-28">Meters</th>
-                  <th className="px-2 py-2 border text-center w-16">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {lotItems?.length > 0 ? (
-                  lotItems?.map((item, index) => (
-                    <tr key={index} className="text-sm hover:bg-gray-50">
-                      <td className="px-2 py-1 border text-center">
-                        {index + 1}
-                      </td>
-
-                      <td className="py-1 border focus:ring-2 focus:border-2 text-right">
-                        <input
-                          type="number"
-                          name="pcNo"
-                          value={item?.pcNo}
-                          onChange={(e) =>
-                            handleChange(index, e.target.value, "pcNo")
-                          }
-                          className="focus:border-none pr-1  bg-transparent focus:outline-none text-right w-full"
-                        />
-                      </td>
-
-                      <td className=" py-1 border text-right focus:ring-2 focus:border-2">
-                        <input
-                          type="number"
-                          name="meters"
-                          value={item?.meters}
-                          onChange={(e) =>
-                            handleChange(index, e.target.value, "meters")
-                          }
-                          onBlur={(e) =>
-                            handleChange(
-                              index,
-                              Number(e.target.value || 0).toFixed(2),
-                              "meters",
-                            )
-                          }
-                          className="focus:border-none  pr-1 bg-transparent focus:outline-none text-right w-full"
-                        />
-                      </td>
-
-                      <td className="px-2 py-1 border text-center">
-                        <div className="flex justify-center gap-2">
-                          {!item._isDbRow && (
-                            <button
-                              onClick={() => handleDeleteItem(index)}
-                              className="bg-red-500 text-white px-1 py-1 rounded text-sm"
-                            >
-                              <MdDelete />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
+        <div className="flex gap-4 mt-2">
+          <div className="w-[70vw] lg:w-[30vw] rounded-lg overflow-hidden mt-2 p-2">
+            <div className="max-h-[35vh] overflow-y-auto overflow-x-auto">
+              <table className="min-w-full text-sm border-collapse table-fixed">
+                <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
                   <tr>
-                    <td
-                      colSpan="4"
-                      className="text-center  py-4 border text-gray-500 font-medium"
-                    >
-                      No Data Found
-                    </td>
+                    <th className="px-2 py-2 border w-4 text-center">S.No</th>
+                    <th className="px-2 py-2 border w-28 text-center">
+                      Piece No
+                    </th>
+                    <th className="px-2 py-2 border text-center w-28">
+                      Meters
+                    </th>
+                    <th className="px-2 py-2 border text-center w-16">
+                      Actions
+                    </th>
                   </tr>
-                )}
-              </tbody>
-              <tfoot>
-                {lotItems?.length > 0 ? (
-                  <>
-                    <tr className="bg-gray-100">
-                      <td className=" border font-bold text-center"></td>
-                      <td className="text-center border font-bold  py-1">
-                        Total
+                </thead>
+
+                <tbody>
+                  {lotItems?.length > 0 ? (
+                    lotItems?.map((item, index) => (
+                      <tr key={index} className="text-sm hover:bg-gray-50">
+                        <td className="px-2 py-1 border text-center">
+                          {index + 1}
+                        </td>
+
+                        <td className="py-1 border focus:ring-2 focus:border-2 text-right">
+                          <input
+                            type="number"
+                            name="pcNo"
+                            value={item?.pcNo}
+                            onChange={(e) =>
+                              handleChange(index, e.target.value, "pcNo")
+                            }
+                            className="focus:border-none pr-1  bg-transparent focus:outline-none text-right w-full"
+                          />
+                        </td>
+
+                        <td className=" py-1 border text-right focus:ring-2 focus:border-2">
+                          <input
+                            type="number"
+                            name="meters"
+                            value={item?.meters}
+                            onChange={(e) =>
+                              handleChange(index, e.target.value, "meters")
+                            }
+                            onBlur={(e) =>
+                              handleChange(
+                                index,
+                                Number(e.target.value || 0).toFixed(2),
+                                "meters",
+                              )
+                            }
+                            className="focus:border-none  pr-1 bg-transparent focus:outline-none text-right w-full"
+                          />
+                        </td>
+
+                        <td className="px-2 py-1 border text-center">
+                          <div className="flex justify-center gap-2">
+                            {!item._isDbRow && (
+                              <button
+                                onClick={() => handleDeleteItem(index)}
+                                className="bg-red-500 text-white px-1 py-1 rounded text-sm"
+                              >
+                                <MdDelete />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="text-center  py-4 border text-gray-500 font-medium"
+                      >
+                        No Data Found
                       </td>
-                      <td className="text-right border font-bold pr-1 py-1">
-                        {totalMetersTable}
-                      </td>
-                      <td className="text-right border font-bold px-2 py-1"></td>
                     </tr>
-                  </>
-                ) : (
-                  <></>
-                )}
-              </tfoot>
-            </table>
+                  )}
+                </tbody>
+                <tfoot>
+                  {lotItems?.length > 0 ? (
+                    <>
+                      <tr className="bg-gray-100">
+                        <td className=" border font-bold text-center"></td>
+                        <td className="text-center border font-bold  py-1">
+                          Total
+                        </td>
+                        <td className="text-right border font-bold pr-1 py-1">
+                          {totalMetersTable}
+                        </td>
+                        <td className="text-right border font-bold px-2 py-1"></td>
+                      </tr>
+                    </>
+                  ) : (
+                    <></>
+                  )}
+                </tfoot>
+              </table>
+            </div>
+          </div>
+          <div className="min-w-[180px] h-fit mt-4 border rounded-lg bg-gray-50 p-3 mr-2 shadow">
+            <h3 className="font-semibold text-sm mb-2 text-gray-700">
+              Summary
+            </h3>
+
+            <div className="flex justify-between text-sm mb-1">
+              <span>Total Pieces</span>
+              <span className="font-bold">{lotItems?.length}</span>
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span>Total Meters</span>
+              <span className="font-bold">{totalMetersTable}</span>
+            </div>
           </div>
         </div>
       </div>
