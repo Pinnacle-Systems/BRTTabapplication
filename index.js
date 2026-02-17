@@ -73,7 +73,7 @@ app.get("/retreiveFile/:fileName", (req, res) => {
   res.sendFile(__dirname + "/uploads/" + fileName);
 })
 
-const PORT = 9899;
+const PORT = 9889;
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
