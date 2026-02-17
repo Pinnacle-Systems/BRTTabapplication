@@ -54,6 +54,7 @@ const PieceReceipt = ({
           item?.lotItemsSubGrid?.map((val) => ({
             pcNo: Number(val?.sno),
             meters: Number(val?.mtr).toFixed(2),
+            _isDbRow: true, // ✅ frontend only flag
           })),
         ) || [];
 
@@ -69,7 +70,7 @@ const PieceReceipt = ({
     if (selectedClothId && singleData?.data) {
       syncFormWithDb(singleData.data);
     }
-  }, [selectedClothId,singleData, syncFormWithDb]);
+  }, [selectedClothId, singleData, syncFormWithDb]);
 
   const data = {
     selectedLotId: parseInt(selectedLotId),
@@ -77,13 +78,12 @@ const PieceReceipt = ({
     selectedClothId: parseInt(selectedClothId),
     selectedGridId: parseInt(selectedGridId),
 
-    lotItems: lotItems?.map((item) => ({
-      pcNo: parseInt(item?.pcNo),
+    lotItems: lotItems?.map(({ _isDbRow, ...item }) => ({
+      pcNo: parseInt(item.pcNo),
       selectedLotId: parseInt(selectedLotId),
       selectedGridId: parseInt(selectedGridId),
-
       selectedClothId: parseInt(selectedClothId),
-      meters: parseFloat(item?.meters),
+      meters: parseFloat(item.meters),
     })),
   };
   const handleSubmitCustom = async (callback, data) => {
@@ -93,15 +93,21 @@ const PieceReceipt = ({
         title: "Added Successfully",
         icon: "success",
         draggable: true,
-        timer: 1000,
+        timer: 2000,
         showConfirmButton: false,
       });
+      setLotItems([]);
+      setSelectedClothId("");
+      setSelectedLotId("");
+      setSelectedGridId("");
+      setPieceNumber("");
+      setMeter("");
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Submission error",
         text: "Something went wrong!",
-        timer: 1000,
+        timer: 2000,
       });
     }
   };
@@ -112,7 +118,7 @@ const PieceReceipt = ({
 
         title: "Select Lot and Cloth",
 
-        timer: 1000,
+        timer: 2000,
 
         showConfirmButton: false,
       });
@@ -125,7 +131,7 @@ const PieceReceipt = ({
 
         title: "Add at least one piece",
 
-        timer: 1000,
+        timer: 2000,
 
         showConfirmButton: false,
       });
@@ -182,8 +188,8 @@ const PieceReceipt = ({
       Swal.fire({
         title: "Enter Piece No and Meter",
         icon: "warning",
-        timer: 1000,
-        showConfirmButton: false,
+        timer: 2000,
+        showConfirmButton: true,
       });
       return;
     }
@@ -191,8 +197,8 @@ const PieceReceipt = ({
       Swal.fire({
         title: "Piece Number cannot be 0",
         icon: "warning",
-        timer: 1000,
-        showConfirmButton: false,
+        timer: 2000,
+        showConfirmButton: true,
       });
       return;
     }
@@ -204,8 +210,8 @@ const PieceReceipt = ({
         icon: "error",
         title: "Exceeded",
         text: "Meter exceeding the DC Meter",
-        timer: 1000,
-        showConfirmButton: false,
+        timer: 2000,
+        showConfirmButton: true,
       });
       return;
     }
@@ -221,8 +227,8 @@ const PieceReceipt = ({
         icon: "error",
         text: "Meter exceeding the DC Meter",
 
-        timer: 1000,
-        showConfirmButton: false,
+        timer: 2000,
+        showConfirmButton: true,
       });
       return;
     }
@@ -231,6 +237,7 @@ const PieceReceipt = ({
       selectedClothId,
       pcNo: Number(pieceNo), // ✅ FIX
       meters: Number(meter).toFixed(2),
+      _isDbRow: false, // ✅ frontend only flag
     };
 
     // ✅ structure clone
@@ -243,8 +250,8 @@ const PieceReceipt = ({
       Swal.fire({
         title: "Piece Number Already Exists",
         icon: "warning",
-        timer: 1000,
-        showConfirmButton: false,
+        timer: 2000,
+        showConfirmButton: true,
       });
       return;
     }
@@ -282,8 +289,8 @@ const PieceReceipt = ({
         Swal.fire({
           title: "Piece Number cannot be 0",
           icon: "warning",
-          timer: 1000,
-          showConfirmButton: false,
+          timer: 2000,
+          showConfirmButton: true,
         });
 
         return;
@@ -293,15 +300,14 @@ const PieceReceipt = ({
         Swal.fire({
           title: "Piece Number cannot be greater than Receipt Pieces",
           icon: "error",
-          timer: 1000,
-          showConfirmButton: false,
+          timer: 2000,
+          showConfirmButton: true,
         });
 
         return;
       }
       /* cannot exceed receipt pcs */
-
-      const exists = updated.some(
+      const exists = updated?.some(
         (item, i) => i !== index && Number(item.pcNo) === Number(value),
       );
 
@@ -309,12 +315,13 @@ const PieceReceipt = ({
         Swal.fire({
           title: "Piece Number already exists",
           icon: "warning",
-          timer: 1000,
-          showConfirmButton: false,
+          timer: 2000,
+          showConfirmButton: true,
         });
         return;
       }
     }
+
     /* ✅ METER VALIDATION */
     if (field === "meters") {
       const newMeter = Number(value);
@@ -325,8 +332,8 @@ const PieceReceipt = ({
           title: "Exceeded",
           text: "Meter exceeding the DC Meter",
           icon: "error",
-          timer: 1000,
-          showConfirmButton: false,
+          timer: 2000,
+          showConfirmButton: true,
         });
         return;
       }
@@ -343,8 +350,8 @@ const PieceReceipt = ({
           title: "Exceeded",
           text: "Total meter exceeding DC Meter",
           icon: "error",
-          timer: 1000,
-          showConfirmButton: false,
+          timer: 2000,
+          showConfirmButton: true,
         });
 
         return;
@@ -484,8 +491,8 @@ const PieceReceipt = ({
                         title:
                           "Piece Number cannot be greater than Receipt Pieces",
                         icon: "error",
-                        timer: 1000,
-                        showConfirmButton: false,
+                        timer: 2000,
+                        showConfirmButton: true,
                       });
                       return;
                     }
@@ -577,12 +584,14 @@ const PieceReceipt = ({
 
                       <td className="px-2 py-1 border text-center">
                         <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => handleDeleteItem(index)}
-                            className="bg-red-500 text-white px-1 py-1 rounded text-sm"
-                          >
-                            <MdDelete />
-                          </button>
+                          {!item._isDbRow && (
+                            <button
+                              onClick={() => handleDeleteItem(index)}
+                              className="bg-red-500 text-white px-1 py-1 rounded text-sm"
+                            >
+                              <MdDelete />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

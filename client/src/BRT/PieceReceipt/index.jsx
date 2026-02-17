@@ -65,7 +65,7 @@ const PieceReport = () => {
               <th className="w-4 px-0 border py-1">S.No</th>
               <th className="w-20 border">Lot No</th>
               <th className="w-48 border">Cloth Name</th>
-              <th className="w-8 border ">Actions</th>
+              {/* <th className="w-8 border ">Actions</th> */}
             </tr>
           </thead>
 
@@ -92,7 +92,7 @@ const PieceReport = () => {
                     <td className="pl-1 py-1.5 border text-left">{row.docId}</td>
                     <td className="pl-1 border text-left">{clothName}</td>
 
-                    <td className=" border">
+                    {/* <td className=" border">
                       <button
                         onClick={() => {
                           setEditData(row);
@@ -109,7 +109,7 @@ const PieceReport = () => {
                       >
                         <MdDelete />
                       </button>
-                    </td>
+                    </td> */}
                   </tr>
                 );
               })}
