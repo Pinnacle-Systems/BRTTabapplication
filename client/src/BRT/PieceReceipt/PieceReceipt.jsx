@@ -9,6 +9,7 @@ import {
 import { useEffect } from "react";
 import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
+import Select from "react-select";
 
 const PieceReceipt = ({
   onClose,
@@ -27,7 +28,77 @@ const PieceReceipt = ({
   const [viewOnly, setViewOnly] = useState(true);
   const lotIdRef = useRef(null);
   const pieceNoRef = useRef(null);
+  const customSelectStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: "13px",
+      height: "18px",
+      padding: "16px 4px",
+      fontSize: "14px",
+      borderRadius: "8px",
 
+      color: state.isDisabled ? "#6b7280" : "black",
+      backgroundColor: state.isDisabled ? "#f3f4f6" : "white", // bg-gray-100 vs bg-white
+      cursor: state.isDisabled ? "not-allowed" : "default",
+      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db", // blue-500 vs gray-300
+      boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : base.boxShadow,
+      "&:hover": {
+        borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
+      },
+    }),
+    valueContainer: (base, state) => ({
+      ...base,
+      padding: "0 3px",
+      marginTop: "-9px",
+      fontSize: "14px",
+
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    input: (base, state) => ({
+      ...base,
+      margin: 0,
+      fontSize: "14px",
+      padding: 0,
+
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    singleValue: (base, state) => ({
+      ...base,
+
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    placeholder: (base) => ({
+      ...base,
+      // marginTop: "20px",
+
+      color: "black",
+      fontSize: "14px",
+    }),
+    menu: (base, state) => ({
+      ...base,
+
+      maxHeight: 140,
+      // overflowY: "auto",
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    option: (base, state) => ({
+      ...base,
+
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+      padding: "6px 8px",
+    }),
+    dropdownIndicator: () => ({ display: "none" }),
+
+    indicatorSeparator: () => ({ display: "none" }),
+    menuList: (base) => ({
+      ...base,
+      maxHeight: 140,
+      // overflowY: "auto",
+    }),
+  };
   // ✅ RTK Query
   const { data: lots, error, isLoading } = useGetLotPieceReceiptQuery();
 
@@ -104,6 +175,10 @@ const PieceReceipt = ({
       setSelectedGridId("");
       setPieceNumber("");
       setMeter("");
+      setTimeout(() => {
+        lotIdRef.current?.focus();
+        lotIdRef.current?.openMenu("first");
+      }, 100);
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -147,7 +222,7 @@ const PieceReceipt = ({
   useEffect(() => {
     if (lotIdRef.current) {
       lotIdRef.current.focus();
-      lotIdRef.current.click(); // opens dropdown
+      lotIdRef.current?.openMenu("first");
     }
   }, []);
   const clothOptions = lotReceiptDetails?.data?.map((cloth) => ({
@@ -183,6 +258,34 @@ const PieceReceipt = ({
     }
   }, [selectedClothId, lotReceiptDetails]);
 
+  useEffect(() => {
+    if (lotItems?.length === Number(receiptPcs)) {
+      setPieceNumber("");
+    }
+  }, [lotItems, receiptPcs]);
+
+  useEffect(() => {
+    if (!receiptPcs) return;
+
+    // ✅ IMPORTANT: if table empty, don't autofill
+    if (lotItems.length === 0) {
+      setPieceNumber("");
+      return;
+    }
+
+    const receipt = Number(receiptPcs);
+
+    const maxPieceNo = Math.max(
+      ...lotItems?.map((item) => Number(item?.pcNo || 0)),
+    );
+
+    if (maxPieceNo >= receipt) {
+      setPieceNumber("");
+      return;
+    }
+
+    setPieceNumber(maxPieceNo + 1);
+  }, [lotItems, receiptPcs]);
   const handleAddItem = (e) => {
     e.preventDefault();
 
@@ -388,6 +491,12 @@ const PieceReceipt = ({
   const balanceMeters = (
     Number(dcMeter || 0) - Number(totalMetersTable)
   ).toFixed(2);
+
+  const lotOptions = lots?.data?.map((lot) => ({
+    value: lot?.GTFABRICRECEIPTID,
+    label: lot?.DOCID,
+  }));
+
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
@@ -415,24 +524,23 @@ const PieceReceipt = ({
               <h2 className="text-lg  font-semibold mb-2 ">Lot Details</h2>
               <div className="grid grid-cols-4 lg:grid-cols-10 gap-4 text-sm">
                 {/* Lot No */}
-                <div className="col-span-2 lg:col-span-2 ">
+                <div className="col-span-2 lg:col-span-2 z-999">
                   <label className="block font-medium mb-1">Lot No</label>
-                  <select
-                    value={selectedLotId}
-                    onChange={(e) => setSelectedLotId(e.target.value)}
-                    className="w-full bg-white border rounded-lg px-2 py-1.5"
-                    ref={lotIdRef}
-                  >
-                    <option value="">Select Lot</option>
-                    {lots?.data?.map((lot) => (
-                      <option
-                        key={lot?.GTFABRICRECEIPTID}
-                        value={lot?.GTFABRICRECEIPTID}
-                      >
-                        {lot?.DOCID}
-                      </option>
-                    ))}
-                  </select>
+                  <Select
+                    ref={lotIdRef} // ✅ ADD THIS
+                    options={lotOptions}
+                    value={lotOptions?.find(
+                      (option) => option.value === selectedLotId,
+                    )}
+                    onChange={(selectedOption) =>
+                      setSelectedLotId(selectedOption?.value || "")
+                    }
+                    placeholder="Select Lot"
+                    isClearable={false} // ✅ disable cross icon
+                    styles={customSelectStyles}
+                    autoFocus
+                    isSearchable={true}
+                  />
                 </div>
 
                 {/* Cloth Name */}
@@ -508,7 +616,9 @@ const PieceReceipt = ({
 
                     setPieceNumber(e.target.value);
                   }}
-                  disabled={!selectedClothId}
+                  disabled={
+                    !selectedClothId || lotItems.length === Number(receiptPcs) // ✅ disable when limit reached
+                  }
                   className="border rounded-lg text-right px-2 py-1.5 w-full"
                 />
               </div>
@@ -647,8 +757,6 @@ const PieceReceipt = ({
               Summary
             </h3>
 
-            
-
             <div className="flex justify-between text-sm mb-1">
               <span>Entered Pcs</span>
               <span className="font-bold">{totalPieces}</span>
@@ -660,8 +768,6 @@ const PieceReceipt = ({
             </div>
 
             <hr className="my-2" />
-
-           
 
             <div className="flex justify-between text-sm mb-1">
               <span>Entered Mtrs</span>
