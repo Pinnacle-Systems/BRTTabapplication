@@ -116,7 +116,7 @@ function Signup({autoLogout}) {
           <div className="lg:w-1/2 p-8 lg:p-10 flex flex-col justify-center">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-[#03A454]">
-BRT              </h2>
+BRT Sizing Mill        </h2>
             </div>
 
             <form
