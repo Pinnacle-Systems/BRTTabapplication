@@ -529,9 +529,11 @@ const PieceReceipt = ({
                   <Select
                     ref={lotIdRef} // ✅ ADD THIS
                     options={lotOptions}
-                    value={lotOptions?.find(
-                      (option) => option.value === selectedLotId,
-                    )}
+                    value={
+                      lotOptions?.find(
+                        (option) => option.value === selectedLotId,
+                      ) || null
+                    }
                     onChange={(selectedOption) =>
                       setSelectedLotId(selectedOption?.value || "")
                     }
