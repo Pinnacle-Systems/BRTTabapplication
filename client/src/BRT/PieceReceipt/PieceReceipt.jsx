@@ -381,6 +381,13 @@ const PieceReceipt = ({
   const totalMetersTable = lotItems
     ?.reduce((sum, item) => sum + Number(item?.meters || 0), 0)
     ?.toFixed(2);
+  const totalPieces = lotItems.length;
+
+  const balancePcs = Number(receiptPcs || 0) - totalPieces;
+
+  const balanceMeters = (
+    Number(dcMeter || 0) - Number(totalMetersTable)
+  ).toFixed(2);
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
@@ -640,14 +647,30 @@ const PieceReceipt = ({
               Summary
             </h3>
 
+            
+
             <div className="flex justify-between text-sm mb-1">
-              <span>Total Pieces</span>
-              <span className="font-bold">{lotItems?.length}</span>
+              <span>Entered Pcs</span>
+              <span className="font-bold">{totalPieces}</span>
             </div>
 
-            <div className="flex justify-between text-sm">
-              <span>Total Meters</span>
+            <div className="flex justify-between text-sm mb-2 text-red-600">
+              <span>Balance Pcs</span>
+              <span className="font-bold">{balancePcs}</span>
+            </div>
+
+            <hr className="my-2" />
+
+           
+
+            <div className="flex justify-between text-sm mb-1">
+              <span>Entered Mtrs</span>
               <span className="font-bold">{totalMetersTable}</span>
+            </div>
+
+            <div className="flex justify-between text-sm text-red-600">
+              <span>Balance Mtrs</span>
+              <span className="font-bold">{balanceMeters}</span>
             </div>
           </div>
         </div>
