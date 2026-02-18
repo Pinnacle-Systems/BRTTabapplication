@@ -45,7 +45,7 @@ const PieceReport = () => {
     <div className="h-[75vh]  pt-0">
       {/* Header */}
       <div className="flex bg-white justify-between py-1 rounded-lg">
-        <h1 className="text-2xl ml-2 font-bold">Piece Receipt </h1>
+        <h1 className="text-xl ml-2 font-bold">Piece Receipt </h1>
 
         <button
           onClick={() => {

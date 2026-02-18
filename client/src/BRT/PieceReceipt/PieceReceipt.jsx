@@ -32,8 +32,8 @@ const PieceReceipt = ({
     control: (base, state) => ({
       ...base,
       minHeight: "13px",
-      height: "18px",
-      padding: "16px 4px",
+         height: "36px",
+      padding: "0px 4px",
       fontSize: "14px",
       borderRadius: "8px",
 
@@ -49,7 +49,6 @@ const PieceReceipt = ({
     valueContainer: (base, state) => ({
       ...base,
       padding: "0 3px",
-      marginTop: "-9px",
       fontSize: "14px",
 
       color: state.isDisabled ? "#6b7280" : "black",
@@ -90,7 +89,7 @@ const PieceReceipt = ({
       color: state.isDisabled ? "#6b7280" : "black",
       padding: "6px 8px",
     }),
-    dropdownIndicator: () => ({ display: "none" }),
+    dropdownIndicator: () => ({ }),
 
     indicatorSeparator: () => ({ display: "none" }),
     menuList: (base) => ({
@@ -500,7 +499,7 @@ const PieceReceipt = ({
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
-        <h1 className="text-2xl ml-2 font-bold text-center">Piece Receipt</h1>
+        <h1 className="text-xl ml-2 font-bold text-center">Piece Receipt</h1>
         <div>
           <button
             onClick={onClose}

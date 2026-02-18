@@ -9,7 +9,8 @@ import {
   LotDetailApi,
   ProductionEntry,
   WhatsAppApi,
-  pieceReceiptApi
+  pieceReceiptApi,
+  tableLotApi
 } from "../redux";
 
 import { setupListeners } from "@reduxjs/toolkit/query";
@@ -27,6 +28,7 @@ export const store = configureStore({
     [ProductionEntry.reducerPath]: ProductionEntry.reducer,
     [WhatsAppApi.reducerPath]: WhatsAppApi.reducer,
     [pieceReceiptApi.reducerPath]:pieceReceiptApi.reducer,
+    [tableLotApi.reducerPath]:tableLotApi.reducer,
 
   }
 
@@ -40,6 +42,7 @@ export const store = configureStore({
       ProductionEntry.middleware,
       WhatsAppApi.middleware,
       pieceReceiptApi.middleware,
+      tableLotApi.middleware,
     ]),
 });
 setupListeners(store.dispatch);

@@ -44,6 +44,12 @@ import {
   MdSettings,
 } from "react-icons/md";
 import { BiSolidUserRectangle } from "react-icons/bi";
+import { FaTableCells } from "react-icons/fa6";
+import { MdOutlinePendingActions } from "react-icons/md";
+import { GiRolledCloth } from "react-icons/gi";
+import { RiBillLine } from "react-icons/ri";
+
+
 import {
   Menu,
   MenuItem,
@@ -203,7 +209,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Table and Lot Allocation",
-      icon: LOADING_ICON,
+      icon: <FaTableCells />,
       value: new Set(
         loadingResponse?.data?.map(
           (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
@@ -223,7 +229,8 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Folding Pending List",
-      icon: APPROVAL_ICON,
+      icon: <MdOutlinePendingActions />
+,
       value: new Set(
         approval?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
       ).size,
@@ -232,7 +239,8 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Piece Folding Entry",
-      icon: REVERT_ICON,
+      icon: <GiRolledCloth />
+,
       value: new Set(
         revert?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
       ).size,
@@ -241,7 +249,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "PackingSlip",
-      icon: INSPECTION_ICON,
+      icon: <RiBillLine />,
       value: new Set(
         InspectionDet?.data?.map(
           (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,

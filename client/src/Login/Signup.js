@@ -22,7 +22,7 @@ const solutions = [
   { name: "Computer Hardware Solutions", icon: Computer },
 ];
 
-function Signup({autoLogout}) {
+function Signup({ autoLogout }) {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -42,11 +42,11 @@ function Signup({autoLogout}) {
         sessionStorage.setItem("sessionId", generateSessionId());
         secureLocalStorage.setItem(
           sessionStorage.getItem("sessionId") + "token",
-          data.token
+          data.token,
         );
         localStorage.setItem("userName", username);
         sessionStorage.setItem("userName", username);
-        autoLogout(sessionStorage.getItem("sessionId"))
+        autoLogout(sessionStorage.getItem("sessionId"));
         navigate("/branch-finyear");
       } else {
         setError("Login failed, please try again.");
@@ -116,7 +116,8 @@ function Signup({autoLogout}) {
           <div className="lg:w-1/2 p-8 lg:p-10 flex flex-col justify-center">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-[#03A454]">
-BRT Sizing Mill        </h2>
+                BRT Sizing Mill
+              </h2>
             </div>
 
             <form
