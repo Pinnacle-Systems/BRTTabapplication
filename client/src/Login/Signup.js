@@ -38,12 +38,17 @@ function Signup({ autoLogout }) {
       console.log(data, "data");
 
       if (data.message === "Login Successful") {
+        const userId = data?.user?.[0]?.USERID;
+        console.log("USERID:", userId);
         loginSocket(data?.user);
         sessionStorage.setItem("sessionId", generateSessionId());
         secureLocalStorage.setItem(
           sessionStorage.getItem("sessionId") + "token",
           data.token,
         );
+        localStorage.setItem("userId", userId);
+
+        sessionStorage.setItem("userId", userId);
         localStorage.setItem("userName", username);
         sessionStorage.setItem("userName", username);
         autoLogout(sessionStorage.getItem("sessionId"));

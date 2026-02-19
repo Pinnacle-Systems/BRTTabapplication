@@ -8,7 +8,7 @@ export async function get(req, res) {
 
   try {
     const result = await connection.execute(
-      `SELECT * FROM USERLOG`,
+      `SELECT * FROM TABPAGE`,
       [],
       { outFormat: oracledb.OUT_FORMAT_OBJECT } 
     );

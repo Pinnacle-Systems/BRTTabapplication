@@ -132,7 +132,6 @@ const CheckingNoGrid = ({
             </div>
           );
         })}
-        
       </div>
 
       {/* Selected Tables Display */}

@@ -84,28 +84,28 @@ export default function UserManagement() {
     );
   }
 
-  if (!userData?.data) {
-    return (
-      <Typography variant="body1" color="textSecondary" textAlign="center" mt={2}>
-        No user data available
-      </Typography>
-    );
-  }
+  // if (!userData?.data) {
+  //   return (
+  //     <Typography variant="body1" color="textSecondary" textAlign="center" mt={2}>
+  //       No user data available
+  //     </Typography>
+  //   );
+  // }
 
-  const groupedUsers = userData.data.reduce((acc, user) => {
-    if (!acc[user.userName]) {
-      acc[user.userName] = {
-        userName: user.userName,
+  const groupedUsers = userData?.data?.reduce((acc, user) => {
+    if (!acc[user?.USERNAME]) {
+      acc[user?.USERNAME] = {
+        USERNAME: user?.USERNAME,
         roles: [],
       };
     }
-    if (user.role && !acc[user.userName].roles.includes(user.role)) {
-      acc[user.userName].roles.push(user.role);
+    if (user?.role && !acc[user?.USERNAME]?.roles?.includes(user?.role)) {
+      acc[user?.USERNAME]?.roles.push(user?.role);
     }
     return acc;
   }, {});
 
-  const uniqueRoles = [...new Set(userData.data.map(user => user.role).filter(role => role))];
+  const uniqueRoles = [...new Set(userData?.data?.map(user => user.role)?.filter(role => role))];
 
   return (
     <Box sx={{ p: 2 }}>
@@ -146,7 +146,7 @@ export default function UserManagement() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Object.values(groupedUsers).map((user, index) => (
+              {Object?.values(groupedUsers)?.map((user, index) => (
                 <CompactTableRow key={index} hover>
                   <TableCell sx={{ py: 1 }}>
                     <Box display="flex" alignItems="center" gap={1}>
@@ -159,9 +159,9 @@ export default function UserManagement() {
                           fontSize: '0.875rem'
                         }}
                       >
-                        {user.userName.charAt(0).toUpperCase()}
+                        {user?.userName?.charAt(0).toUpperCase()}
                       </Avatar>
-                      <Typography variant="body2">{user.userName}</Typography>
+                      <Typography variant="body2">{user?.userName}</Typography>
                     </Box>
                   </TableCell>
               

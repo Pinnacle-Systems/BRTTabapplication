@@ -49,7 +49,6 @@ import { MdOutlinePendingActions } from "react-icons/md";
 import { GiRolledCloth } from "react-icons/gi";
 import { RiBillLine } from "react-icons/ri";
 
-
 import {
   Menu,
   MenuItem,
@@ -153,28 +152,35 @@ const NavbarHeader = ({ onLogout }) => {
 
   const ref = useOutsideClick(() => setShowMobileMenu(false));
   const { data: userlog } = useGetUserslogQuery();
+  const storedUserId = localStorage.getItem("userId");
   const storedUsername = localStorage.getItem("userName");
+
+  console.log(storedUserId, "storedUserId");
 
   // Find the current user from userlog data
   const currentUser = userlog?.data?.find(
-    (user) => user.USERNAME === storedUsername,
+    (user) => user.USERID === storedUserId,
   );
+  console.log(userData, "userData");
+  console.log(currentUser, "currentUser");
+
   const userRoles = useMemo(() => {
     return currentUser
       ? userData.data
-          .filter((user) => user.userName === storedUsername && user.role)
+          .filter((user) => user.USERNAME === storedUserId && user.role)
           .map((user) => user.role)
       : [];
-  }, [currentUser, userData, storedUsername]);
+  }, [currentUser, userData, storedUserId]);
 
   // Check if user is admin or has specific permissions
   const isAdmin = useMemo(() => {
     return (
-      currentUser?.userName === "Admin" ||
-      currentUser?.role === "Admin" ||
+      currentUser?.USERNAME === "Admin" ||
+      currentUser?.ROLENAME === "Admin" ||
       currentUser?.isAdmin
     );
   }, [currentUser]);
+  console.log(isAdmin, "isAdmin");
 
   const handleUserMenuOpen = (event) => {
     setUserMenuEl(event.currentTarget);
@@ -196,8 +202,9 @@ const NavbarHeader = ({ onLogout }) => {
     "Defect Entry": <DefectEntry />,
     "Folding Pending List": <FoldingPendingList />,
     "Piece Folding Entry": <PieceFoldingEntry />,
-    "PackingSlip": <PackingSlip />,
-    "PieceVerification": <PieceVerification />,
+    PackingSlip: <PackingSlip />,
+    PieceVerification: <PieceVerification />,
+    User: <OutlinedCard />,
   };
   const tabData = [
     {
@@ -229,8 +236,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Folding Pending List",
-      icon: <MdOutlinePendingActions />
-,
+      icon: <MdOutlinePendingActions />,
       value: new Set(
         approval?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
       ).size,
@@ -239,13 +245,12 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Piece Folding Entry",
-      icon: <GiRolledCloth />
-,
+      icon: <GiRolledCloth />,
       value: new Set(
         revert?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
       ).size,
       gradient: "from-rose-500 to-pink-600",
-      key: "REVERT",
+      key: "PIECEFOLDINGENTRY",
     },
     {
       name: "PackingSlip",
@@ -272,12 +277,11 @@ const NavbarHeader = ({ onLogout }) => {
   ];
 
   // Filter tabs based on user permissions
-  const filteredTabData =
-    storedUsername === "Admin"
-      ? tabData
-      : tabData.filter((item) => {
-          return currentUser && currentUser[item.key] == 1;
-        });
+  const filteredTabData = isAdmin
+  ? tabData
+  : tabData.filter((item) => {
+      return currentUserPermission?.[item.key] === "Yes";
+    });
 
   const handleTabChange = (name) => {
     if (!openTabs.tabs.some((tab) => tab.id === name)) {
@@ -402,7 +406,7 @@ const NavbarHeader = ({ onLogout }) => {
                           color: colors.white,
                         }}
                       >
-                        {currentUser?.userName?.charAt(0).toUpperCase()}
+                        {currentUser?.USERNAME?.charAt(0).toUpperCase()}
                       </Avatar>
                     </Badge>
                     <MdArrowDropDown
@@ -469,50 +473,50 @@ const NavbarHeader = ({ onLogout }) => {
                       <Divider sx={{ my: 1 }} />
 
                       {/* Menu Items - Only show for admin */}
-                      {isAdmin && (
-                        <Box sx={{ py: 1 }}>
-                          <MenuItem
-                            onClick={handleCreateUser}
-                            sx={{
-                              borderRadius: "8px",
-                              py: 1.5,
-                              "&:hover": {
-                                backgroundColor: colors.hover,
-                              },
-                            }}
-                          >
-                            <ListItemIcon>
-                              <MdPersonAdd
-                                fontSize="20px"
-                                color={colors.primary}
-                              />
-                            </ListItemIcon>
-                            <ListItemText primary="Create New User" />
-                          </MenuItem>
+                      {/* {isAdmin && ( */}
+                      <Box sx={{ py: 1 }}>
+                        <MenuItem
+                          onClick={handleCreateUser}
+                          sx={{
+                            borderRadius: "8px",
+                            py: 1.5,
+                            "&:hover": {
+                              backgroundColor: colors.hover,
+                            },
+                          }}
+                        >
+                          <ListItemIcon>
+                            <MdPersonAdd
+                              fontSize="20px"
+                              color={colors.primary}
+                            />
+                          </ListItemIcon>
+                          <ListItemText primary="Create New User" />
+                        </MenuItem>
 
-                          <MenuItem
-                            onClick={() => {
-                              dispatch(push({ id: 6, name: "User Settings" }));
-                              handleUserMenuClose();
-                            }}
-                            sx={{
-                              borderRadius: "8px",
-                              py: 1.5,
-                              "&:hover": {
-                                backgroundColor: colors.hover,
-                              },
-                            }}
-                          >
-                            <ListItemIcon>
-                              <MdSettings
-                                fontSize="20px"
-                                color={colors.primary}
-                              />
-                            </ListItemIcon>
-                            <ListItemText primary="User Settings" />
-                          </MenuItem>
-                        </Box>
-                      )}
+                        <MenuItem
+                          onClick={() => {
+                            dispatch(push({ id: 6, name: "User Settings" }));
+                            handleUserMenuClose();
+                          }}
+                          sx={{
+                            borderRadius: "8px",
+                            py: 1.5,
+                            "&:hover": {
+                              backgroundColor: colors.hover,
+                            },
+                          }}
+                        >
+                          <ListItemIcon>
+                            <MdSettings
+                              fontSize="20px"
+                              color={colors.primary}
+                            />
+                          </ListItemIcon>
+                          <ListItemText primary="User Settings" />
+                        </MenuItem>
+                      </Box>
+                      {/* )} */}
 
                       <Divider sx={{ my: 1 }} />
 
@@ -573,7 +577,6 @@ const NavbarHeader = ({ onLogout }) => {
             <div className="flex  justify-between items-center px-3 mb-2 border-b border-gray-500/20 ">
               <div>
                 <h2 className={`text-xl font-bold ${textColor}`}>Operations</h2>
-                
               </div>
               <button
                 onClick={toggleDarkMode}
@@ -628,8 +631,6 @@ const NavbarHeader = ({ onLogout }) => {
                 </button>
               ))}
             </div>
-
-           
           </div>
           {showMobileMenu && (
             <div className="fixed inset-0 z-50 bg-black/40 md:hidden backdrop-blur-sm py-16">
@@ -639,7 +640,6 @@ const NavbarHeader = ({ onLogout }) => {
               >
                 <div className="p-5 border-b border-gray-500/20 bg-gradient-to-r from-cyan-600 to-blue-700 text-white">
                   <h2 className="text-xl font-bold">Operations</h2>
-                
                 </div>
                 <div className="flex flex-col p-3 space-y-2">
                   {filteredTabData.map(({ name, icon, value, gradient }) => (
@@ -780,7 +780,7 @@ const NavbarHeader = ({ onLogout }) => {
                   </div>
                 </div>
               )}
-              <AiMessageButton />
+              {/* <AiMessageButton /> */}
             </div>
           </div>
         </div>
