@@ -161,25 +161,28 @@ const NavbarHeader = ({ onLogout }) => {
   const currentUser = userlog?.data?.find(
     (user) => user.USERID === storedUserId,
   );
+  const currentUserPermission = userlog?.data?.find(
+    (item) => item.USERID == storedUserId,
+  );
   console.log(userData, "userData");
   console.log(currentUser, "currentUser");
 
   const userRoles = useMemo(() => {
     return currentUser
       ? userData.data
-          .filter((user) => user.USERNAME === storedUserId && user.role)
-          .map((user) => user.role)
+          ?.filter((user) => user.USERNAME === storedUserId && user.role)
+          ?.map((user) => user.role)
       : [];
   }, [currentUser, userData, storedUserId]);
-
+  const isAdmin = storedUsername === "Admin";
   // Check if user is admin or has specific permissions
-  const isAdmin = useMemo(() => {
-    return (
-      currentUser?.USERNAME === "Admin" ||
-      currentUser?.ROLENAME === "Admin" ||
-      currentUser?.isAdmin
-    );
-  }, [currentUser]);
+  // const isAdmin = useMemo(() => {
+  //   return (
+  //     currentUser?.USERNAME === "Admin" ||
+  //     currentUser?.ROLENAME === "Admin" ||
+  //     currentUser?.isAdmin
+  //   );
+  // }, [currentUser]);
   console.log(isAdmin, "isAdmin");
 
   const handleUserMenuOpen = (event) => {
@@ -278,10 +281,10 @@ const NavbarHeader = ({ onLogout }) => {
 
   // Filter tabs based on user permissions
   const filteredTabData = isAdmin
-  ? tabData
-  : tabData.filter((item) => {
-      return currentUserPermission?.[item.key] === "Yes";
-    });
+    ? tabData
+    : tabData.filter((item) => {
+        return currentUserPermission?.[item.key] === "Yes";
+      });
 
   const handleTabChange = (name) => {
     if (!openTabs.tabs.some((tab) => tab.id === name)) {
@@ -406,7 +409,7 @@ const NavbarHeader = ({ onLogout }) => {
                           color: colors.white,
                         }}
                       >
-                        {currentUser?.USERNAME?.charAt(0).toUpperCase()}
+                        {storedUsername?.charAt(0).toUpperCase()}
                       </Avatar>
                     </Badge>
                     <MdArrowDropDown
@@ -457,11 +460,11 @@ const NavbarHeader = ({ onLogout }) => {
                             fontSize: "1.5rem",
                           }}
                         >
-                          {currentUser?.userName?.charAt(0).toUpperCase()}
+                          {storedUsername?.charAt(0).toUpperCase()}
                         </Avatar>
                         <UserDetails>
                           <Typography variant="subtitle1" fontWeight={600}>
-                            {currentUser?.userName}
+                            {storedUsername?.USERNAME}
                           </Typography>
                           <Typography
                             variant="body2"

@@ -104,7 +104,7 @@ export default function UserManagement() {
     }
     return acc;
   }, {});
-
+console.log(groupedUsers,"groupedUsers")
   const uniqueRoles = [...new Set(userData?.data?.map(user => user.role)?.filter(role => role))];
 
   return (
@@ -159,9 +159,9 @@ export default function UserManagement() {
                           fontSize: '0.875rem'
                         }}
                       >
-                        {user?.userName?.charAt(0).toUpperCase()}
+                        {user?.USERNAME?.charAt(0).toUpperCase()}
                       </Avatar>
-                      <Typography variant="body2">{user?.userName}</Typography>
+                      <Typography variant="body2">{user?.USERNAME}</Typography>
                     </Box>
                   </TableCell>
               
