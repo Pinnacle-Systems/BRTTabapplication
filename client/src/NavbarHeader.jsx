@@ -1,29 +1,27 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect, useRef, useMemo } from "react";
 import OutlinedCard from "./Users/Users";
+import RoleManagement from "./Roles/Roles";
 import { push, remove } from "./redux/features/opentabs";
 import AiMessageButton from "./Alagendira/AiMessageButton";
 import {
   CLOSE_ICON,
   MENU_ICON,
   LOT_ICON,
-  LOADING_ICON,
   UNLOADING_ICON,
-  APPROVAL_ICON,
+  
   INSPECTION_ICON,
-  REVERT_ICON,
   SUN_ICON,
   MOON_ICON,
 } from "./icons";
 import useOutsideClick from "./CustomHooks/handleOutsideClick";
-import Inspection from "./Alagendira/Inspection";
 import {
-  useGetLotDetailQuery,
   useGetLoadingDetailQuery,
   useGetUnLoadingDetailQuery,
   useGetApprovalDetailQuery,
   useGetRevertDetailQuery,
 } from "./redux/services/LotDetailData";
+import { useGetPieceReceiptQuery } from "./redux/services/PieceReceipt";
 import { useGetUserslogQuery } from "./redux/userservice";
 import { useGetInspectionDetailQuery } from "./redux/services/LotDetailData";
 import {
@@ -35,15 +33,12 @@ import {
   PackingSlip,
   PieceVerification,
 } from "./BRT";
-import PropTypes from "prop-types";
 import {
   MdLogout,
-  MdMenu,
   MdArrowDropDown,
   MdPersonAdd,
   MdSettings,
 } from "react-icons/md";
-import { BiSolidUserRectangle } from "react-icons/bi";
 import { FaTableCells } from "react-icons/fa6";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GiRolledCloth } from "react-icons/gi";
@@ -69,9 +64,8 @@ import {
   Stack,
   Button,
 } from "@mui/material";
-import { useGetUsersQuery } from "./redux/userservice";
+import { useGetUsersQuery, useGetRolesQuery } from "./redux/userservice";
 import { styled, alpha } from "@mui/material/styles";
-import logo from "../src/img/BRTImage.png";
 
 const colors = {
   primary: "#1976d2",
@@ -120,61 +114,68 @@ function HideOnScroll({ children }) {
 }
 const NavbarHeader = ({ onLogout }) => {
   const openTabs = useSelector((state) => state.openTabs);
-  const [docId, setDocId] = useState("");
   const dispatch = useDispatch();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [darkMode, setDarkMode] = useState(false);
   const tabContainerRef = useRef(null);
   const [count, setCount] = useState(0);
-  const [anchorEl, setAnchorEl] = useState(null);
   const [userMenuEl, setUserMenuEl] = useState(null);
   const { data: userData } = useGetUsersQuery();
-
+  const { data: roles } = useGetRolesQuery();
+  console.log(roles, "roles");
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  const { data: apiResponse } = useGetLotDetailQuery();
+  const { data: apiResponse } = useGetPieceReceiptQuery();
   const { data: loadingResponse } = useGetLoadingDetailQuery();
   const { data: UnLoading } = useGetUnLoadingDetailQuery();
   const { data: approval } = useGetApprovalDetailQuery();
   const { data: revert } = useGetRevertDetailQuery();
   const { data: InspectionDet } = useGetInspectionDetailQuery();
-
+  console.log(apiResponse, "apiResponse");
   useEffect(() => {
-    const uniquePairs = new Set(
-      apiResponse?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
-    );
-    setCount(uniquePairs.size || 0);
+    const uniquePairs = apiResponse?.data?.length;
+    console.log(uniquePairs, "uniquePairs");
+    setCount(uniquePairs || 0);
   }, [apiResponse]);
 
   const ref = useOutsideClick(() => setShowMobileMenu(false));
   const { data: userlog } = useGetUserslogQuery();
-  const storedUserId = localStorage.getItem("userId");
+  const storedUserId = Number(localStorage.getItem("userId"));
   const storedUsername = localStorage.getItem("userName");
+const storedRoleId = Number(localStorage.getItem("roleId"));
+  const adminRole = roles?.data?.find(
+    (val) => val?.ROLENAME?.toLowerCase() === "admin",
+  );
 
+  let adminId = adminRole?.ROLEID;
+  console.log(adminId, "isRollAdmin");
+  console.log(storedRoleId, "storedRoleId");
   console.log(storedUserId, "storedUserId");
+  console.log(userlog, "userlog");
 
   // Find the current user from userlog data
   const currentUser = userlog?.data?.find(
-    (user) => user.USERID === storedUserId,
+  (user) => user.USERID ===storedUserId,
   );
   const currentUserPermission = userlog?.data?.find(
-    (item) => item.USERID == storedUserId,
+    (item) => item?.ROLEID == storedRoleId,
   );
+
   console.log(userData, "userData");
   console.log(currentUser, "currentUser");
 
-  const userRoles = useMemo(() => {
-    return currentUser
-      ? userData.data
-          ?.filter((user) => user.USERNAME === storedUserId && user.role)
-          ?.map((user) => user.role)
-      : [];
-  }, [currentUser, userData, storedUserId]);
-  const isAdmin = storedUsername === "Admin";
+  // const userRoles = useMemo(() => {
+  //   return currentUser
+  //     ? userData.data
+  //         ?.filter((user) => user.USERNAME === storedUserId && user.role)
+  //         ?.map((user) => user.role)
+  //     : [];
+  // }, [currentUser, userData, storedUserId]);
+  const isAdmin = Number(storedRoleId) === adminId;
   // Check if user is admin or has specific permissions
   // const isAdmin = useMemo(() => {
   //   return (
@@ -208,6 +209,7 @@ const NavbarHeader = ({ onLogout }) => {
     PackingSlip: <PackingSlip />,
     PieceVerification: <PieceVerification />,
     User: <OutlinedCard />,
+    Role: <RoleManagement />,
   };
   const tabData = [
     {
@@ -464,7 +466,7 @@ const NavbarHeader = ({ onLogout }) => {
                         </Avatar>
                         <UserDetails>
                           <Typography variant="subtitle1" fontWeight={600}>
-                            {storedUsername?.USERNAME}
+                            {storedUsername || ""}
                           </Typography>
                           <Typography
                             variant="body2"
@@ -476,50 +478,50 @@ const NavbarHeader = ({ onLogout }) => {
                       <Divider sx={{ my: 1 }} />
 
                       {/* Menu Items - Only show for admin */}
-                      {/* {isAdmin && ( */}
-                      <Box sx={{ py: 1 }}>
-                        <MenuItem
-                          onClick={handleCreateUser}
-                          sx={{
-                            borderRadius: "8px",
-                            py: 1.5,
-                            "&:hover": {
-                              backgroundColor: colors.hover,
-                            },
-                          }}
-                        >
-                          <ListItemIcon>
-                            <MdPersonAdd
-                              fontSize="20px"
-                              color={colors.primary}
-                            />
-                          </ListItemIcon>
-                          <ListItemText primary="Create New User" />
-                        </MenuItem>
+                      {isAdmin && (
+                        <Box sx={{ py: 1 }}>
+                          <MenuItem
+                            onClick={handleCreateUser}
+                            sx={{
+                              borderRadius: "8px",
+                              py: 1.5,
+                              "&:hover": {
+                                backgroundColor: colors.hover,
+                              },
+                            }}
+                          >
+                            <ListItemIcon>
+                              <MdPersonAdd
+                                fontSize="20px"
+                                color={colors.primary}
+                              />
+                            </ListItemIcon>
+                            <ListItemText primary="Create New User" />
+                          </MenuItem>
 
-                        <MenuItem
-                          onClick={() => {
-                            dispatch(push({ id: 6, name: "User Settings" }));
-                            handleUserMenuClose();
-                          }}
-                          sx={{
-                            borderRadius: "8px",
-                            py: 1.5,
-                            "&:hover": {
-                              backgroundColor: colors.hover,
-                            },
-                          }}
-                        >
-                          <ListItemIcon>
-                            <MdSettings
-                              fontSize="20px"
-                              color={colors.primary}
-                            />
-                          </ListItemIcon>
-                          <ListItemText primary="User Settings" />
-                        </MenuItem>
-                      </Box>
-                      {/* )} */}
+                          <MenuItem
+                            onClick={() => {
+                              dispatch(push({ id: 9, name: "Role" }));
+                              handleUserMenuClose();
+                            }}
+                            sx={{
+                              borderRadius: "8px",
+                              py: 1.5,
+                              "&:hover": {
+                                backgroundColor: colors.hover,
+                              },
+                            }}
+                          >
+                            <ListItemIcon>
+                              <MdSettings
+                                fontSize="20px"
+                                color={colors.primary}
+                              />
+                            </ListItemIcon>
+                            <ListItemText primary="Roles" />
+                          </MenuItem>
+                        </Box>
+                      )}
 
                       <Divider sx={{ my: 1 }} />
 
@@ -590,7 +592,7 @@ const NavbarHeader = ({ onLogout }) => {
             </div>
 
             <div className=" space-y-2">
-              {filteredTabData.map(({ name, icon, value, gradient }) => (
+              {filteredTabData?.map(({ name, icon, value, gradient }) => (
                 <button
                   key={name}
                   onClick={() => handleTabChange(name)}
@@ -747,7 +749,7 @@ const NavbarHeader = ({ onLogout }) => {
                 ))
               ) : (
                 <div
-                  className={`h-full flex flex-col items-center justify-center ${emptyStateBg} rounded-xl border-2 border-dashed ${darkMode ? "border-gray-700" : "border-gray-300"} backdrop-blur-sm`}
+                  className={`h-[70vh] flex flex-col items-center justify-center ${emptyStateBg} rounded-xl border-2 border-dashed ${darkMode ? "border-gray-700" : "border-gray-300"} backdrop-blur-sm`}
                 >
                   <div className="text-center p-6 max-w-md">
                     <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 bg-gradient-to-r from-cyan-500 to-blue-600">

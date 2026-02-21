@@ -52,13 +52,16 @@ const LotPreparation = () => {
 );
 
   const [filters, setFilters] = useState(filtersInitialState);
-
-  const {
-    data: apiResponse,
-    error,
-    isLoading,
-    refetch
-  } = useGetLotDetailQuery();
+let apiResponse;
+let error;
+let isLoading;
+let refetch;
+  // const {
+  //   data: apiResponse,
+  //   error,
+  //   isLoading,
+  //   refetch
+  // } = useGetLotDetailQuery();
   const {data:contractDet} = useGetContractorDetailQuery()
   const Contractor = contractDet?.data
   const [updateLot] = useUpdateLotDetailMutation();

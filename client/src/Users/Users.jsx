@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useGetUsersQuery } from "../redux/userservice";
+import { useGetUsersQuery,useGetRolesQuery } from "../redux/userservice";
 import { useEffect } from "react";
 import { 
   Modal, 
@@ -71,6 +71,8 @@ export default function UserManagement() {
   };
 
   const { data: userData, refetch, isLoading } = useGetUsersQuery();
+    const { data: Roles } = useGetRolesQuery();
+  
 
   useEffect(() => {
     refetch();
@@ -84,13 +86,13 @@ export default function UserManagement() {
     );
   }
 
-  // if (!userData?.data) {
-  //   return (
-  //     <Typography variant="body1" color="textSecondary" textAlign="center" mt={2}>
-  //       No user data available
-  //     </Typography>
-  //   );
-  // }
+  if (!userData?.data) {
+    return (
+      <Typography variant="body1" color="textSecondary" textAlign="center" mt={2}>
+        No user data available
+      </Typography>
+    );
+  }
 
   const groupedUsers = userData?.data?.reduce((acc, user) => {
     if (!acc[user?.USERNAME]) {
@@ -193,7 +195,7 @@ console.log(groupedUsers,"groupedUsers")
               outline: 'none'
             }}
           >
-            <Form onClose={handleClose} primaryColor={primaryColor} />
+            <Form onClose={handleClose} Roles={Roles} primaryColor={primaryColor} />
           </Box>
         </Fade>
       </Modal>

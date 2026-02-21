@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useCreateUserMutation } from "../redux/userservice";
+import { useCreateRoleMutation } from "../redux/userservice";
 import { toast } from "react-toastify";
 import {
   Box,
@@ -10,24 +10,13 @@ import {
   Button,
   IconButton,
   CircularProgress,
-  Divider,
   Grid,
   InputAdornment,
   alpha,
   styled,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import LockIcon from "@mui/icons-material/Lock";
-import PersonIcon from "@mui/icons-material/Person";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import BadgeIcon from "@mui/icons-material/Badge";
-
 const CompactTextField = styled(TextField)(({ theme, primarycolor }) => ({
   "& .MuiOutlinedInput-root": {
     borderRadius: "6px",
@@ -64,12 +53,10 @@ const CompactCheckbox = styled(FormControlLabel)(({ primarycolor }) => ({
   },
 }));
 
-const Form = ({ onClose, primaryColor, Roles }) => {
-  const [username, setUserName] = useState("");
-  const [roleId, setRoleId] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [createUser, { isLoading }] = useCreateUserMutation();
+const Form = ({ onClose, primaryColor }) => {
+  const [rolename, setrolename] = useState("");
+ 
+  const [createRole, { isLoading }] = useCreateRoleMutation();
   const [checkboxes, setCheckboxes] = useState({});
 
   const pageNames = [
@@ -80,7 +67,6 @@ const Form = ({ onClose, primaryColor, Roles }) => {
     { id: 5, label: "Piece Folding Entry" },
     { id: 6, label: "PackingSlip" },
     { id: 7, label: "PieceVerification" },
-    // { id: 8, label: "User" },
   ];
 
   const handleCheckboxChange = (id) => {
@@ -92,20 +78,19 @@ const Form = ({ onClose, primaryColor, Roles }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // const selectedCheckboxes = pageNames
-    //   .filter((checkbox) => checkboxes[checkbox.id])
-    //   .map((checkbox) => ({ id: checkbox.id, label: checkbox.label }));
+    const selectedCheckboxes = pageNames
+      .filter((checkbox) => checkboxes[checkbox.id])
+      .map((checkbox) => ({ id: checkbox.id, label: checkbox.label }));
 
-    const formData = { username, password, roleId };
+    const formData = { rolename, checkboxes: selectedCheckboxes };
 
-    if (!username || !password || !roleId) {
+    if (!rolename  ) {
       toast.info("Please fill all required fields");
       return;
     }
 
-    if (!window.confirm("Create this user?")) return;
 
-    createUser(formData)
+    createRole(formData)
       .unwrap()
       .then((response) => {
         if (response.statusCode === 1) {
@@ -121,7 +106,7 @@ const Form = ({ onClose, primaryColor, Roles }) => {
   };
 
   return (
-    <Box sx={{ p: 0, height: "50vh" }}>
+    <Box sx={{ p: 0 }}>
       <Box
         sx={{
           p: 2,
@@ -133,7 +118,7 @@ const Form = ({ onClose, primaryColor, Roles }) => {
         }}
       >
         <Typography variant="subtitle1" fontWeight="600">
-          Create User
+          Create Role
         </Typography>
         <IconButton onClick={onClose} size="small" sx={{ color: "white" }}>
           <CloseIcon fontSize="small" />
@@ -147,14 +132,14 @@ const Form = ({ onClose, primaryColor, Roles }) => {
               <CompactTextField
                 fullWidth
                 size="small"
-                label="Username"
+                label="Rolename"
                 variant="outlined"
-                value={username}
-                onChange={(e) => setUserName(e.target.value)}
+                value={rolename}
+                onChange={(e) => setrolename(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonIcon
+                      <BadgeIcon    
                         fontSize="small"
                         sx={{ color: alpha("#000", 0.6) }}
                       />
@@ -165,81 +150,34 @@ const Form = ({ onClose, primaryColor, Roles }) => {
               />
             </Grid>
 
+      
+
             <Grid item xs={12}>
-              <CompactTextField
-                fullWidth
-                size="small"
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                variant="outlined"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockIcon
-                        fontSize="small"
-                        sx={{ color: alpha("#000", 0.6) }}
-                      />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                      >
-                        {showPassword ? (
-                          <VisibilityOffIcon fontSize="small" />
-                        ) : (
-                          <VisibilityIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                primarycolor={primaryColor}
-              />
+              <Typography variant="body2" fontWeight="500" gutterBottom>
+                Permissions
+              </Typography>
+
+              <Grid container spacing={1}>
+                {pageNames.map((checkbox) => (
+                  <Grid item xs={6} key={checkbox.id}>
+                    <CompactCheckbox
+                      control={
+                        <Checkbox
+                          size="small"
+                          checked={checkboxes[checkbox.id] || false}
+                          onChange={() => handleCheckboxChange(checkbox.id)}
+                        />
+                      }
+                      label={checkbox.label}
+                      primarycolor={primaryColor}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
             </Grid>
 
             <Grid item xs={12}>
-              <FormControl fullWidth size="small">
-                <InputLabel id="role-label">Role</InputLabel>
-
-                <Select
-                  labelId="role-label"
-                  label="Role"
-                  value={roleId}
-                  onChange={(e) => setRoleId(e.target.value)}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <BadgeIcon
-                        fontSize="small"
-                        sx={{ color: alpha("#000", 0.6), mr: 1 }}
-                      />
-                    </InputAdornment>
-                  }
-                  sx={{ height: 40 }}
-                  MenuProps={{
-                    PaperProps: {
-                      style: {
-                        maxHeight: 200, // ✅ dropdown height
-                      },
-                    },
-                  }}
-                >
-                  {Roles?.data?.map((role) => (
-                    <MenuItem key={role.ROLEID} value={role.ROLEID}>
-                      {role.ROLENAME}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="flex-end " gap={1} mt={12}>
+              <Box display="flex" justifyContent="flex-end" gap={1} mt={1}>
                 <Button
                   variant="outlined"
                   size="small"

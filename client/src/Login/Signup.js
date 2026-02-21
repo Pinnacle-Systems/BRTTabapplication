@@ -39,6 +39,7 @@ function Signup({ autoLogout }) {
 
       if (data.message === "Login Successful") {
         const userId = data?.user?.[0]?.USERID;
+        const roleId = data?.user?.[0]?.ROLEID;
         console.log("USERID:", userId);
         loginSocket(data?.user);
         sessionStorage.setItem("sessionId", generateSessionId());
@@ -47,10 +48,14 @@ function Signup({ autoLogout }) {
           data.token,
         );
         localStorage.setItem("userId", userId);
-
         sessionStorage.setItem("userId", userId);
+
+        localStorage.setItem("roleId", roleId);
+        sessionStorage.setItem("roleId", roleId);
+
         localStorage.setItem("userName", username);
         sessionStorage.setItem("userName", username);
+        
         autoLogout(sessionStorage.getItem("sessionId"));
         navigate("/branch-finyear");
       } else {

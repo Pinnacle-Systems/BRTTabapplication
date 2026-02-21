@@ -77,7 +77,7 @@ const App = () => {
                   <ActiveTabList />
                 </div>
               </div> */}
-              <NavbarHeader/>
+              <NavbarHeader onLogout={handleLogout}/>
               </>
           }
         />

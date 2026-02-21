@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { LOGIN_API, USERS_API,USERSLOG_API } from "../Api";
+import { LOGIN_API, USERS_API, USERSLOG_API } from "../Api";
 import baseQuery from "./baseQuery";
 const BASE_URL = process.env.REACT_APP_SERVER_URL;
 
@@ -8,8 +8,6 @@ const UsersApi = createApi({
   baseQuery,
   tagTypes: ["Login"],
   endpoints: (builder) => ({
-
-
     loginUser: builder.mutation({
       query: (payload) => ({
         url: LOGIN_API,
@@ -23,28 +21,36 @@ const UsersApi = createApi({
     }),
     getUsers: builder.query({
       query: () => {
-
         return {
           url: USERS_API,
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-
         };
       },
       providesTags: ["Users"],
     }),
-      getUserslog: builder.query({
+    getRoles: builder.query({
       query: () => {
-
+        return {
+          url: `${USERS_API}/getroles`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["Users"],
+    }),
+    getUserslog: builder.query({
+      query: () => {
         return {
           url: USERSLOG_API,
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-
         };
       },
       providesTags: ["Users"],
@@ -60,13 +66,27 @@ const UsersApi = createApi({
       }),
       invalidatesTags: ["Login"],
     }),
-
-
+    createRole: builder.mutation({
+      query: (payload) => ({
+        url: `${USERS_API}/role`,
+        method: "POST",
+        body: payload,
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      }),
+      invalidatesTags: ["Users"],
+    }),
   }),
 });
 
 export const {
-  useLoginUserMutation, useGetUsersQuery,useGetUserslogQuery, useCreateUserMutation
+  useLoginUserMutation,
+  useGetUsersQuery,
+  useGetUserslogQuery,
+  useCreateUserMutation,
+  useGetRolesQuery,
+  useCreateRoleMutation
 } = UsersApi;
 
 export default UsersApi;

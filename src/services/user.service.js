@@ -15,7 +15,7 @@ export async function login(req, res) {
     return res.json({ statusCode: 1, message: "Password is Required" });
 
   const result = await connection.execute(
-    `SELECT * FROM TABUSER where username=:username`,
+    `SELECT * FROM TABUSER where  UPPER(USERNAME) = UPPER(:username)`,
     { username },
   );
   if (result.rows.length === 0)
@@ -48,23 +48,12 @@ export async function login(req, res) {
   await connection.close();
   return res.json({ statusCode: 0, message: "Login Successful", token, user });
 }
-// export async function login(req, res) {
-//   const token = jwt.sign({ user: "demo" }, "RANDOM-TOKEN", {
-//     expiresIn: "24h",
-//   });
 
-//   return res.json({
-//     statusCode: 0,
-//     message: "Login Successful",
-//     token,
-//     user: "demo",
-//   });
-// }
 
 export async function create(req, res) {
   const connection = await getConnection();
-  const { username, password, checkboxes } = req.body;
-  const roles = checkboxes?.map((item) => item.label.toUpperCase());
+  const { username, password, roleId } = req.body;
+  // const roles = checkboxes?.map((item) => item.label.toUpperCase());
 
   if (!username || !password) {
     return res.json({
@@ -88,52 +77,49 @@ export async function create(req, res) {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     console.log(username, hashedPassword, "username,hashedPassword");
     const result = await connection.execute(
-      `INSERT INTO TABUSER (USERNAME, PASSWORD)
-       VALUES (:username, :password)
-       RETURNING USERID INTO :userId`,
+      `INSERT INTO TABUSER (USERNAME, PASSWORD,ROLEID)
+       VALUES (:username, :password,:roleId)
+       `,
       {
         username,
         password: hashedPassword,
-        userId: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
+        roleId,
       },
     );
 
     // ⭐ Generated USERID
-    const userId = result.outBinds.userId[0];
 
-    console.log("New USERID:", userId);
 
-    const userLogValues = {
-      userId,
+    // const userLogValues = {
+    //   userId,
 
-      pieceReceipt: roles.includes("PIECE RECEIPT") ? "Yes" : "No",
+    //   pieceReceipt: roles.includes("PIECE RECEIPT") ? "Yes" : "No",
 
-      tableAndLotAllocation: roles.includes("TABLE AND LOT ALLOCATION")
-        ? "Yes"
-        : "No",
+    //   tableAndLotAllocation: roles.includes("TABLE AND LOT ALLOCATION")
+    //     ? "Yes"
+    //     : "No",
 
-      defectEntry: roles.includes("DEFECT ENTRY") ? "Yes" : "No",
+    //   defectEntry: roles.includes("DEFECT ENTRY") ? "Yes" : "No",
 
-      foldingPendingList: roles.includes("FOLDING PENDING LIST") ? "Yes" : "No",
+    //   foldingPendingList: roles.includes("FOLDING PENDING LIST") ? "Yes" : "No",
 
-      pieceFoldingEntry: roles.includes("PIECE FOLDING ENTRY") ? "Yes" : "No",
+    //   pieceFoldingEntry: roles.includes("PIECE FOLDING ENTRY") ? "Yes" : "No",
 
-      packingSlip: roles.includes("PACKING SLIP") ? "Yes" : "No",
+    //   packingSlip: roles.includes("PACKING SLIP") ? "Yes" : "No",
 
-      pieceVerification: roles.includes("PIECE VERIFICATION") ? "Yes" : "No",
+    //   pieceVerification: roles.includes("PIECE VERIFICATION") ? "Yes" : "No",
 
-      TABUSERVALUE: roles.includes("USER") ? "Yes" : "No",
-    };
+    // };
 
-    const tabpagetableSql = `
-      INSERT INTO TABPAGE (
-        userId, PIECERECEIPT, TABLEANDLOTALLOCATION, DEFECTENTRY, FOLDINGPENDINGLIST, PIECEFOLDINGENTRY, PACKINGSLIP, PIECEVERIFICATION,TABUSER
-      ) VALUES (
-        :userId, :pieceReceipt,:tableAndLotAllocation,:defectEntry,:foldingPendingList, :pieceFoldingEntry, :packingSlip, :pieceVerification,:TABUSERVALUE
-      )
-    `;
+    // const tabpagetableSql = `
+    //   INSERT INTO TABPAGE (
+    //     userId, PIECERECEIPT, TABLEANDLOTALLOCATION, DEFECTENTRY, FOLDINGPENDINGLIST, PIECEFOLDINGENTRY, PACKINGSLIP, PIECEVERIFICATION
+    //   ) VALUES (
+    //     :userId, :pieceReceipt,:tableAndLotAllocation,:defectEntry,:foldingPendingList, :pieceFoldingEntry, :packingSlip, :pieceVerification
+    //   )
+    // `;
 
-    await connection.execute(tabpagetableSql, userLogValues);
+    // await connection.execute(tabpagetableSql, userLogValues);
 
     await connection.commit();
     await connection.close();
@@ -158,7 +144,6 @@ export async function get(req, res) {
 
     const result = await connection.execute(sql);
 
-    console.log(result, "resultcehdhfd");
 
     const resp = result.rows.map((row) => {
       let obj = {};
@@ -232,4 +217,114 @@ export async function remove(req, res) {
   const connection = await getConnection.apply(res);
   try {
   } catch (err) {}
+}
+
+export async function getRoles(req, res) {
+  const connection = await getConnection(res);
+  try {
+    const sql = `  
+ select * from roletab
+`;
+
+    const result = await connection.execute(sql);
+
+
+    const resp = result.rows.map((row) => {
+      let obj = {};
+      result.metaData.forEach(({ name }, idx) => {
+        obj[name] = row[idx];
+      });
+      return obj;
+    });
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
+  }
+}
+
+export async function createRole(req, res) {
+  const connection = await getConnection();
+  const { rolename, checkboxes } = req.body;
+  const roles = checkboxes?.map((item) => item.label.toUpperCase());
+
+  if (!rolename ) {
+    return res.json({
+      statusCode: 1,
+      message: "RoleName is Required",
+    });
+  }
+
+  try {
+    const roleNameResult = await connection.execute(
+      "SELECT COUNT(*) as count FROM roletab WHERE rolename = :rolename",
+      { rolename },
+    );
+
+    if (roleNameResult.rows[0][0] > 0) {
+      await connection.close();
+      return res.json({ statusCode: 1, message: "RoleName Already Exists" });
+    }
+
+
+    const result = await connection.execute(
+      `INSERT INTO ROLETAB (ROLENAME)
+       VALUES (:rolename)
+       RETURNING ROLEID INTO :roleId`,
+      {
+        rolename,
+        roleId: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
+      },
+    );
+
+    // ⭐ Generated USERID
+    const roleId = result.outBinds.roleId[0];
+
+    console.log("New ROLEID:", roleId);
+
+    const userLogValues = {
+      roleId,
+
+      pieceReceipt: roles.includes("PIECE RECEIPT") ? "Yes" : "No",
+
+      tableAndLotAllocation: roles.includes("TABLE AND LOT ALLOCATION")
+        ? "Yes"
+        : "No",
+
+      defectEntry: roles.includes("DEFECT ENTRY") ? "Yes" : "No",
+
+      foldingPendingList: roles.includes("FOLDING PENDING LIST") ? "Yes" : "No",
+
+      pieceFoldingEntry: roles.includes("PIECE FOLDING ENTRY") ? "Yes" : "No",
+
+      packingSlip: roles.includes("PACKING SLIP") ? "Yes" : "No",
+
+      pieceVerification: roles.includes("PIECE VERIFICATION") ? "Yes" : "No",
+
+    };
+
+    const tabpagetableSql = `
+      INSERT INTO TABPAGE (
+        ROLEID, PIECERECEIPT, TABLEANDLOTALLOCATION, DEFECTENTRY, FOLDINGPENDINGLIST, PIECEFOLDINGENTRY, PACKINGSLIP, PIECEVERIFICATION
+      ) VALUES (
+        :roleId, :pieceReceipt,:tableAndLotAllocation,:defectEntry,:foldingPendingList, :pieceFoldingEntry, :packingSlip, :pieceVerification
+      )
+    `;
+
+    await connection.execute(tabpagetableSql, userLogValues);
+
+    await connection.commit();
+    await connection.close();
+
+    return res.json({ statusCode: 0, message: "Role created successfully" });
+  } catch (error) {
+    console.error(error);
+    await connection.close();
+    return res.json({
+      statusCode: 1,
+      message: "An error occurred while creating the role",
+    });
+  }
 }
