@@ -9,7 +9,6 @@ import {
   MENU_ICON,
   LOT_ICON,
   UNLOADING_ICON,
-  
   INSPECTION_ICON,
   SUN_ICON,
   MOON_ICON,
@@ -146,7 +145,7 @@ const NavbarHeader = ({ onLogout }) => {
   const { data: userlog } = useGetUserslogQuery();
   const storedUserId = Number(localStorage.getItem("userId"));
   const storedUsername = localStorage.getItem("userName");
-const storedRoleId = Number(localStorage.getItem("roleId"));
+  const storedRoleId = Number(localStorage.getItem("roleId"));
   const adminRole = roles?.data?.find(
     (val) => val?.ROLENAME?.toLowerCase() === "admin",
   );
@@ -159,7 +158,7 @@ const storedRoleId = Number(localStorage.getItem("roleId"));
 
   // Find the current user from userlog data
   const currentUser = userlog?.data?.find(
-  (user) => user.USERID ===storedUserId,
+    (user) => user.USERID === storedUserId,
   );
   const currentUserPermission = userlog?.data?.find(
     (item) => item?.ROLEID == storedRoleId,

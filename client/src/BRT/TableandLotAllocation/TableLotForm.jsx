@@ -30,11 +30,22 @@ const TableLotForm = ({
   setSelectedPiece,
   checkingSectionId,
   setCheckingSectionId,
+  isAdmin,
+  isSuppervisor,
+  storedUsername,
+  storedUserId,
+  userOptions,
 }) => {
   const [dcMeter, setDcMeter] = useState("");
   const [selectedTables, setSelectedTables] = useState([]);
 
   const lotIdRef = useRef(null);
+  useEffect(() => {
+    if (!isAdmin && !isSuppervisor) {
+      setCheckerId(storedUserId);
+    }
+  }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
+
   const customSelectStyles = {
     control: (base, state) => ({
       ...base,
@@ -227,9 +238,9 @@ const TableLotForm = ({
     setSelectedSubGridId("");
     setSelectedPiece("");
     setDcMeter("");
-    setCheckingSectionId("");
-    setCheckerId("");
-    setSelectedTables([])
+    // setCheckingSectionId("");
+    // setCheckerId("");
+    // setSelectedTables([]);
   }, [selectedLotNo]);
 
   useEffect(() => {
@@ -315,16 +326,39 @@ const TableLotForm = ({
                 />
               </div>
 
-              {/* Meters */}
               <div className="flex flex-col flex-1 max-w-[18rem]">
                 <label className="text-sm font-medium mb-1">Checker Name</label>
-                <input
-                  type="text"
-                  name="checkerId"
-                  value={checkerId}
-                  onChange={(e) => setCheckerId(e.target.value)}
-                  className="border rounded-lg text-left px-1 py-[7px] w-full"
-                />
+
+                {isAdmin || isSuppervisor ? (
+                  <>
+                    <Select
+                      options={userOptions}
+                      value={
+                        userOptions?.find(
+                          (option) => option.value === checkerId,
+                        ) || null
+                      }
+                      onChange={(selectedOption) => {
+                        setCheckerId(selectedOption?.value || "");
+                      }}
+                      
+                      placeholder="Select User"
+                      isClearable={false} // ✅ disable cross icon
+                      styles={customSelectStyles}
+                      className="text-left"
+                      isSearchable={true}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={storedUsername}
+                      readOnly
+                      className="border rounded-lg text-left px-1 py-[7px] w-full bg-gray-100"
+                    />
+                  </>
+                )}
               </div>
               <div className="flex flex-col flex-1 max-w-[8rem]">
                 <label className="text-sm font-medium mb-1">
