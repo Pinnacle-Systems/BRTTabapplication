@@ -35,6 +35,8 @@ const TableLotForm = ({
   storedUsername,
   storedUserId,
   userOptions,
+  setLotCheckingNoId,
+  lotCheckingNoId,
 }) => {
   const [dcMeter, setDcMeter] = useState("");
   const [selectedTables, setSelectedTables] = useState([]);
@@ -130,9 +132,16 @@ const TableLotForm = ({
   });
   console.log(cloths, "cloths");
 
-  const { data: pieces } = useGetPiecesQuery(selectedGridId, {
-    skip: !selectedGridId,
-  });
+  const { data: pieces } = useGetPiecesQuery(
+    {
+      selectedClothId,
+      selectedLotNo,
+      lotCheckingNoId,
+    },
+    {
+      skip: !selectedClothId || !selectedLotNo || !lotCheckingNoId,
+    },
+  );
   console.log(pieces, "pieces");
 
   const { data: singleData } = useGetTableLotByIdQuery(
@@ -211,7 +220,7 @@ const TableLotForm = ({
 
   const lotOptions = lots?.data?.map((lot) => ({
     value: lot?.LOTNO,
-    label: lot?.LOTNO,
+    label: lot?.LOTDOCID,
   }));
   const checkingOptions = checking?.data?.map((check) => ({
     value: check?.GTCHECKINGMASTID,
@@ -222,11 +231,12 @@ const TableLotForm = ({
     label: cloth?.CLOTHNAME,
     value: cloth?.GRIDID,
     clothId: cloth?.CLOTHID,
+    lotchkId: cloth?.LOTCHKNOID,
   }));
 
   const pieceOptions = pieces?.data?.map((piece) => ({
     label: piece?.PCSNO,
-    value: piece?.SUBGRIDID,
+    value: piece?.PCSNO,
     meter: piece?.METER,
     pcNo: piece?.PCSNO,
   }));
@@ -341,7 +351,6 @@ const TableLotForm = ({
                       onChange={(selectedOption) => {
                         setCheckerId(selectedOption?.value || "");
                       }}
-                      
                       placeholder="Select User"
                       isClearable={false} // ✅ disable cross icon
                       styles={customSelectStyles}
@@ -427,6 +436,7 @@ const TableLotForm = ({
                     onChange={(selectedOption) => {
                       setSelectedGridId(selectedOption?.value || "");
                       setSelectedClothId(selectedOption?.clothId || "");
+                      setLotCheckingNoId(selectedOption?.lotchkId || "");
                     }}
                     placeholder="Select cloth"
                     isClearable={false} // ✅ disable cross icon

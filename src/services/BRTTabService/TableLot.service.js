@@ -52,7 +52,8 @@ export async function getLotNo(req, res) {
   const connection = await getConnection(res);
 
   try {
-    const sql = `select A.GTLOTCHKPLANID as nonGridId,A.GTLOTCHKPLANDETID as gridId,A.LOTNO from Gtlotchkplandet A`;
+    const sql1 = `select A.GTLOTCHKPLANID as nonGridId,A.GTLOTCHKPLANDETID as gridId,A.LOTNO from Gtlotchkplandet A`;
+    const sql = `select A.LOTNO as LOTNO,B.DOCID as LOTDOCID from gtlotallotmentdet A left join GTFABRICRECEIPT B ON A.LOTNO = B.GTFABRICRECEIPTID`;
     console.log(sql, "sql for getLotNo");
     const result = await connection.execute(sql);
 
@@ -80,8 +81,12 @@ export async function getClothName(req, res) {
   console.log(selectedLotNo, "params for getClothName");
 
   try {
-    const sql = `select A.GTLOTCHKPLANID as nonGridId,A.GTLOTCHKPLANDETID as gridId,A.LOTNO,A.CLOTHNAME as CLOTHID,C.CLOTHNAME from Gtlotchkplandet A
+    const sql1 = `select A.GTLOTCHKPLANID as nonGridId,A.GTLOTCHKPLANDETID as gridId,A.LOTNO,A.CLOTHNAME as CLOTHID,C.CLOTHNAME from Gtlotchkplandet A
 JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = A.CLOTHNAME
+WHERE A.LOTNO = '${selectedLotNo}'`;
+    const sql = `SELECT A.GTLOTALLOTMENTID AS NONGRIDID,A.GTLOTALLOTMENTDETID AS GRIDID,A.LOTNO AS LOTID,A.CLOTHNAME AS CLOTHID,C.CLOTHNAME,A.LOTCHKNO AS LOTCHKNOID,D.DOCID AS LOTCHEKCNO FROM GTLOTALLOTMENTDET A
+JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = A.CLOTHNAME
+JOIN  GTLOTCHKPLAN  D ON D.GTLOTCHKPLANID = A.LOTCHKNO
 WHERE A.LOTNO = '${selectedLotNo}'`;
     console.log(sql, "sql for getClothName");
     const result = await connection.execute(sql);
@@ -104,14 +109,22 @@ WHERE A.LOTNO = '${selectedLotNo}'`;
 }
 export async function getPieces(req, res) {
   const connection = await getConnection(res);
+  const { selectedClothId, selectedLotNo, lotCheckingNoId } = req.params;
 
-  const { selectedGridId } = req.params;
-
-  console.log(selectedGridId, "params for getPieces");
+  console.log(selectedClothId, selectedLotNo, lotCheckingNoId, "params for getPieces");
 
   try {
-    const sql = `select GTLOTCHKPLANID as nonGridId,GTLOTCHKPLANDETID as gridId,GTLOTPCSSUBDETID as subGridId,PCSNO,METER from gtlotpcssubdet
-WHERE GTLOTCHKPLANDETID ='${selectedGridId}'`;
+//     const sql1 = `select GTLOTCHKPLANID as nonGridId,GTLOTCHKPLANDETID as gridId,GTLOTPCSSUBDETID as subGridId,PCSNO,METER from gtlotpcssubdet
+// WHERE GTLOTCHKPLANDETID ='${selectedGridId}'`;
+    const sql = `SELECT A.GTLOTCHKPLANID,A.DOCID,BB.PCSNO,BB.METER,EE.CLOTHNAME,EE.LOTNO,C.DOCID LOTNO,D.CLOTHNAME
+FROM GTLOTCHKPLAN A
+JOIN GTLOTCHKPLANDET B ON B.GTLOTCHKPLANID = A.GTLOTCHKPLANID
+JOIN GTLOTPCSSUBDET BB ON BB.GTLOTCHKPLANID = A.GTLOTCHKPLANID
+JOIN GTLOTALLOTMENTDET EE ON EE.LOTCHKNO = A.GTLOTCHKPLANID
+JOIN GTLOTALLOTMENT E ON E.GTLOTALLOTMENTID = EE.GTLOTALLOTMENTID
+JOIN GTFABRICRECEIPT C ON C.GTFABRICRECEIPTID =EE.LOTNO
+JOIN GTCLOTHCREATION D ON D.GTCLOTHCREATIONID = EE.CLOTHNAME
+WHERE A.GTLOTCHKPLANID ='${lotCheckingNoId}' AND C.GTFABRICRECEIPTID='${selectedLotNo}' AND D.GTCLOTHCREATIONID='${selectedClothId}'`;
     console.log(sql, "sql for getPieces");
     const result = await connection.execute(sql);
 

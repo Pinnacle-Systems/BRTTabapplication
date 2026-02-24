@@ -6,7 +6,7 @@ router.get('/getTable', getTables);
 router.get('/getLotNo', getLotNo);
 router.get('/getCheckingSection', getCheckingSection);
 router.get('/:selectedLotNo/getCloth', getClothName);
-router.get('/:selectedGridId/getPiece', getPieces);
+router.get('/:lotCheckingNoId/:selectedLotNo/:selectedClothId/getPiece', getPieces);
 
 
 

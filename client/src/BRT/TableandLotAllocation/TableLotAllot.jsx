@@ -18,6 +18,7 @@ const TableLotAllot = () => {
   const [selectedSubGridId, setSelectedSubGridId] = useState("");
   const [checkingSectionId, setCheckingSectionId] = useState("");
   const [checkerId, setCheckerId] = useState("");
+  const [lotCheckingNoId,setLotCheckingNoId] = useState("")
   const storedUserId = Number(localStorage.getItem("userId"));
   const storedRoleId = Number(localStorage.getItem("roleId"));
 
@@ -55,7 +56,12 @@ const TableLotAllot = () => {
   if (openForm) {
     return (
       <TableLotForm
-        editData={editData}  isAdmin={isAdmin} isSuppervisor={isSuppervisor} storedUsername={storedUsername} userOptions={userOptions} storedUserId={storedUserId}
+        editData={editData} lotCheckingNoId={lotCheckingNoId} setLotCheckingNoId={setLotCheckingNoId}
+        isAdmin={isAdmin}
+        isSuppervisor={isSuppervisor}
+        storedUsername={storedUsername}
+        userOptions={userOptions}
+        storedUserId={storedUserId}
         selectedLotNo={selectedLotNo}
         setSelectedLotNo={setSelectedLotNo}
         selectedClothId={selectedClothId}
@@ -88,9 +94,9 @@ const TableLotAllot = () => {
         <button
           onClick={() => {
             setSelectedLotNo("");
-            setCheckerId("")
-            setCheckingSectionId("")
-            
+            setCheckerId("");
+            setCheckingSectionId("");
+
             setOpenForm(true);
           }}
           className="bg-green-600 mr-2 text-white px-5 py-1 rounded-lg hover:bg-green-700 transition"

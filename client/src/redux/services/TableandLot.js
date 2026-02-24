@@ -102,8 +102,8 @@ const tableLotApi = createApi({
       providesTags: ["pieceReceipt"],
     }),
     getPieces: builder.query({
-      query: (selectedGridId) => ({
-        url: `${TABLELOTAPI}/${selectedGridId}/getPiece`,
+      query: ({ selectedClothId, selectedLotNo, lotCheckingNoId }) => ({
+        url: `${TABLELOTAPI}/${lotCheckingNoId}/${selectedLotNo}/${selectedClothId}/getPiece`,
         method: "GET",
         headers: {
           "Content-type": "application/json; charset=UTF-8",
