@@ -248,7 +248,7 @@ export async function update(req, res) {
           PCSNO,
           PCSTAKEN,
           TABDATE,
-          CHECKINGID
+          PROCESSNAME
         )
         VALUES
         (
