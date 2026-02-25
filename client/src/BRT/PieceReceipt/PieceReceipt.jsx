@@ -25,9 +25,9 @@ const PieceReceipt = ({
   const [pieceNo, setPieceNumber] = useState("");
   const [meter, setMeter] = useState("");
   const [lotItems, setLotItems] = useState([]);
-  const [viewOnly, setViewOnly] = useState(true);
   const lotIdRef = useRef(null);
   const pieceNoRef = useRef(null);
+  let CHK = 1;
   const customSelectStyles = {
     control: (base, state) => ({
       ...base,
@@ -146,7 +146,6 @@ const PieceReceipt = ({
 
   const data = {
     selectedLotId: parseInt(selectedLotId),
-
     selectedClothId: parseInt(selectedClothId),
     selectedGridId: parseInt(selectedGridId),
 
@@ -154,7 +153,8 @@ const PieceReceipt = ({
       pcNo: parseInt(item.pcNo),
       selectedLotId: parseInt(selectedLotId),
       selectedGridId: parseInt(selectedGridId),
-      selectedClothId: parseInt(selectedClothId),
+      selectedClothId: parseInt(selectedClothId),    CHK,
+
       meters: parseFloat(item.meters),
     })),
   };

@@ -136,9 +136,9 @@ const tableLotApi = createApi({
     }),
     updateTableLot: builder.mutation({
       query: (payload) => {
-        const { selectedLotId, selectedGridId, ...body } = payload;
+        const { selectedNonGridId, selectedGridId, ...body } = payload;
         return {
-          url: `${TABLELOTAPI}/${selectedLotId}/${selectedGridId}`,
+          url: `${TABLELOTAPI}/${selectedNonGridId}/${selectedGridId}`,
           method: "PUT",
           body,
         };

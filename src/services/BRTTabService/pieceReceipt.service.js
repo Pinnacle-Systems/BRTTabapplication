@@ -299,7 +299,9 @@ export async function update(req, res) {
             GTFABRICRECEIPTID,
             GTFABRICRECEIPTDETID,
             SNO,
-            MTR
+            MTR,
+            CHK
+
           )
           VALUES
           (
@@ -307,7 +309,9 @@ export async function update(req, res) {
             :lotId,
             :clothId,
             :pcNo,
-            :meters
+            :meters,
+            :CHK
+
           )
 
       `;
@@ -315,12 +319,12 @@ export async function update(req, res) {
       await connection.execute(
         sql,
         {
-          GTSCHEDULESUNDETID: Date.now(), // ✅ bind to correct column name
-
+          GTSCHEDULESUNDETID:Date.now() + 1000 + Math.floor(Math.random() * 1000), 
           lotId: item.selectedLotId,
           clothId: item.selectedGridId,
           pcNo: item.pcNo,
           meters: item.meters,
+          CHK: item.CHK,
         },
         { autoCommit: false },
       );
@@ -345,6 +349,3 @@ export async function update(req, res) {
     await connection.close();
   }
 }
-
-
-

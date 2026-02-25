@@ -53,7 +53,9 @@ export async function getLotNo(req, res) {
 
   try {
     const sql1 = `select A.GTLOTCHKPLANID as nonGridId,A.GTLOTCHKPLANDETID as gridId,A.LOTNO from Gtlotchkplandet A`;
-    const sql = `select A.LOTNO as LOTNO,B.DOCID as LOTDOCID from gtlotallotmentdet A left join GTFABRICRECEIPT B ON A.LOTNO = B.GTFABRICRECEIPTID`;
+    const sql = `select A.LOTNO as LOTNO,B.DOCID as LOTDOCID,A.GTLOTALLOTMENTID as nongiidId,c.DOCID from gtlotallotmentdet A 
+left join GTFABRICRECEIPT B ON A.LOTNO = B.GTFABRICRECEIPTID
+left join GTLOTALLOTMENT c on A.GTLOTALLOTMENTID = c.GTLOTALLOTMENTID`;
     console.log(sql, "sql for getLotNo");
     const result = await connection.execute(sql);
 
@@ -111,12 +113,17 @@ export async function getPieces(req, res) {
   const connection = await getConnection(res);
   const { selectedClothId, selectedLotNo, lotCheckingNoId } = req.params;
 
-  console.log(selectedClothId, selectedLotNo, lotCheckingNoId, "params for getPieces");
+  console.log(
+    selectedClothId,
+    selectedLotNo,
+    lotCheckingNoId,
+    "params for getPieces",
+  );
 
   try {
-//     const sql1 = `select GTLOTCHKPLANID as nonGridId,GTLOTCHKPLANDETID as gridId,GTLOTPCSSUBDETID as subGridId,PCSNO,METER from gtlotpcssubdet
-// WHERE GTLOTCHKPLANDETID ='${selectedGridId}'`;
-    const sql = `SELECT A.GTLOTCHKPLANID,A.DOCID,BB.PCSNO,BB.METER,EE.CLOTHNAME,EE.LOTNO,C.DOCID LOTNO,D.CLOTHNAME
+    //     const sql1 = `select GTLOTCHKPLANID as nonGridId,GTLOTCHKPLANDETID as gridId,GTLOTPCSSUBDETID as subGridId,PCSNO,METER from gtlotpcssubdet
+    // WHERE GTLOTCHKPLANDETID ='${selectedGridId}'`;
+    const sql = `SELECT BB.PCSNO,BB.METER
 FROM GTLOTCHKPLAN A
 JOIN GTLOTCHKPLANDET B ON B.GTLOTCHKPLANID = A.GTLOTCHKPLANID
 JOIN GTLOTPCSSUBDET BB ON BB.GTLOTCHKPLANID = A.GTLOTCHKPLANID
@@ -140,6 +147,152 @@ WHERE A.GTLOTCHKPLANID ='${lotCheckingNoId}' AND C.GTFABRICRECEIPTID='${selected
   } catch (err) {
     console.error("Error retrieving data:", err);
     res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
+  }
+}
+export async function update(req, res) {
+  const connection = await getConnection(res);
+
+  try {
+    const {
+      checkerId,
+      selectedTables,
+      selectedPiece,
+      checkingSectionId,
+      dcMeter,
+      NOOFPCSSTK,
+      PCSTAKEN,
+      TABDATE,
+    } = req.body;
+    const { selectedNonGridId, selectedGridId } = req.params;
+    console.log(
+      checkerId,
+      selectedTables,
+      selectedPiece,
+      checkingSectionId,
+      dcMeter,
+      "body updatinglotAllot",
+    );
+    console.log(selectedNonGridId, selectedGridId, "params updatinglotAllot");
+
+    // ✅ Check Parent Exists
+    const parentResult = await connection.execute(
+      `
+        SELECT 1
+        FROM gtlotallotmentdet
+        WHERE gtlotallotmentId = :nonGridId
+        AND gtlotallotmentdetId = :gridId
+        `,
+      {
+        nonGridId: selectedNonGridId,
+        gridId: selectedGridId,
+      },
+      { autoCommit: false },
+    );
+
+    if (parentResult.rows.length === 0) {
+      await connection.rollback();
+
+      return res.json({
+        statusCode: 1,
+        message: "Parent record not found",
+      });
+    }
+
+    // ✅ Insert child records
+    for (const table of selectedTables) {
+      const tableId = table.GTCHKTABLEMASTID;
+      const primaryKey = Date.now() + 1000 + Math.floor(Math.random() * 1000);
+      await connection.execute(
+        `
+        INSERT INTO gtlotallosubdet
+        (
+          GTLOTALLOSUBDETID,
+          GTLOTALLOTMENTID,
+          GTLOTALLOTMENTDETID,
+          CHECKER,
+          TABLENO1
+        )
+        VALUES
+        (
+          :id,
+          :nonGridId,
+          :gridId,
+          :checkerId,
+          :tableId
+        )
+        `,
+        {
+          id: primaryKey,
+          nonGridId: selectedNonGridId,
+          gridId: selectedGridId,
+          checkerId: checkerId,
+          tableId: tableId,
+        },
+        { autoCommit: false },
+      );
+      // ✅ stock table PK
+      const stockDetId = Date.now() + 1000 + Math.floor(Math.random() * 1000);
+
+      // insert gtstockdet
+      await connection.execute(
+        `
+        INSERT INTO gtstockdet
+        (
+          GTSTOCKDETID,
+          GTLOTALLOTMENTID,
+          GTLOTALLOSUBDETID,
+          NOOFMTRSTK,
+          NOOFPCSSTK,
+          PCSNO,
+          PCSTAKEN,
+          TABDATE,
+          CHECKINGID
+        )
+        VALUES
+        (
+          :stockDetId,
+          :nonGridId,
+          :primaryKey,
+          :dcMeter,
+          :NOOFPCSSTK,
+          :selectedPiece,
+          :PCSTAKEN,
+          :TABDATE,
+          :checkingSectionId
+        )
+        `,
+        {
+          stockDetId,
+          nonGridId: selectedNonGridId,
+          primaryKey,
+          dcMeter,
+          NOOFPCSSTK,
+          selectedPiece,
+          PCSTAKEN,
+          TABDATE,
+          checkingSectionId,
+        },
+        { autoCommit: false },
+      );
+    }
+
+    await connection.commit();
+
+    res.json({
+      statusCode: 0,
+      message: "Saved Successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    await connection.rollback();
+
+    res.json({
+      statusCode: 1,
+      message: "Error",
+    });
   } finally {
     await connection.close();
   }

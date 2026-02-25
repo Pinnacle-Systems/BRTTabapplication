@@ -9,16 +9,18 @@ import {
 } from "../../redux/userservice";
 
 const TableLotAllot = () => {
+  const TABDATE = new Date().toLocaleDateString("en-GB");
   const [openForm, setOpenForm] = useState(false);
   const [editData, setEditData] = useState(null);
   const [selectedLotNo, setSelectedLotNo] = useState("");
+  const [selectedNonGridId, setSelectedNonGridId] = useState("");
   const [selectedGridId, setSelectedGridId] = useState("");
   const [selectedClothId, setSelectedClothId] = useState("");
   const [selectedPiece, setSelectedPiece] = useState("");
   const [selectedSubGridId, setSelectedSubGridId] = useState("");
   const [checkingSectionId, setCheckingSectionId] = useState("");
   const [checkerId, setCheckerId] = useState("");
-  const [lotCheckingNoId,setLotCheckingNoId] = useState("")
+  const [lotCheckingNoId, setLotCheckingNoId] = useState("");
   const storedUserId = Number(localStorage.getItem("userId"));
   const storedRoleId = Number(localStorage.getItem("roleId"));
 
@@ -52,11 +54,24 @@ const TableLotAllot = () => {
     }));
   console.log(userOptions, "useryajo");
 
+  const onNew = () => {
+    setCheckingSectionId("");
+    setCheckerId("");
+    setSelectedLotNo("");
+    setSelectedGridId("");
+    setSelectedClothId("");
+    setSelectedPiece("");
+  };
+
   // 🔹 If openForm true → Show Form Page
   if (openForm) {
     return (
       <TableLotForm
-        editData={editData} lotCheckingNoId={lotCheckingNoId} setLotCheckingNoId={setLotCheckingNoId}
+        editData={editData}
+        lotCheckingNoId={lotCheckingNoId}
+        setLotCheckingNoId={setLotCheckingNoId}
+        selectedNonGridId={selectedNonGridId}
+        setSelectedNonGridId={setSelectedNonGridId}
         isAdmin={isAdmin}
         isSuppervisor={isSuppervisor}
         storedUsername={storedUsername}
@@ -80,6 +95,7 @@ const TableLotAllot = () => {
           setOpenForm(false);
           setEditData(null);
         }}
+        onNew={onNew} TABDATE={TABDATE}
       />
     );
   }
@@ -96,7 +112,7 @@ const TableLotAllot = () => {
             setSelectedLotNo("");
             setCheckerId("");
             setCheckingSectionId("");
-
+            onNew();
             setOpenForm(true);
           }}
           className="bg-green-600 mr-2 text-white px-5 py-1 rounded-lg hover:bg-green-700 transition"

@@ -37,10 +37,14 @@ const TableLotForm = ({
   userOptions,
   setLotCheckingNoId,
   lotCheckingNoId,
+  selectedNonGridId,
+  setSelectedNonGridId,
+  onNew,TABDATE
 }) => {
   const [dcMeter, setDcMeter] = useState("");
   const [selectedTables, setSelectedTables] = useState([]);
-
+  let NOOFPCSSTK = 1;
+  let PCSTAKEN = "Yes";
   const lotIdRef = useRef(null);
   useEffect(() => {
     if (!isAdmin && !isSuppervisor) {
@@ -144,10 +148,11 @@ const TableLotForm = ({
   );
   console.log(pieces, "pieces");
 
-  const { data: singleData } = useGetTableLotByIdQuery(
-    { selectedLotNo, selectedGridId },
-    { skip: !selectedLotNo || !selectedGridId },
-  );
+  let singleData;
+  // const { data: singleData } = useGetTableLotByIdQuery(
+  //   { selectedLotNo, selectedGridId },
+  //   { skip: !selectedLotNo || !selectedGridId },
+  // );
   console.log(singleData, "singleData");
 
   const [updateData] = useUpdateTableLotMutation();
@@ -163,11 +168,23 @@ const TableLotForm = ({
   }, [selectedClothId, singleData, syncFormWithDb]);
 
   const data = {
+    selectedNonGridId: parseInt(selectedNonGridId),
     selectedLotNo: parseInt(selectedLotNo),
-
     selectedClothId: parseInt(selectedClothId),
     selectedGridId: parseInt(selectedGridId),
+    selectedTables,
+    checkerId: parseInt(checkerId),
+    selectedPiece: parseInt(selectedPiece),
+    checkingSectionId: parseInt(checkingSectionId),
+    dcMeter,TABDATE,
+    NOOFPCSSTK,PCSTAKEN
   };
+  console.log(
+    selectedNonGridId,
+    selectedGridId,
+    "selectedNonGridIdselectedGridId",
+  );
+
   const handleSubmitCustom = async (callback, data) => {
     try {
       let returnData = await callback(data).unwrap();
@@ -178,9 +195,10 @@ const TableLotForm = ({
         timer: 2000,
         showConfirmButton: false,
       });
-      setSelectedLotNo("");
-      setSelectedGridId("");
-      setSelectedClothId("");
+      onNew();
+      setSelectedTables([]);
+
+      setDcMeter("");
       setTimeout(() => {
         lotIdRef.current?.focus();
         lotIdRef.current?.openMenu("first");
@@ -194,20 +212,38 @@ const TableLotForm = ({
       });
     }
   };
-  const saveData = () => {
-    if (!selectedLotNo || !selectedClothId) {
-      Swal.fire({
-        icon: "warning",
+  const validateSaveData = () => {
+    const validations = [
+      {
+        condition: !checkingSectionId,
+        message: "Please Select Checking Section",
+      },
+      { condition: !checkerId, message: "Please Select Checker Name" },
+      { condition: !selectedLotNo, message: "Please Select Lot No" },
+      { condition: !selectedClothId, message: "Please Select Cloth" },
+      { condition: !selectedPiece, message: "Please Select Piece" },
+      {
+        condition: selectedTables?.lenght === 0,
+        message: "Please Select Table",
+      },
+    ];
 
-        title: "Select Lot and Cloth",
-
-        timer: 2000,
-
-        showConfirmButton: false,
-      });
-
-      return;
+    for (const item of validations) {
+      if (item.condition) {
+        Swal.fire({
+          icon: "warning",
+          title: item.message,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        return false;
+      }
     }
+
+    return true;
+  };
+  const saveData = () => {
+    if (!validateSaveData()) return;
 
     handleSubmitCustom(updateData, data);
   };
@@ -221,6 +257,7 @@ const TableLotForm = ({
   const lotOptions = lots?.data?.map((lot) => ({
     value: lot?.LOTNO,
     label: lot?.LOTDOCID,
+    nonGridId: lot?.NONGIIDID,
   }));
   const checkingOptions = checking?.data?.map((check) => ({
     value: check?.GTCHECKINGMASTID,
@@ -412,9 +449,10 @@ const TableLotForm = ({
                         (option) => option.value === selectedLotNo,
                       ) || null
                     }
-                    onChange={(selectedOption) =>
-                      setSelectedLotNo(selectedOption?.value || "")
-                    }
+                    onChange={(selectedOption) => {
+                      setSelectedLotNo(selectedOption?.value || "");
+                      setSelectedNonGridId(selectedOption?.nonGridId || "");
+                    }}
                     placeholder="Select Lot"
                     isClearable={false} // ✅ disable cross icon
                     styles={customSelectStyles}
@@ -452,12 +490,12 @@ const TableLotForm = ({
                     options={pieceOptions}
                     value={
                       pieceOptions?.find(
-                        (option) => option.value === selectedSubGridId,
+                        (option) => option.value === selectedPiece,
                       ) || null
                     }
                     onChange={(selectedOption) => {
-                      setSelectedSubGridId(selectedOption?.value || "");
-                      setSelectedPiece(selectedOption?.pcNo || "");
+                      // setSelectedSubGridId(selectedOption?.value || "");
+                      setSelectedPiece(selectedOption?.value || "");
                       setDcMeter(selectedOption?.meter || "");
                     }}
                     placeholder=" "
