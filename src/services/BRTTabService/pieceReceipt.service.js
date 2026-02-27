@@ -165,7 +165,6 @@ export async function getOne(req, res) {
 
   try {
     const { selectedLotId, selectedGridId } = req.params;
-
     const sql = `
 
       SELECT
@@ -274,6 +273,7 @@ export async function update(req, res) {
   try {
     const { lotItems } = req.body;
     console.log(lotItems, "updatinglotItems");
+    let NOTES1 = "TabUser";
 
     for (const item of lotItems) {
       const sql = `
@@ -300,7 +300,8 @@ export async function update(req, res) {
             GTFABRICRECEIPTDETID,
             SNO,
             MTR,
-            CHK
+            CHK,
+            NOTES1
 
           )
           VALUES
@@ -310,7 +311,8 @@ export async function update(req, res) {
             :clothId,
             :pcNo,
             :meters,
-            :CHK
+            :CHK,
+            :notes
 
           )
 
@@ -319,12 +321,14 @@ export async function update(req, res) {
       await connection.execute(
         sql,
         {
-          GTSCHEDULESUNDETID:Date.now() + 1000 + Math.floor(Math.random() * 1000), 
+          GTSCHEDULESUNDETID:
+            Date.now() + 1000 + Math.floor(Math.random() * 1000),
           lotId: item.selectedLotId,
           clothId: item.selectedGridId,
           pcNo: item.pcNo,
           meters: item.meters,
           CHK: item.CHK,
+          notes:NOTES1,
         },
         { autoCommit: false },
       );

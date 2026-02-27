@@ -76,7 +76,7 @@ app.get("/retreiveFile/:fileName", (req, res) => {
 const PORT = 9889;
 const httpServer = createServer(app);
 
-const io = new Server(httpServer, {
+export const io = new Server(httpServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],

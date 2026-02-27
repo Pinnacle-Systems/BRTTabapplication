@@ -1,5 +1,5 @@
 import { getConnection } from "../../constants/db.connection.js";
-
+import { io } from "../../../index.js"; // adjust path properly
 export async function getCheckingSection(req, res) {
   const connection = await getConnection(res);
 
@@ -28,7 +28,7 @@ export async function getTables(req, res) {
   const connection = await getConnection(res);
 
   try {
-    const sql = `select GTCHKTABLEMASTID,CHECKINGNO from gtchktablemast`;
+    const sql = `SELECT GTCHKTABLEMASTID, CHECKINGNO,TABLEAVAILBLE FROM GTCHKTABLEMAST WHERE TABLEAVAILBLE IS NULL OR UPPER(TABLEAVAILBLE) <> 'NO'`;
     console.log(sql, "sql for getTables");
     const result = await connection.execute(sql);
 
@@ -131,7 +131,8 @@ JOIN GTLOTALLOTMENTDET EE ON EE.LOTCHKNO = A.GTLOTCHKPLANID
 JOIN GTLOTALLOTMENT E ON E.GTLOTALLOTMENTID = EE.GTLOTALLOTMENTID
 JOIN GTFABRICRECEIPT C ON C.GTFABRICRECEIPTID =EE.LOTNO
 JOIN GTCLOTHCREATION D ON D.GTCLOTHCREATIONID = EE.CLOTHNAME
-WHERE A.GTLOTCHKPLANID ='${lotCheckingNoId}' AND C.GTFABRICRECEIPTID='${selectedLotNo}' AND D.GTCLOTHCREATIONID='${selectedClothId}'`;
+WHERE A.GTLOTCHKPLANID ='${lotCheckingNoId}' AND C.GTFABRICRECEIPTID='${selectedLotNo}' AND D.GTCLOTHCREATIONID='${selectedClothId}'
+AND (BB.NOTES1 IS NULL OR UPPER(BB.NOTES1) <> 'YES')`;
     console.log(sql, "sql for getPieces");
     const result = await connection.execute(sql);
 
@@ -164,6 +165,9 @@ export async function update(req, res) {
       NOOFPCSSTK,
       PCSTAKEN,
       TABDATE,
+      selectedSubGridId,
+      NOTES1,
+      storedUserId,
     } = req.body;
     const { selectedNonGridId, selectedGridId } = req.params;
     console.log(
@@ -172,6 +176,12 @@ export async function update(req, res) {
       selectedPiece,
       checkingSectionId,
       dcMeter,
+      NOOFPCSSTK,
+      PCSTAKEN,
+      TABDATE,
+      selectedSubGridId,
+      NOTES1,
+      storedUserId,
       "body updatinglotAllot",
     );
     console.log(selectedNonGridId, selectedGridId, "params updatinglotAllot");
@@ -199,10 +209,44 @@ export async function update(req, res) {
         message: "Parent record not found",
       });
     }
+    // 🔒 SORT TABLES (prevents deadlocks)
+    const sortedTables = [...selectedTables].sort(
+      (a, b) => a.GTCHKTABLEMASTID - b.GTCHKTABLEMASTID,
+    );
 
     // ✅ Insert child records
-    for (const table of selectedTables) {
+
+    for (const table of sortedTables) {
       const tableId = table.GTCHKTABLEMASTID;
+
+      // ✅ ATOMIC LOCK (NO SELECT FOR UPDATE)
+      const lockResult = await connection.execute(
+        `
+        UPDATE GTCHKTABLEMAST
+        SET TABLEAVAILBLE = 'NO',
+            TABLEUSERID = :userId,
+            TABDATE = SYSDATE
+        WHERE GTCHKTABLEMASTID = :tableId
+        AND (
+              TABLEAVAILBLE IS NULL
+              OR TABLEAVAILBLE <> 'NO'
+              OR TABLEUSERID = :userId
+            )
+        `,
+        { tableId, userId: storedUserId },
+        { autoCommit: false },
+      );
+
+      // ❌ If already locked by another user
+      if (lockResult.rowsAffected === 0) {
+        await connection.rollback();
+        return res.status(409).json({
+          statusCode: 1,
+          errorCode: "TABLE_ALREADY_SELECTED",
+
+          message: `Table ${tableId} already taken by another user`,
+        });
+      }
       const primaryKey = Date.now() + 1000 + Math.floor(Math.random() * 1000);
       await connection.execute(
         `
@@ -277,21 +321,43 @@ export async function update(req, res) {
         { autoCommit: false },
       );
     }
+    const updateResult = await connection.execute(
+      `
+  UPDATE GTLOTPCSSUBDET
+  SET NOTES1 = :NOTES1
+  WHERE GTLOTPCSSUBDETID = :selectedSubGridId
+  `,
+      {
+        NOTES1,
+        selectedSubGridId,
+      },
+    );
 
+    if (updateResult.rowsAffected === 0) {
+      await connection.rollback();
+
+      return res.json({
+        statusCode: 1,
+        message: "Piece not found",
+      });
+    }
     await connection.commit();
+    io.emit("tableUpdated", {
+      tableIds: selectedTables.map((t) => t.GTCHKTABLEMASTID),
+    });
 
     res.json({
       statusCode: 0,
       message: "Saved Successfully",
     });
   } catch (err) {
-    console.log(err);
+    console.error("Oracle Error:", err);
 
     await connection.rollback();
 
-    res.json({
+    res.status(500).json({
       statusCode: 1,
-      message: "Error",
+      message: err.message,
     });
   } finally {
     await connection.close();

@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useState, useRef, useCallback } from "react";
+import { io } from "socket.io-client";
 
 import {
   useGetTablesQuery,
@@ -39,12 +40,16 @@ const TableLotForm = ({
   lotCheckingNoId,
   selectedNonGridId,
   setSelectedNonGridId,
-  onNew,TABDATE
+  onNew,
+  TABDATE,
 }) => {
+  const socketRef = useRef(null);
+
   const [dcMeter, setDcMeter] = useState("");
   const [selectedTables, setSelectedTables] = useState([]);
   let NOOFPCSSTK = 1;
   let PCSTAKEN = "Yes";
+  let NOTES1 = "Yes";
   const lotIdRef = useRef(null);
   useEffect(() => {
     if (!isAdmin && !isSuppervisor) {
@@ -127,16 +132,34 @@ const TableLotForm = ({
   console.log(lots, "lots");
   const { data: checking } = useGetCheckingSectionQuery();
   console.log(checking, "checking");
+  console.log(selectedSubGridId, "selectedSubGridId");
 
-  const { data: tables } = useGetTablesQuery();
+  const { data: tables, refetch } = useGetTablesQuery();
+  useEffect(() => {
+    socketRef.current = io(process.env.REACT_APP_SERVER_URL);
+
+    socketRef.current.on("tableUpdated", (data) => {
+      console.log("Tables updated:", data.tableIds);
+
+      // 🔥 Refetch tables automatically
+      refetch();
+    });
+
+    return () => {
+      socketRef.current.disconnect();
+    };
+  }, [refetch]);
   console.log(tables, "tables");
 
-  const { data: cloths } = useGetClothQuery(selectedLotNo, {
-    skip: !selectedLotNo,
-  });
+  const { data: cloths, refetch: clothsrefetch } = useGetClothQuery(
+    selectedLotNo,
+    {
+      skip: !selectedLotNo,
+    },
+  );
   console.log(cloths, "cloths");
 
-  const { data: pieces } = useGetPiecesQuery(
+  const { data: pieces, refetch: piecesrefetch } = useGetPiecesQuery(
     {
       selectedClothId,
       selectedLotNo,
@@ -176,8 +199,13 @@ const TableLotForm = ({
     checkerId: parseInt(checkerId),
     selectedPiece: parseInt(selectedPiece),
     checkingSectionId: parseInt(checkingSectionId),
-    dcMeter,TABDATE,
-    NOOFPCSSTK,PCSTAKEN
+    selectedSubGridId: parseInt(selectedSubGridId),
+    dcMeter,
+    TABDATE,
+    NOOFPCSSTK,
+    PCSTAKEN,
+    NOTES1,
+    storedUserId: parseInt(storedUserId),
   };
   console.log(
     selectedNonGridId,
@@ -203,12 +231,18 @@ const TableLotForm = ({
         lotIdRef.current?.focus();
         lotIdRef.current?.openMenu("first");
       }, 100);
+      clothsrefetch();
+      piecesrefetch();
     } catch (error) {
+      console.log("Full Error:", error);
+      const backendMessage =
+        error?.data?.message || error?.data?.error || "Something went wrong!";
+
       Swal.fire({
         icon: "error",
-        title: "Submission error",
-        text: "Something went wrong!",
-        timer: 2000,
+        title: "Submission Failed",
+        text: backendMessage,
+        timer: 2500,
       });
     }
   };
@@ -275,7 +309,7 @@ const TableLotForm = ({
     label: piece?.PCSNO,
     value: piece?.PCSNO,
     meter: piece?.METER,
-    pcNo: piece?.PCSNO,
+    subGridId: piece?.SUBGRIDID,
   }));
 
   useEffect(() => {
@@ -494,7 +528,7 @@ const TableLotForm = ({
                       ) || null
                     }
                     onChange={(selectedOption) => {
-                      // setSelectedSubGridId(selectedOption?.value || "");
+                      setSelectedSubGridId(selectedOption?.subGridId || "");
                       setSelectedPiece(selectedOption?.value || "");
                       setDcMeter(selectedOption?.meter || "");
                     }}
