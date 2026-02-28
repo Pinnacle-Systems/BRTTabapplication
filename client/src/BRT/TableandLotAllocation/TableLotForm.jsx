@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { io } from "socket.io-client";
 
 import {
@@ -10,6 +10,7 @@ import {
   useGetCheckingSectionQuery,
   useUpdateTableLotMutation,
   useGetTableLotByIdQuery,
+  useGetWorkStatusQuery,
 } from "../../redux/services/TableandLot";
 import { useEffect } from "react";
 import Swal from "sweetalert2";
@@ -42,21 +43,44 @@ const TableLotForm = ({
   setSelectedNonGridId,
   onNew,
   TABDATE,
+  userData,
 }) => {
   const socketRef = useRef(null);
-
+  const [savedData, setSavedData] = useState([]);
   const [dcMeter, setDcMeter] = useState("");
   const [selectedTables, setSelectedTables] = useState([]);
+  const [workingDetails, setWorkingDetails] = useState(null);
   let NOOFPCSSTK = 1;
   let PCSTAKEN = "Yes";
   let NOTES1 = "Yes";
   const lotIdRef = useRef(null);
+  const { data: tables, refetch } = useGetTablesQuery();
+  useEffect(() => {
+    socketRef.current = io(process.env.REACT_APP_SERVER_URL);
+
+    socketRef.current.on("tableUpdated", (data) => {
+      console.log("Tables updated:", data.tableIds);
+
+      // 🔥 Refetch tables automatically
+      refetch();
+    });
+
+    return () => {
+      socketRef.current.disconnect();
+    };
+  }, [refetch]);
   useEffect(() => {
     if (!isAdmin && !isSuppervisor) {
       setCheckerId(storedUserId);
     }
   }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
+  console.log(isAdmin, isSuppervisor, checkerId, "sAdminisSuppervisor");
+  const { data: workStatus } = useGetWorkStatusQuery(storedUserId, {
+    skip: !storedUserId,
+  });
 
+  console.log(workStatus,"workStatus");
+  
   const customSelectStyles = {
     control: (base, state) => ({
       ...base,
@@ -134,21 +158,6 @@ const TableLotForm = ({
   console.log(checking, "checking");
   console.log(selectedSubGridId, "selectedSubGridId");
 
-  const { data: tables, refetch } = useGetTablesQuery();
-  useEffect(() => {
-    socketRef.current = io(process.env.REACT_APP_SERVER_URL);
-
-    socketRef.current.on("tableUpdated", (data) => {
-      console.log("Tables updated:", data.tableIds);
-
-      // 🔥 Refetch tables automatically
-      refetch();
-    });
-
-    return () => {
-      socketRef.current.disconnect();
-    };
-  }, [refetch]);
   console.log(tables, "tables");
 
   const { data: cloths, refetch: clothsrefetch } = useGetClothQuery(
@@ -227,12 +236,14 @@ const TableLotForm = ({
       setSelectedTables([]);
 
       setDcMeter("");
+
+      clothsrefetch();
+      piecesrefetch();
+      setSavedData(returnData?.data);
       setTimeout(() => {
         lotIdRef.current?.focus();
         lotIdRef.current?.openMenu("first");
       }, 100);
-      clothsrefetch();
-      piecesrefetch();
     } catch (error) {
       console.log("Full Error:", error);
       const backendMessage =
@@ -246,6 +257,85 @@ const TableLotForm = ({
       });
     }
   };
+  console.log(savedData, "savedData");
+  const lotOptions = useMemo(
+    () =>
+      lots?.data?.map((lot) => ({
+        value: lot?.LOTNO,
+        label: lot?.LOTDOCID,
+        nonGridId: lot?.NONGIIDID,
+      })),
+    [lots?.data],
+  );
+
+  const checkingOptions = useMemo(
+    () =>
+      checking?.data?.map((check) => ({
+        value: check?.GTCHECKINGMASTID,
+        label: check?.SECTIONNAME,
+      })),
+    [checking?.data],
+  );
+
+  const clothOptions = useMemo(
+    () =>
+      cloths?.data?.map((cloth) => ({
+        label: cloth?.CLOTHNAME,
+        value: cloth?.GRIDID,
+        clothId: cloth?.CLOTHID,
+        lotchkId: cloth?.LOTCHKNOID,
+      })),
+    [cloths?.data],
+  );
+
+  const pieceOptions = useMemo(
+    () =>
+      pieces?.data?.map((piece) => ({
+        label: piece?.PCSNO,
+        value: piece?.PCSNO,
+        meter: piece?.METER,
+        subGridId: piece?.SUBGRIDID,
+      })),
+    [pieces?.data],
+  );
+
+  useEffect(() => {
+    if (!savedData || !tables || !checking) return;
+    const sectionName =
+      checking?.data?.find(
+        (s) => s.GTCHECKINGMASTID === savedData.checkingSectionId,
+      )?.SECTIONNAME ?? "";
+    const userName =
+      userData?.data?.find((u) => u?.USERID === savedData.checkerId)
+        ?.USERNAME ?? "";
+
+    const tableNumbers =
+      tables?.data
+        ?.filter((t) => savedData.tableIds?.includes(t.GTCHKTABLEMASTID))
+        ?.map((t) => t.CHECKINGNO) ?? [];
+
+    const lotNo =
+      lots?.data?.find((lot) => String(lot.LOTNO) === String(savedData.lotId))
+        ?.LOTDOCID || "";
+
+    const piece = savedData?.pieceNo || "";
+
+    setWorkingDetails({
+      ...savedData,
+      userName,
+      tableNumbers,
+      sectionName,
+      lotNo,
+      piece,
+    });
+  }, [savedData, tables, checking, userOptions, checkingOptions, lotOptions]);
+  // Filter tables for selection
+  const availableTables = tables?.data?.filter(
+    (t) => !t.TABLEAVAILBLE || t.TABLEAVAILBLE.toUpperCase() !== "NO",
+  );
+
+  console.log(workingDetails, "workingDetails");
+
   const validateSaveData = () => {
     const validations = [
       {
@@ -288,30 +378,6 @@ const TableLotForm = ({
     }
   }, []);
 
-  const lotOptions = lots?.data?.map((lot) => ({
-    value: lot?.LOTNO,
-    label: lot?.LOTDOCID,
-    nonGridId: lot?.NONGIIDID,
-  }));
-  const checkingOptions = checking?.data?.map((check) => ({
-    value: check?.GTCHECKINGMASTID,
-    label: check?.SECTIONNAME,
-  }));
-
-  const clothOptions = cloths?.data?.map((cloth) => ({
-    label: cloth?.CLOTHNAME,
-    value: cloth?.GRIDID,
-    clothId: cloth?.CLOTHID,
-    lotchkId: cloth?.LOTCHKNOID,
-  }));
-
-  const pieceOptions = pieces?.data?.map((piece) => ({
-    label: piece?.PCSNO,
-    value: piece?.PCSNO,
-    meter: piece?.METER,
-    subGridId: piece?.SUBGRIDID,
-  }));
-
   useEffect(() => {
     // Reset when lot changes
     setSelectedGridId("");
@@ -353,7 +419,32 @@ const TableLotForm = ({
       }
     });
   };
+  const handleDefectEntry = async (work) => {
+    try {
+      // await releaseTableAPI({
+      //   userId: work.userId,
+      //   tableId: work.tableIds[0], // if multiple, handle accordingly
+      // });
 
+      Swal.fire({
+        icon: "success",
+        title: "Table Released",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      // Reset frontend state
+      setWorkingDetails(null);
+      setSavedData(null);
+      setSelectedTables([]);
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed to release table",
+        text: err.message || "Something went wrong",
+      });
+    }
+  };
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
@@ -556,11 +647,37 @@ const TableLotForm = ({
         </form>
 
         <CheckingNoGrid
-          data={tables?.data}
+          data={availableTables}
           selectedTables={selectedTables}
           setSelectedTables={setSelectedTables}
           handleSelect={handleSelect}
         />
+        {workingDetails && (
+          <div className="bg-green-50 flex flex-col-md  gap-x-8 p-4 rounded shadow my-2">
+            <p>
+              <strong>Section:</strong> {workingDetails.sectionName}
+            </p>
+            <p>
+              <strong>Checker:</strong> {workingDetails.userName}
+            </p>
+            <p>
+              <strong>Lot No:</strong> {workingDetails.lotNo}
+            </p>
+            <p>
+              <strong>Piece:</strong> {workingDetails.pieceNo}
+            </p>
+            <p>
+              <strong>Tables:</strong> {workingDetails.tableNumbers.join(", ")}
+            </p>
+
+            <button
+              className=" bg-red-500 text-white px-4  rounded"
+              onClick={() => handleDefectEntry(workingDetails)}
+            >
+              Defect Entry
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

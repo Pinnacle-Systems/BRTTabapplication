@@ -73,6 +73,7 @@ const TableLotAllot = () => {
         selectedNonGridId={selectedNonGridId}
         setSelectedNonGridId={setSelectedNonGridId}
         isAdmin={isAdmin}
+        userData={userData}
         isSuppervisor={isSuppervisor}
         storedUsername={storedUsername}
         userOptions={userOptions}
@@ -95,7 +96,8 @@ const TableLotAllot = () => {
           setOpenForm(false);
           setEditData(null);
         }}
-        onNew={onNew} TABDATE={TABDATE}
+        onNew={onNew}
+        TABDATE={TABDATE}
       />
     );
   }

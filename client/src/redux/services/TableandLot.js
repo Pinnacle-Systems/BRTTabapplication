@@ -101,6 +101,7 @@ const tableLotApi = createApi({
       }),
       providesTags: ["pieceReceipt"],
     }),
+
     getPieces: builder.query({
       query: ({ selectedClothId, selectedLotNo, lotCheckingNoId }) => ({
         url: `${TABLELOTAPI}/${lotCheckingNoId}/${selectedLotNo}/${selectedClothId}/getPiece`,
@@ -152,6 +153,16 @@ const tableLotApi = createApi({
       }),
       invalidatesTags: ["tableLotApi"],
     }),
+    getWorkStatus: builder.query({
+      query: (storedUserId) => ({
+        url: `${TABLELOTAPI}/${storedUserId}/getWorkStatus`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      }),
+      providesTags: ["tableLotApi"],
+    }),
   }),
 });
 
@@ -166,6 +177,7 @@ export const {
   useAddTableLotMutation,
   useUpdateTableLotMutation,
   useDeleteTableLotMutation,
+  useGetWorkStatusQuery
 } = tableLotApi;
 
 export default tableLotApi;
