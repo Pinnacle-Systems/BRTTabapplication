@@ -161,7 +161,21 @@ const tableLotApi = createApi({
           "Content-type": "application/json; charset=UTF-8",
         },
       }),
-      providesTags: ["tableLotApi"],
+      providesTags: ["WorkStatus"],
+    }),
+    revertAllocation: builder.mutation({
+      query: (allocationId) => ({
+        url: `${TABLELOTAPI}/${allocationId}`,
+        method: "POST",
+      }),
+      invalidatesTags: ["WorkStatus"],
+    }),
+    deleteWorkStatusLot: builder.mutation({
+      query: (allocationId) => ({
+        url: `${TABLELOTAPI}/${allocationId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["tableLotApi"],
     }),
   }),
 });
@@ -177,7 +191,7 @@ export const {
   useAddTableLotMutation,
   useUpdateTableLotMutation,
   useDeleteTableLotMutation,
-  useGetWorkStatusQuery
+  useGetWorkStatusQuery,useRevertAllocationMutation,useDeleteWorkStatusLotMutation
 } = tableLotApi;
 
 export default tableLotApi;

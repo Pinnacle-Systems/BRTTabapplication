@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import { useState, useRef, useCallback, useMemo } from "react";
 import { io } from "socket.io-client";
-
-import {
+import { useDispatch } from "react-redux";
+import tableLotApi, {
   useGetTablesQuery,
   useGetLotsQuery,
   useGetClothQuery,
@@ -11,6 +11,8 @@ import {
   useUpdateTableLotMutation,
   useGetTableLotByIdQuery,
   useGetWorkStatusQuery,
+  useDeleteWorkStatusLotMutation,
+  useRevertAllocationMutation,
 } from "../../redux/services/TableandLot";
 import { useEffect } from "react";
 import Swal from "sweetalert2";
@@ -46,41 +48,72 @@ const TableLotForm = ({
   userData,
 }) => {
   const socketRef = useRef(null);
-  const [savedData, setSavedData] = useState([]);
   const [dcMeter, setDcMeter] = useState("");
   const [selectedTables, setSelectedTables] = useState([]);
   const [workingDetails, setWorkingDetails] = useState(null);
+  const [allocationId, setAllocationId] = useState("");
   let NOOFPCSSTK = 1;
   let PCSTAKEN = "Yes";
-  let NOTES1 = "Yes";
+  let NOTES1 = "YES";
   const lotIdRef = useRef(null);
-  const { data: tables, refetch } = useGetTablesQuery();
+  const {
+    data: tables,
+    refetch,
+    isUninitialized: tablesUninitialized,
+  } = useGetTablesQuery();
+  const {
+    data: pieces,
+    refetch: piecesrefetch,
+    isUninitialized: piecesUninitialized,
+  } = useGetPiecesQuery(
+    {
+      selectedClothId,
+      selectedLotNo,
+      lotCheckingNoId,
+    },
+    {
+      skip: !selectedClothId || !selectedLotNo || !lotCheckingNoId,
+    },
+  );
+  const { data: workStatus, refetch: refetchWorkStatus } =
+    useGetWorkStatusQuery(storedUserId, {
+      skip: !storedUserId,
+    });
+  const dispatch = useDispatch();
+  console.log(workStatus, "workStatus");
   useEffect(() => {
     socketRef.current = io(process.env.REACT_APP_SERVER_URL);
 
     socketRef.current.on("tableUpdated", (data) => {
-      console.log("Tables updated:", data.tableIds);
+      if (!tablesUninitialized) {
+        console.log("Tables updated:", data?.tableIds);
 
-      // 🔥 Refetch tables automatically
-      refetch();
+        // 🔥 Refetch tables automatically
+        refetch();
+      }
+    });
+    socketRef.current.on("pieceUpdated", (data) => {
+      if (!piecesUninitialized) {
+        console.log("Piece updated:", data?.pieceId);
+        piecesrefetch();
+      }
+    });
+    socketRef.current.on("workStatusUpdated", () => {
+      dispatch(tableLotApi.util.invalidateTags(["WorkStatus"]));
     });
 
     return () => {
       socketRef.current.disconnect();
     };
-  }, [refetch]);
+  }, [refetch, piecesrefetch, refetchWorkStatus]);
+
   useEffect(() => {
     if (!isAdmin && !isSuppervisor) {
       setCheckerId(storedUserId);
     }
   }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
   console.log(isAdmin, isSuppervisor, checkerId, "sAdminisSuppervisor");
-  const { data: workStatus } = useGetWorkStatusQuery(storedUserId, {
-    skip: !storedUserId,
-  });
 
-  console.log(workStatus,"workStatus");
-  
   const customSelectStyles = {
     control: (base, state) => ({
       ...base,
@@ -168,16 +201,6 @@ const TableLotForm = ({
   );
   console.log(cloths, "cloths");
 
-  const { data: pieces, refetch: piecesrefetch } = useGetPiecesQuery(
-    {
-      selectedClothId,
-      selectedLotNo,
-      lotCheckingNoId,
-    },
-    {
-      skip: !selectedClothId || !selectedLotNo || !lotCheckingNoId,
-    },
-  );
   console.log(pieces, "pieces");
 
   let singleData;
@@ -188,6 +211,9 @@ const TableLotForm = ({
   console.log(singleData, "singleData");
 
   const [updateData] = useUpdateTableLotMutation();
+  const [deleteAllocation] = useDeleteWorkStatusLotMutation();
+  const [revertAllocation] = useRevertAllocationMutation();
+
   const syncFormWithDb = useCallback(
     (data) => {},
     [selectedLotNo, selectedGridId],
@@ -232,6 +258,7 @@ const TableLotForm = ({
         timer: 2000,
         showConfirmButton: false,
       });
+      await refetchWorkStatus();
       onNew();
       setSelectedTables([]);
 
@@ -239,7 +266,6 @@ const TableLotForm = ({
 
       clothsrefetch();
       piecesrefetch();
-      setSavedData(returnData?.data);
       setTimeout(() => {
         lotIdRef.current?.focus();
         lotIdRef.current?.openMenu("first");
@@ -257,7 +283,6 @@ const TableLotForm = ({
       });
     }
   };
-  console.log(savedData, "savedData");
   const lotOptions = useMemo(
     () =>
       lots?.data?.map((lot) => ({
@@ -298,37 +323,22 @@ const TableLotForm = ({
       })),
     [pieces?.data],
   );
-
   useEffect(() => {
-    if (!savedData || !tables || !checking) return;
-    const sectionName =
-      checking?.data?.find(
-        (s) => s.GTCHECKINGMASTID === savedData.checkingSectionId,
-      )?.SECTIONNAME ?? "";
-    const userName =
-      userData?.data?.find((u) => u?.USERID === savedData.checkerId)
-        ?.USERNAME ?? "";
-
-    const tableNumbers =
-      tables?.data
-        ?.filter((t) => savedData.tableIds?.includes(t.GTCHKTABLEMASTID))
-        ?.map((t) => t.CHECKINGNO) ?? [];
-
-    const lotNo =
-      lots?.data?.find((lot) => String(lot.LOTNO) === String(savedData.lotId))
-        ?.LOTDOCID || "";
-
-    const piece = savedData?.pieceNo || "";
-
-    setWorkingDetails({
-      ...savedData,
-      userName,
-      tableNumbers,
-      sectionName,
-      lotNo,
-      piece,
-    });
-  }, [savedData, tables, checking, userOptions, checkingOptions, lotOptions]);
+    if (workStatus?.hasActiveWork) {
+      const work = workStatus.data;
+      setAllocationId(work?.allocationId);
+      setWorkingDetails({
+        allocationId: work.allocationId,
+        sectionName: work.sectionName,
+        userName: work.checkerName,
+        lotNo: work.docId,
+        pieceNo: work.pieceNo,
+        tableNumbers: work.tables.map((t) => t.checkingNo),
+      });
+    } else {
+      setWorkingDetails(null);
+    }
+  }, [workStatus]);
   // Filter tables for selection
   const availableTables = tables?.data?.filter(
     (t) => !t.TABLEAVAILBLE || t.TABLEAVAILBLE.toUpperCase() !== "NO",
@@ -347,7 +357,7 @@ const TableLotForm = ({
       { condition: !selectedClothId, message: "Please Select Cloth" },
       { condition: !selectedPiece, message: "Please Select Piece" },
       {
-        condition: selectedTables?.lenght === 0,
+        condition: selectedTables?.length === 0,
         message: "Please Select Table",
       },
     ];
@@ -390,6 +400,25 @@ const TableLotForm = ({
     // setSelectedTables([]);
   }, [selectedLotNo]);
 
+  const handleRevert = async (allocationId) => {
+    try {
+      await revertAllocation(allocationId).unwrap();
+      Swal.fire({
+        icon: "sucess",
+        title: "Work reverted successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "Warning",
+        title: "Failed to revert",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
+  };
+
   useEffect(() => {
     if (!selectedSubGridId || !cloths?.data) {
       setDcMeter("");
@@ -421,10 +450,7 @@ const TableLotForm = ({
   };
   const handleDefectEntry = async (work) => {
     try {
-      // await releaseTableAPI({
-      //   userId: work.userId,
-      //   tableId: work.tableIds[0], // if multiple, handle accordingly
-      // });
+      await deleteAllocation(allocationId);
 
       Swal.fire({
         icon: "success",
@@ -435,7 +461,6 @@ const TableLotForm = ({
 
       // Reset frontend state
       setWorkingDetails(null);
-      setSavedData(null);
       setSelectedTables([]);
     } catch (err) {
       Swal.fire({
@@ -445,6 +470,44 @@ const TableLotForm = ({
       });
     }
   };
+  if (workStatus?.hasActiveWork) {
+    return (
+      <div className="h-[75vh] p-6 bg-white rounded-xl">
+        <h1 className="text-xl font-bold mb-4">Active Work In Progress</h1>
+
+        <div className="bg-green-50 p-4 rounded shadow space-y-2">
+          <p>
+            <strong>Section:</strong> {workingDetails?.sectionName}
+          </p>
+          <p>
+            <strong>Checker:</strong> {workingDetails?.userName}
+          </p>
+          <p>
+            <strong>Lot No:</strong> {workingDetails?.lotNo}
+          </p>
+          <p>
+            <strong>Piece:</strong> {workingDetails?.pieceNo}
+          </p>
+          <p>
+            <strong>Tables:</strong> {workingDetails?.tableNumbers?.join(", ")}
+          </p>
+
+          <button
+            className="bg-blue-600 text-white px-4 py-1 rounded mt-3"
+            // onClick={() => handleDefectEntry(workingDetails)}
+          >
+            Go To Defect Entry
+          </button>
+          <button
+            className="bg-red-600 text-white px-4 py-1 rounded mt-3"
+            onClick={() => handleRevert(allocationId)}
+          >
+            Cancel / Revert Work
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
@@ -652,32 +715,6 @@ const TableLotForm = ({
           setSelectedTables={setSelectedTables}
           handleSelect={handleSelect}
         />
-        {workingDetails && (
-          <div className="bg-green-50 flex flex-col-md  gap-x-8 p-4 rounded shadow my-2">
-            <p>
-              <strong>Section:</strong> {workingDetails.sectionName}
-            </p>
-            <p>
-              <strong>Checker:</strong> {workingDetails.userName}
-            </p>
-            <p>
-              <strong>Lot No:</strong> {workingDetails.lotNo}
-            </p>
-            <p>
-              <strong>Piece:</strong> {workingDetails.pieceNo}
-            </p>
-            <p>
-              <strong>Tables:</strong> {workingDetails.tableNumbers.join(", ")}
-            </p>
-
-            <button
-              className=" bg-red-500 text-white px-4  rounded"
-              onClick={() => handleDefectEntry(workingDetails)}
-            >
-              Defect Entry
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

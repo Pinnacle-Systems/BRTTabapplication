@@ -213,6 +213,30 @@ export async function update(req, res) {
         message: "Parent record not found",
       });
     }
+
+    const updateResult = await connection.execute(
+      `
+  UPDATE GTLOTPCSSUBDET
+  SET NOTES1 = :NOTES1
+  WHERE GTLOTPCSSUBDETID = :selectedSubGridId
+  AND (NOTES1 IS NULL OR UPPER(NOTES1) <> 'YES')
+  `,
+      {
+        NOTES1,
+        selectedSubGridId,
+      },
+      { autoCommit: false },
+    );
+
+    if (updateResult.rowsAffected === 0) {
+      await connection.rollback();
+
+      return res.status(409).json({
+        statusCode: 1,
+        errorCode: "PIECE_ALREADY_TAKEN",
+        message: "This piece is already taken by another checker.",
+      });
+    }
     // 🔒 SORT TABLES (prevents deadlocks)
     const sortedTables = [...selectedTables].sort(
       (a, b) => a.GTCHKTABLEMASTID - b.GTCHKTABLEMASTID,
@@ -327,26 +351,7 @@ export async function update(req, res) {
         { autoCommit: false },
       );
     }
-    const updateResult = await connection.execute(
-      `
-  UPDATE GTLOTPCSSUBDET
-  SET NOTES1 = :NOTES1
-  WHERE GTLOTPCSSUBDETID = :selectedSubGridId
-  `,
-      {
-        NOTES1,
-        selectedSubGridId,
-      },
-    );
 
-    if (updateResult.rowsAffected === 0) {
-      await connection.rollback();
-
-      return res.json({
-        statusCode: 1,
-        message: "Piece not found",
-      });
-    }
     // 🔹 Insert into CheckerWorkingDetails
     const allocationResult = await connection.execute(
       `
@@ -402,6 +407,9 @@ export async function update(req, res) {
     io.emit("tableUpdated", {
       tableIds: selectedTables.map((t) => t.GTCHKTABLEMASTID),
     });
+    io.emit("pieceUpdated", {
+      pieceId: selectedSubGridId,
+    });
 
     res.json({
       statusCode: 0,
@@ -420,6 +428,14 @@ export async function update(req, res) {
     console.error("Oracle Error:", err);
 
     await connection.rollback();
+    // 🔹 Handle unique constraint (active work exists)
+    if (err.errorNum === 1) {
+      return res.status(409).json({
+        statusCode: 1,
+        message:
+          "Checker already has active work. Please complete defect entry first.",
+      });
+    }
 
     res.status(500).json({
       statusCode: 1,
@@ -504,6 +520,146 @@ export async function getWorkStatus(req, res) {
     await connection.close();
   }
 }
+
+export async function revertAllocation(req, res) {
+  const connection = await getConnection(res);
+
+  try {
+    const { allocationId } = req.params;
+
+    // 1️⃣ Lock allocation row
+    const allocationResult = await connection.execute(
+      `
+      SELECT CheckerID, LotID, PieceNo
+      FROM CheckerWorkingDetails
+      WHERE AllocationID = :allocationId
+      FOR UPDATE
+      `,
+      { allocationId },
+      { autoCommit: false },
+    );
+
+    if (allocationResult.rows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        statusCode: 1,
+        message: "Allocation not found",
+      });
+    }
+
+    const [checkerId, lotId, pieceNo] = allocationResult.rows[0];
+
+    // 2️⃣ Get sub allot IDs from stock
+    const stockRows = await connection.execute(
+      `
+      SELECT GTLOTALLOSUBDETID
+      FROM gtstockdet
+      WHERE CHECKER1 = :checkerId
+      `,
+      { checkerId },
+      { autoCommit: false },
+    );
+    if (stockRows.rows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        statusCode: 0,
+        message: "No active allocation found to revert",
+      });
+    }
+
+    const subIds = stockRows.rows.map((r) => r[0]);
+
+    // 3️⃣ Delete stock rows
+    await connection.execute(
+      `
+      DELETE FROM gtstockdet
+      WHERE CHECKER1 = :checkerId
+      `,
+      { checkerId },
+      { autoCommit: false },
+    );
+
+    // 4️⃣ Delete only inserted sub allot rows
+    if (subIds.length > 0) {
+      await connection.execute(
+        `
+        DELETE FROM gtlotallosubdet
+        WHERE GTLOTALLOSUBDETID IN (${subIds.map((_, i) => `:id${i}`).join(",")})
+        `,
+        Object.fromEntries(subIds.map((id, i) => [`id${i}`, id])),
+        { autoCommit: false },
+      );
+    }
+
+    // 5️⃣ Unlock piece
+    await connection.execute(
+      `
+      UPDATE GTLOTPCSSUBDET
+      SET NOTES1 = NULL
+      WHERE PCSNO = :pieceNo
+      `,
+      { pieceNo },
+      { autoCommit: false },
+    );
+
+    // 6️⃣ Unlock tables
+    await connection.execute(
+      `
+      UPDATE GTCHKTABLEMAST
+      SET TABLEAVAILBLE = NULL,
+          TABLEUSERID = NULL,
+          TABDATE = NULL
+      WHERE GTCHKTABLEMASTID IN (
+        SELECT GTCHKTABLEMASTID
+        FROM CheckerWorkingTables
+        WHERE AllocationID = :allocationId
+      )
+      `,
+      { allocationId },
+      { autoCommit: false },
+    );
+
+    // 7️⃣ Delete working tables
+    await connection.execute(
+      `
+      DELETE FROM CheckerWorkingTables
+      WHERE AllocationID = :allocationId
+      `,
+      { allocationId },
+      { autoCommit: false },
+    );
+
+    // 8️⃣ Delete working details
+    await connection.execute(
+      `
+      DELETE FROM CheckerWorkingDetails
+      WHERE AllocationID = :allocationId
+      `,
+      { allocationId },
+      { autoCommit: false },
+    );
+
+    await connection.commit();
+
+    io.emit("tableUpdated");
+    io.emit("pieceUpdated");
+    io.emit("workStatusUpdated");
+
+    res.json({
+      statusCode: 0,
+      message: "Allocation reverted successfully",
+    });
+  } catch (err) {
+    await connection.rollback();
+    res.status(500).json({
+      statusCode: 1,
+      message: err.message,
+    });
+  } finally {
+    await connection.close();
+  }
+}
+
 export async function releaseTable(req, res) {
   const connection = await getConnection(res);
 
