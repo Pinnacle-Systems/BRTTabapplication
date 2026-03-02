@@ -197,6 +197,7 @@ const TableLotForm = ({
   console.log(selectedSubGridId, "selectedSubGridId");
 
   console.log(tables, "tables");
+  console.log(selectedLotNo, "selectedLotNo");
 
   const { data: cloths, refetch: clothsrefetch } = useGetClothQuery(
     selectedLotNo,
@@ -266,7 +267,8 @@ const TableLotForm = ({
       await refetchWorkStatus();
       onNew();
       setSelectedTables([]);
-
+      clothsrefetch();
+      piecesrefetch();
       setDcMeter("");
 
       setTimeout(() => {
@@ -305,27 +307,32 @@ const TableLotForm = ({
     [checking?.data],
   );
 
-  const clothOptions = useMemo(
-    () =>
+  const clothOptions = useMemo(() => {
+    if (!selectedLotNo) return [];
+
+    return (
       cloths?.data?.map((cloth) => ({
         label: cloth?.CLOTHNAME,
         value: cloth?.GRIDID,
         clothId: cloth?.CLOTHID,
         lotchkId: cloth?.LOTCHKNOID,
-      })),
-    [cloths?.data],
-  );
+      })) || []
+    );
+  }, [cloths?.data, selectedLotNo]);
 
-  const pieceOptions = useMemo(() => {
-    return [...(pieces?.data || [])] // prevent mutation
-      .sort((a, b) => a.PCSNO - b.PCSNO) // ascending order
-      .map((piece) => ({
-        label: piece?.PCSNO,
-        value: piece?.PCSNO,
-        meter: piece?.METER,
-        subGridId: piece?.SUBGRIDID,
-      }));
-  }, [pieces?.data]);
+const pieceOptions = useMemo(() => {
+  if (!selectedClothId || !selectedLotNo || !lotCheckingNoId) return [];
+
+  return [...(pieces?.data || [])]
+    .sort((a, b) => a.PCSNO - b.PCSNO)
+    .map((piece) => ({
+      label: piece?.PCSNO,
+      value: piece?.PCSNO,
+      meter: piece?.METER,
+      subGridId: piece?.SUBGRIDID,
+    }));
+}, [pieces?.data, selectedClothId, selectedLotNo, lotCheckingNoId]);
+
   useEffect(() => {
     if (workStatus?.hasActiveWork) {
       const work = workStatus.data;
@@ -412,9 +419,8 @@ const TableLotForm = ({
         timer: 2000,
         showConfirmButton: false,
       });
-      onNew()
-    } 
-    catch (err) {
+      onNew();
+    } catch (err) {
       Swal.fire({
         icon: "Warning",
         title: "Failed to revert",
