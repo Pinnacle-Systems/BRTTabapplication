@@ -61,6 +61,7 @@ const TableLotAllot = () => {
     setSelectedGridId("");
     setSelectedClothId("");
     setSelectedPiece("");
+    setLotCheckingNoId(""); // 🔥 VERY IMPORTANT
   };
 
   // 🔹 If openForm true → Show Form Page

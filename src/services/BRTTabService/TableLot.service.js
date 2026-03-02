@@ -360,14 +360,16 @@ export async function update(req, res) {
     CheckingSectionID,
     CheckerID,
     LotID,
-    PieceNo
+    PieceNo,
+    pieceId
   )
   VALUES
   (
     :checkingSectionId,
     :checkerId,
     :lotId,
-    :pieceNo
+    :pieceNo,
+    :pieceId
   )
   RETURNING AllocationID INTO :allocationId
   `,
@@ -377,6 +379,7 @@ export async function update(req, res) {
         lotId: selectedLotNo,
         pieceNo: selectedPiece,
         allocationId: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
+        pieceId: selectedSubGridId,
       },
       { autoCommit: false },
     );
@@ -530,7 +533,7 @@ export async function revertAllocation(req, res) {
     // 1️⃣ Lock allocation row
     const allocationResult = await connection.execute(
       `
-      SELECT CheckerID, LotID, PieceNo
+      SELECT CheckerID, LotID, PieceNo,PIECEID
       FROM CheckerWorkingDetails
       WHERE AllocationID = :allocationId
       FOR UPDATE
@@ -547,7 +550,7 @@ export async function revertAllocation(req, res) {
       });
     }
 
-    const [checkerId, lotId, pieceNo] = allocationResult.rows[0];
+    const [checkerId, lotId, pieceNo, PIECEID] = allocationResult.rows[0];
 
     // 2️⃣ Get sub allot IDs from stock
     const stockRows = await connection.execute(
@@ -596,9 +599,9 @@ export async function revertAllocation(req, res) {
       `
       UPDATE GTLOTPCSSUBDET
       SET NOTES1 = NULL
-      WHERE PCSNO = :pieceNo
+    WHERE GTLOTPCSSUBDETID = :pieceId
       `,
-      { pieceNo },
+      {  pieceId: PIECEID },
       { autoCommit: false },
     );
 

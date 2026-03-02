@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 import { useState, useRef, useCallback, useMemo } from "react";
 import { io } from "socket.io-client";
@@ -9,7 +10,6 @@ import tableLotApi, {
   useGetPiecesQuery,
   useGetCheckingSectionQuery,
   useUpdateTableLotMutation,
-  useGetTableLotByIdQuery,
   useGetWorkStatusQuery,
   useDeleteWorkStatusLotMutation,
   useRevertAllocationMutation,
@@ -45,7 +45,6 @@ const TableLotForm = ({
   setSelectedNonGridId,
   onNew,
   TABDATE,
-  userData,
 }) => {
   const socketRef = useRef(null);
   const [dcMeter, setDcMeter] = useState("");
@@ -105,7 +104,13 @@ const TableLotForm = ({
     return () => {
       socketRef.current.disconnect();
     };
-  }, [refetch, piecesrefetch, refetchWorkStatus]);
+  }, [
+    refetch,
+    piecesrefetch,
+    refetchWorkStatus,
+    piecesUninitialized,
+    tablesUninitialized,
+  ]);
 
   useEffect(() => {
     if (!isAdmin && !isSuppervisor) {
@@ -264,8 +269,6 @@ const TableLotForm = ({
 
       setDcMeter("");
 
-      clothsrefetch();
-      piecesrefetch();
       setTimeout(() => {
         lotIdRef.current?.focus();
         lotIdRef.current?.openMenu("first");
@@ -313,16 +316,16 @@ const TableLotForm = ({
     [cloths?.data],
   );
 
-  const pieceOptions = useMemo(
-    () =>
-      pieces?.data?.map((piece) => ({
+  const pieceOptions = useMemo(() => {
+    return [...(pieces?.data || [])] // prevent mutation
+      .sort((a, b) => a.PCSNO - b.PCSNO) // ascending order
+      .map((piece) => ({
         label: piece?.PCSNO,
         value: piece?.PCSNO,
         meter: piece?.METER,
         subGridId: piece?.SUBGRIDID,
-      })),
-    [pieces?.data],
-  );
+      }));
+  }, [pieces?.data]);
   useEffect(() => {
     if (workStatus?.hasActiveWork) {
       const work = workStatus.data;
@@ -404,12 +407,14 @@ const TableLotForm = ({
     try {
       await revertAllocation(allocationId).unwrap();
       Swal.fire({
-        icon: "sucess",
+        icon: "success",
         title: "Work reverted successfully",
         timer: 2000,
         showConfirmButton: false,
       });
-    } catch (err) {
+      onNew()
+    } 
+    catch (err) {
       Swal.fire({
         icon: "Warning",
         title: "Failed to revert",
@@ -448,62 +453,103 @@ const TableLotForm = ({
       }
     });
   };
-  const handleDefectEntry = async (work) => {
-    try {
-      await deleteAllocation(allocationId);
 
-      Swal.fire({
-        icon: "success",
-        title: "Table Released",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+  // if (workStatus?.hasActiveWork) {
+  //   return (
+  //     <div className="h-[75vh] p-6 bg-white rounded-xl">
+  //       <h1 className="text-xl font-bold mb-4">Active Work In Progress</h1>
 
-      // Reset frontend state
-      setWorkingDetails(null);
-      setSelectedTables([]);
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Failed to release table",
-        text: err.message || "Something went wrong",
-      });
-    }
-  };
+  //       <div className="bg-green-50 p-4 rounded shadow space-y-2">
+  //         <p>
+  //           <strong>Section:</strong> {workingDetails?.sectionName}
+  //         </p>
+  //         <p>
+  //           <strong>Checker:</strong> {workingDetails?.userName}
+  //         </p>
+  //         <p>
+  //           <strong>Lot No:</strong> {workingDetails?.lotNo}
+  //         </p>
+  //         <p>
+  //           <strong>Piece:</strong> {workingDetails?.pieceNo}
+  //         </p>
+  //         <p>
+  //           <strong>Tables:</strong> {workingDetails?.tableNumbers?.join(", ")}
+  //         </p>
+
+  //         <button
+  //           className="bg-blue-600 text-white px-4 py-1 rounded mt-3"
+  //           // onClick={() => handleDefectEntry(workingDetails)}
+  //         >
+  //           Go To Defect Entry
+  //         </button>
+  //         <button
+  //           className="bg-red-600 text-white px-4 py-1 rounded mt-3"
+  //           onClick={() => handleRevert(allocationId)}
+  //         >
+  //          Revert Work
+  //         </button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
   if (workStatus?.hasActiveWork) {
     return (
-      <div className="h-[75vh] p-6 bg-white rounded-xl">
-        <h1 className="text-xl font-bold mb-4">Active Work In Progress</h1>
+      <div className="min-h-[75vh] bg-gray-50 p-4 sm:p-6 flex items-start justify-center">
+        <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+          {/* Header */}
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">
+            Active Work In Progress
+          </h1>
 
-        <div className="bg-green-50 p-4 rounded shadow space-y-2">
-          <p>
-            <strong>Section:</strong> {workingDetails?.sectionName}
-          </p>
-          <p>
-            <strong>Checker:</strong> {workingDetails?.userName}
-          </p>
-          <p>
-            <strong>Lot No:</strong> {workingDetails?.lotNo}
-          </p>
-          <p>
-            <strong>Piece:</strong> {workingDetails?.pieceNo}
-          </p>
-          <p>
-            <strong>Tables:</strong> {workingDetails?.tableNumbers?.join(", ")}
-          </p>
+          {/* Details Card */}
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 sm:p-6">
+            {/* Responsive Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
+              <div>
+                <p className="text-sm text-gray-500">Section</p>
+                <p className="font-semibold">{workingDetails?.sectionName}</p>
+              </div>
 
-          <button
-            className="bg-blue-600 text-white px-4 py-1 rounded mt-3"
-            // onClick={() => handleDefectEntry(workingDetails)}
-          >
-            Go To Defect Entry
-          </button>
-          <button
-            className="bg-red-600 text-white px-4 py-1 rounded mt-3"
-            onClick={() => handleRevert(allocationId)}
-          >
-            Cancel / Revert Work
-          </button>
+              <div>
+                <p className="text-sm text-gray-500">Checker</p>
+                <p className="font-semibold">{workingDetails?.userName}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Lot No</p>
+                <p className="font-semibold">{workingDetails?.lotNo}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Piece</p>
+                <p className="font-semibold">{workingDetails?.pieceNo}</p>
+              </div>
+
+              <div className="sm:col-span-2">
+                <p className="text-sm text-gray-500">Tables</p>
+                <p className="font-semibold">
+                  {workingDetails?.tableNumbers?.join(", ")}
+                </p>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <button
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-2 rounded-lg font-medium"
+                // onClick={() => handleDefectEntry(workingDetails)}
+              >
+                Go To Defect Entry
+              </button>
+
+              <button
+                className="w-full sm:w-auto bg-red-600 hover:bg-red-700 transition text-white px-6 py-2 rounded-lg font-medium"
+                onClick={() => handleRevert(allocationId)}
+              >
+                Revert Work
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
