@@ -361,7 +361,9 @@ export async function update(req, res) {
     CheckerID,
     LotID,
     PieceNo,
-    pieceId
+    pieceId,
+    CREATEDAT,
+    METERS
   )
   VALUES
   (
@@ -369,7 +371,11 @@ export async function update(req, res) {
     :checkerId,
     :lotId,
     :pieceNo,
-    :pieceId
+    :pieceId,
+    SYSDATE,
+    :meters
+    
+
   )
   RETURNING AllocationID INTO :allocationId
   `,
@@ -380,6 +386,7 @@ export async function update(req, res) {
         pieceNo: selectedPiece,
         allocationId: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
         pieceId: selectedSubGridId,
+        meters: dcMeter,
       },
       { autoCommit: false },
     );
@@ -466,7 +473,9 @@ export async function getWorkStatus(req, res) {
         L.DOCID,
         C.PieceNo,
         T.GTCHKTABLEMASTID,
-        M.CHECKINGNO
+        M.CHECKINGNO,
+        C.PIECEID,
+        C.meters
       FROM CheckerWorkingDetails C
       JOIN GTCHECKINGMAST S 
         ON S.GTCHECKINGMASTID = C.CheckingSectionID
@@ -503,6 +512,8 @@ export async function getWorkStatus(req, res) {
       lotId: rows[0][5],
       docId: rows[0][6],
       pieceNo: rows[0][7],
+      pieceId: rows[0][10],
+      meters:rows[0][11],
       tables: rows.map((r) => ({
         tableId: r[8],
         checkingNo: r[9],
@@ -601,7 +612,7 @@ export async function revertAllocation(req, res) {
       SET NOTES1 = NULL
     WHERE GTLOTPCSSUBDETID = :pieceId
       `,
-      {  pieceId: PIECEID },
+      { pieceId: PIECEID },
       { autoCommit: false },
     );
 

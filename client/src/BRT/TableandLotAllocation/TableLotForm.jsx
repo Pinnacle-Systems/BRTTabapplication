@@ -18,6 +18,7 @@ import { useEffect } from "react";
 import Swal from "sweetalert2";
 import Select from "react-select";
 import CheckingNoGrid from "./CheckingNoGrid ";
+import DefectEntry from '../DefectEntry/DefectEntry'
 const TableLotForm = ({
   onClose,
   selectedLotNo,
@@ -51,6 +52,11 @@ const TableLotForm = ({
   const [selectedTables, setSelectedTables] = useState([]);
   const [workingDetails, setWorkingDetails] = useState(null);
   const [allocationId, setAllocationId] = useState("");
+  const [allocatedCheckerId, setAllocatedCheckerId] = useState("");
+  const [allocatedCheckingSectionId, setAllocatedCheckingSectionId] = useState("");
+  const [allocatedLotId, setAllocatedLotId] = useState("");
+  const [allocatedPieceId, setAllocatedPieceId] = useState("");
+  const [allocatedTableId, setAllocatedtableId] = useState([]);
   let NOOFPCSSTK = 1;
   let PCSTAKEN = "Yes";
   let NOTES1 = "YES";
@@ -320,30 +326,40 @@ const TableLotForm = ({
     );
   }, [cloths?.data, selectedLotNo]);
 
-const pieceOptions = useMemo(() => {
-  if (!selectedClothId || !selectedLotNo || !lotCheckingNoId) return [];
+  const pieceOptions = useMemo(() => {
+    if (!selectedClothId || !selectedLotNo || !lotCheckingNoId) return [];
 
-  return [...(pieces?.data || [])]
-    .sort((a, b) => a.PCSNO - b.PCSNO)
-    .map((piece) => ({
-      label: piece?.PCSNO,
-      value: piece?.PCSNO,
-      meter: piece?.METER,
-      subGridId: piece?.SUBGRIDID,
-    }));
-}, [pieces?.data, selectedClothId, selectedLotNo, lotCheckingNoId]);
+    return [...(pieces?.data || [])]
+      .sort((a, b) => a.PCSNO - b.PCSNO)
+      .map((piece) => ({
+        label: piece?.PCSNO,
+        value: piece?.PCSNO,
+        meter: piece?.METER,
+        subGridId: piece?.SUBGRIDID,
+      }));
+  }, [pieces?.data, selectedClothId, selectedLotNo, lotCheckingNoId]);
 
   useEffect(() => {
     if (workStatus?.hasActiveWork) {
       const work = workStatus.data;
       setAllocationId(work?.allocationId);
+      setAllocatedCheckerId(work?.checkerId);
+      setAllocatedCheckingSectionId(work?.checkingSectionId);
+      setAllocatedLotId(work?.lotId);
+      setAllocatedPieceId(work?.pieceId);
+      // safer table mapping
+      const tableIds = work?.tables?.map((t) => t.tableId) || [];
+      const tableNumbers = work?.tables?.map((t) => t.checkingNo) || [];
+
+      setAllocatedtableId(tableIds);
       setWorkingDetails({
         allocationId: work.allocationId,
         sectionName: work.sectionName,
         userName: work.checkerName,
         lotNo: work.docId,
         pieceNo: work.pieceNo,
-        tableNumbers: work.tables.map((t) => t.checkingNo),
+        tableNumbers,
+        meters: work.meters,
       });
     } else {
       setWorkingDetails(null);
@@ -448,56 +464,22 @@ const pieceOptions = useMemo(() => {
   }
   const handleSelect = (item) => {
     setSelectedTables((prev) => {
-      const exists = prev.find(
+      const exists = prev?.find(
         (t) => t.GTCHKTABLEMASTID === item.GTCHKTABLEMASTID,
       );
 
       if (exists) {
-        return prev.filter((t) => t.GTCHKTABLEMASTID !== item.GTCHKTABLEMASTID);
+        return prev?.filter(
+          (t) => t.GTCHKTABLEMASTID !== item.GTCHKTABLEMASTID,
+        );
       } else {
         return [...prev, item];
       }
     });
   };
-
-  // if (workStatus?.hasActiveWork) {
-  //   return (
-  //     <div className="h-[75vh] p-6 bg-white rounded-xl">
-  //       <h1 className="text-xl font-bold mb-4">Active Work In Progress</h1>
-
-  //       <div className="bg-green-50 p-4 rounded shadow space-y-2">
-  //         <p>
-  //           <strong>Section:</strong> {workingDetails?.sectionName}
-  //         </p>
-  //         <p>
-  //           <strong>Checker:</strong> {workingDetails?.userName}
-  //         </p>
-  //         <p>
-  //           <strong>Lot No:</strong> {workingDetails?.lotNo}
-  //         </p>
-  //         <p>
-  //           <strong>Piece:</strong> {workingDetails?.pieceNo}
-  //         </p>
-  //         <p>
-  //           <strong>Tables:</strong> {workingDetails?.tableNumbers?.join(", ")}
-  //         </p>
-
-  //         <button
-  //           className="bg-blue-600 text-white px-4 py-1 rounded mt-3"
-  //           // onClick={() => handleDefectEntry(workingDetails)}
-  //         >
-  //           Go To Defect Entry
-  //         </button>
-  //         <button
-  //           className="bg-red-600 text-white px-4 py-1 rounded mt-3"
-  //           onClick={() => handleRevert(allocationId)}
-  //         >
-  //          Revert Work
-  //         </button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+const handleDefectEntry = () =>{
+  <DefectEntry />
+}
   if (workStatus?.hasActiveWork) {
     return (
       <div className="min-h-[75vh] bg-gray-50 p-4 sm:p-6 flex items-start justify-center">
@@ -530,8 +512,12 @@ const pieceOptions = useMemo(() => {
                 <p className="text-sm text-gray-500">Piece</p>
                 <p className="font-semibold">{workingDetails?.pieceNo}</p>
               </div>
+              <div>
+                <p className="text-sm text-gray-500">Meters</p>
+                <p className="font-semibold">{workingDetails?.meters}</p>
+              </div>
 
-              <div className="sm:col-span-2">
+              <div>
                 <p className="text-sm text-gray-500">Tables</p>
                 <p className="font-semibold">
                   {workingDetails?.tableNumbers?.join(", ")}
@@ -543,7 +529,7 @@ const pieceOptions = useMemo(() => {
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <button
                 className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-2 rounded-lg font-medium"
-                // onClick={() => handleDefectEntry(workingDetails)}
+                onClick={handleDefectEntry}
               >
                 Go To Defect Entry
               </button>
