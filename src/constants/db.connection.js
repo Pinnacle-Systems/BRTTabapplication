@@ -1,8 +1,8 @@
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const oracledb = require("oracledb");
-oracledb.initOracleClient({ libDir: "C:/oracle/instantclient_19_20" });
-// oracledb.initOracleClient({ libDir: "/opt/oracle/instantclient_23_6" });
+// oracledb.initOracleClient({ libDir: "C:/oracle/instantclient_19_20" });
+oracledb.initOracleClient({ libDir: "/opt/oracle/instantclient_23_6" });
 
 const dbConfig = {
   user: "PSSBRT",
