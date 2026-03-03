@@ -382,4 +382,74 @@ export const useIdleLogout = (
         };
     }, [isLoggedIn, onLogout]);
 };
-    
+
+export const customSelectStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: "13px",
+      height: "36px",
+      padding: "0px 4px",
+      fontSize: "14px",
+      borderRadius: "8px",
+
+      color: state.isDisabled ? "#6b7280" : "black",
+      backgroundColor: state.isDisabled ? "white" : "white", // bg-gray-100 vs bg-white
+      cursor: state.isDisabled ? "not-allowed" : "default",
+      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db", // blue-500 vs gray-300
+      boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : base.boxShadow,
+      "&:hover": {
+        borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
+      },
+    }),
+    valueContainer: (base, state) => ({
+      ...base,
+      padding: "0 3px",
+      fontSize: "14px",
+
+      color: state.isDisabled ? "black" : "black",
+    }),
+    input: (base, state) => ({
+      ...base,
+      margin: 0,
+      fontSize: "14px",
+      padding: 0,
+
+      color: state.isDisabled ? "black" : "black",
+    }),
+    singleValue: (base, state) => ({
+      ...base,
+
+      fontSize: "14px",
+      color: state.isDisabled ? "black" : "black",
+    }),
+    placeholder: (base) => ({
+      ...base,
+      // marginTop: "20px",
+
+      color: "black",
+      fontSize: "14px",
+    }),
+    menu: (base, state) => ({
+      ...base,
+
+      maxHeight: 140,
+      // overflowY: "auto",
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    option: (base, state) => ({
+      ...base,
+
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+      padding: "6px 8px",
+    }),
+    dropdownIndicator: () => ({}),
+
+    indicatorSeparator: () => ({ display: "none" }),
+    menuList: (base) => ({
+      ...base,
+      maxHeight: 140,
+      // overflowY: "auto",
+    }),
+  };

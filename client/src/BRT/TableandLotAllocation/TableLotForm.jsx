@@ -18,7 +18,8 @@ import { useEffect } from "react";
 import Swal from "sweetalert2";
 import Select from "react-select";
 import CheckingNoGrid from "./CheckingNoGrid ";
-import DefectEntry from '../DefectEntry/DefectEntry'
+import { push } from "../../redux/features/opentabs";
+
 const TableLotForm = ({
   onClose,
   selectedLotNo,
@@ -53,7 +54,8 @@ const TableLotForm = ({
   const [workingDetails, setWorkingDetails] = useState(null);
   const [allocationId, setAllocationId] = useState("");
   const [allocatedCheckerId, setAllocatedCheckerId] = useState("");
-  const [allocatedCheckingSectionId, setAllocatedCheckingSectionId] = useState("");
+  const [allocatedCheckingSectionId, setAllocatedCheckingSectionId] =
+    useState("");
   const [allocatedLotId, setAllocatedLotId] = useState("");
   const [allocatedPieceId, setAllocatedPieceId] = useState("");
   const [allocatedTableId, setAllocatedtableId] = useState([]);
@@ -125,76 +127,6 @@ const TableLotForm = ({
   }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
   console.log(isAdmin, isSuppervisor, checkerId, "sAdminisSuppervisor");
 
-  const customSelectStyles = {
-    control: (base, state) => ({
-      ...base,
-      minHeight: "13px",
-      height: "36px",
-      padding: "0px 4px",
-      fontSize: "14px",
-      borderRadius: "8px",
-
-      color: state.isDisabled ? "#6b7280" : "black",
-      backgroundColor: state.isDisabled ? "#f3f4f6" : "white", // bg-gray-100 vs bg-white
-      cursor: state.isDisabled ? "not-allowed" : "default",
-      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db", // blue-500 vs gray-300
-      boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : base.boxShadow,
-      "&:hover": {
-        borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
-      },
-    }),
-    valueContainer: (base, state) => ({
-      ...base,
-      padding: "0 3px",
-      fontSize: "14px",
-
-      color: state.isDisabled ? "#6b7280" : "black",
-    }),
-    input: (base, state) => ({
-      ...base,
-      margin: 0,
-      fontSize: "14px",
-      padding: 0,
-
-      color: state.isDisabled ? "#6b7280" : "black",
-    }),
-    singleValue: (base, state) => ({
-      ...base,
-
-      fontSize: "14px",
-      color: state.isDisabled ? "#6b7280" : "black",
-    }),
-    placeholder: (base) => ({
-      ...base,
-      // marginTop: "20px",
-
-      color: "black",
-      fontSize: "14px",
-    }),
-    menu: (base, state) => ({
-      ...base,
-
-      maxHeight: 140,
-      // overflowY: "auto",
-      fontSize: "14px",
-      color: state.isDisabled ? "#6b7280" : "black",
-    }),
-    option: (base, state) => ({
-      ...base,
-
-      fontSize: "14px",
-      color: state.isDisabled ? "#6b7280" : "black",
-      padding: "6px 8px",
-    }),
-    dropdownIndicator: () => ({}),
-
-    indicatorSeparator: () => ({ display: "none" }),
-    menuList: (base) => ({
-      ...base,
-      maxHeight: 140,
-      // overflowY: "auto",
-    }),
-  };
   // ✅ RTK Query
   const { data: lots, error, isLoading } = useGetLotsQuery();
   console.log(lots, "lots");
@@ -214,7 +146,32 @@ const TableLotForm = ({
   console.log(cloths, "cloths");
 
   console.log(pieces, "pieces");
+  useEffect(() => {
+    if (workStatus?.hasActiveWork) {
+      const work = workStatus.data;
+      setAllocationId(work?.allocationId);
+      setAllocatedCheckerId(work?.checkerId);
+      setAllocatedCheckingSectionId(work?.checkingSectionId);
+      setAllocatedLotId(work?.lotId);
+      setAllocatedPieceId(work?.pieceId);
+      // safer table mapping
+      const tableIds = work?.tables?.map((t) => t.tableId) || [];
+      const tableNumbers = work?.tables?.map((t) => t.checkingNo) || [];
 
+      setAllocatedtableId(tableIds);
+      setWorkingDetails({
+        allocationId: work.allocationId,
+        sectionName: work.sectionName,
+        userName: work.checkerName,
+        lotNo: work.docId,
+        pieceNo: work.pieceNo,
+        tableNumbers,
+        meters: work.meters,
+      });
+    } else {
+      setWorkingDetails(null);
+    }
+  }, [workStatus]);
   let singleData;
   // const { data: singleData } = useGetTableLotByIdQuery(
   //   { selectedLotNo, selectedGridId },
@@ -339,32 +296,6 @@ const TableLotForm = ({
       }));
   }, [pieces?.data, selectedClothId, selectedLotNo, lotCheckingNoId]);
 
-  useEffect(() => {
-    if (workStatus?.hasActiveWork) {
-      const work = workStatus.data;
-      setAllocationId(work?.allocationId);
-      setAllocatedCheckerId(work?.checkerId);
-      setAllocatedCheckingSectionId(work?.checkingSectionId);
-      setAllocatedLotId(work?.lotId);
-      setAllocatedPieceId(work?.pieceId);
-      // safer table mapping
-      const tableIds = work?.tables?.map((t) => t.tableId) || [];
-      const tableNumbers = work?.tables?.map((t) => t.checkingNo) || [];
-
-      setAllocatedtableId(tableIds);
-      setWorkingDetails({
-        allocationId: work.allocationId,
-        sectionName: work.sectionName,
-        userName: work.checkerName,
-        lotNo: work.docId,
-        pieceNo: work.pieceNo,
-        tableNumbers,
-        meters: work.meters,
-      });
-    } else {
-      setWorkingDetails(null);
-    }
-  }, [workStatus]);
   // Filter tables for selection
   const availableTables = tables?.data?.filter(
     (t) => !t.TABLEAVAILBLE || t.TABLEAVAILBLE.toUpperCase() !== "NO",
@@ -477,9 +408,79 @@ const TableLotForm = ({
       }
     });
   };
-const handleDefectEntry = () =>{
-  <DefectEntry />
-}
+  const customSelectStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: "13px",
+      height: "36px",
+      padding: "0px 4px",
+      fontSize: "14px",
+      borderRadius: "8px",
+
+      color: state.isDisabled ? "#6b7280" : "black",
+      backgroundColor: state.isDisabled ? "#f3f4f6" : "white", // bg-gray-100 vs bg-white
+      cursor: state.isDisabled ? "not-allowed" : "default",
+      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db", // blue-500 vs gray-300
+      boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : base.boxShadow,
+      "&:hover": {
+        borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
+      },
+    }),
+    valueContainer: (base, state) => ({
+      ...base,
+      padding: "0 3px",
+      fontSize: "14px",
+
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    input: (base, state) => ({
+      ...base,
+      margin: 0,
+      fontSize: "14px",
+      padding: 0,
+
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    singleValue: (base, state) => ({
+      ...base,
+
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    placeholder: (base) => ({
+      ...base,
+      // marginTop: "20px",
+
+      color: "black",
+      fontSize: "14px",
+    }),
+    menu: (base, state) => ({
+      ...base,
+
+      maxHeight: 140,
+      // overflowY: "auto",
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    option: (base, state) => ({
+      ...base,
+
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+      padding: "6px 8px",
+    }),
+    dropdownIndicator: () => ({}),
+
+    indicatorSeparator: () => ({ display: "none" }),
+    menuList: (base) => ({
+      ...base,
+      maxHeight: 140,
+      // overflowY: "auto",
+    }),
+  };
+  const handleDefectEntry = () => {
+    dispatch(push({ id: "Defect Entry", name: "Defect Entry" }));
+  };
   if (workStatus?.hasActiveWork) {
     return (
       <div className="min-h-[75vh] bg-gray-50 p-4 sm:p-6 flex items-start justify-center">
@@ -509,16 +510,16 @@ const handleDefectEntry = () =>{
               </div>
 
               <div>
-                <p className="text-sm text-gray-500">Piece</p>
+                <p className="text-sm text-gray-500">Piece No</p>
                 <p className="font-semibold">{workingDetails?.pieceNo}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Meters</p>
-                <p className="font-semibold">{workingDetails?.meters}</p>
+                <p className="font-semibold">{workingDetails?.meters?.toFixed(2)}</p>
               </div>
 
               <div>
-                <p className="text-sm text-gray-500">Tables</p>
+                <p className="text-sm text-gray-500">Table No</p>
                 <p className="font-semibold">
                   {workingDetails?.tableNumbers?.join(", ")}
                 </p>
