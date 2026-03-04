@@ -8,6 +8,7 @@ import {
   useGetPiecesQuery,
   useGetlotDetailsQuery,
   useGetDefectsQuery,
+  useUpdateDefectEntryMutation,
 } from "../../redux/services/defectEntry.js";
 import { useGetRolesQuery } from "../../redux/userservice";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -42,6 +43,9 @@ const DefectEntry = () => {
   const [defectPoints, setDefectPoints] = useState("");
   const [totalDefectPoints, setTotalDefectPoints] = useState("");
   const [defectArray, setDefectArray] = useState([]);
+  const [translatedDefects, setTranslatedDefects] = useState([]);
+  const [startMeter, setStartMeter] = useState(1);
+  const [endMeter, setEndMeter] = useState(meters);
   const lotIdRef = useRef(null);
 
   const storedUserId = Number(localStorage.getItem("userId"));
@@ -82,6 +86,8 @@ const DefectEntry = () => {
   );
   console.log(lotDetails, "lotDetails");
   const { data: defectEntry } = useGetDefectsQuery();
+  console.log(defectEntry, "defectEntry");
+
   const lotOptions = useMemo(
     () =>
       lots?.data?.map((lot) => ({
@@ -139,6 +145,59 @@ const DefectEntry = () => {
     setSectionName(work?.sectionName || "");
   }, [lotDetails]);
   console.log(checkerName, "checkerName");
+  const totalPointsSum = defectArray.reduce(
+    (sum, item) => sum + Number(item.totalPoints || 0),
+    0,
+  );
+  const data = {
+    lotId: parseInt(lotId), // 👈 ADD THIS
+    allocationId:parseInt(allocationId),
+    pieceId: parseInt(pieceId),
+    pieceNo: parseInt(pieceNo),
+    startMeter,
+    endMeter,
+    meters,
+    tableId,
+    tableNo,
+    checkerId: parseInt(checkerId),
+    checkerName,
+    checkingSectionId: parseInt(checkingSectionId),
+    sectionName,
+    defectArray,
+    totalPointsSum: parseInt(totalPointsSum),
+  };
+
+  console.log(startMeter,endMeter,meters,"tartMeter,endMeter");
+  
+  const [updateData] = useUpdateDefectEntryMutation();
+  const handleSubmitCustom = async (callback, data) => {
+    try {
+      let returnData = await callback(data).unwrap();
+      Swal.fire({
+        title: "Added Successfully",
+        icon: "success",
+        draggable: true,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.log("Full Error:", error);
+      const backendMessage =
+        error?.data?.message || error?.data?.error || "Something went wrong!";
+
+      Swal.fire({
+        icon: "error",
+        title: "Submission Failed",
+        text: backendMessage,
+        timer: 2500,
+      });
+    }
+  };
+  const saveData = () => {
+    // if (!validateSaveData()) return;
+
+    handleSubmitCustom(updateData, data);
+  };
 
   const canEditLot = isAdmin || isSuppervisor;
 
@@ -157,6 +216,14 @@ const DefectEntry = () => {
     }
   }, [lotId, canEditLot]);
   useEffect(() => {
+    if (checkedMeter) {
+      setDefectId("");
+      setDefectPoints("");
+      setDefectTimes("");
+      setTotalDefectPoints("");
+    }
+  }, [checkedMeter]);
+  useEffect(() => {
     if (lotIdRef.current && canEditLot) {
       lotIdRef.current.focus();
       lotIdRef.current?.openMenu("first");
@@ -170,10 +237,54 @@ const DefectEntry = () => {
     value: num,
     label: num.toString(),
   }));
-  const defectOptions = defectEntry?.data?.map((def) => ({
-    label: def?.DEFECTNAME,
-    value: def?.GTPIECEDEFMASTID,
-    points: def?.POINTS,
+  // const defectOptions = defectEntry?.data?.map((def) => ({
+  //   label: def?.DEFECTNAME,
+  //   value: def?.GTPIECEDEFMASTID,
+  //   points: def?.POINTS,
+  // }));
+  const translateText = async (text, targetLang) => {
+    try {
+      const res = await fetch(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURIComponent(
+          text,
+        )}`,
+      );
+
+      const data = await res.json();
+      return data[0][0][0]; // translated text
+    } catch (error) {
+      console.error("Translation error:", error);
+      return text; // fallback to original
+    }
+  };
+  useEffect(() => {
+    const translateAll = async () => {
+      if (!defectEntry?.data) return;
+
+      const results = await Promise.all(
+        defectEntry.data.map(async (def) => {
+          const [hindi, tamil] = await Promise.all([
+            translateText(def.DEFECTNAME, "hi"),
+            translateText(def.DEFECTNAME, "ta"),
+          ]);
+
+          return {
+            ...def,
+            translatedLabel: `${def.DEFECTNAME} / ${hindi} / ${tamil}`,
+          };
+        }),
+      );
+
+      setTranslatedDefects(results);
+    };
+
+    translateAll();
+  }, [defectEntry]);
+  const defectOptions = translatedDefects.map((def) => ({
+    label: def.translatedLabel,
+    value: def.GTPIECEDEFMASTID,
+    points: def.POINTS,
+    englishName: def.DEFECTNAME,
   }));
   useEffect(() => {
     const total = defectPoints * defectTimes;
@@ -182,7 +293,46 @@ const DefectEntry = () => {
 
   const FillDefectArray = (e) => {
     e.preventDefault();
-    if (!checkedMeter || !defectId || !defectTimes) return;
+    // 🔹 Validation
+    if (!checkedMeter) {
+      Swal.fire({
+        icon: "warning",
+        title: "Please select Meter",
+        timer: 2000,
+        showConfirmButton: true,
+      });
+      return;
+    }
+
+    if (!defectId) {
+      Swal.fire({
+        icon: "warning",
+        title: "Please select Defect Name",
+        timer: 2000,
+        showConfirmButton: true,
+      });
+      return;
+    }
+
+    if (defectPoints === "" || defectPoints === null) {
+      Swal.fire({
+        icon: "warning",
+        title: "Points not available",
+        timer: 2000,
+        showConfirmButton: true,
+      });
+      return;
+    }
+
+    if (defectTimes === "" || defectTimes === null) {
+      Swal.fire({
+        icon: "warning",
+        title: "Please enter No of Times",
+        timer: 2000,
+        showConfirmButton: true,
+      });
+      return;
+    }
     const alreadyExists = defectArray.some(
       (item) =>
         Number(item.meter) === Number(checkedMeter) &&
@@ -192,7 +342,7 @@ const DefectEntry = () => {
     if (alreadyExists) {
       Swal.fire({
         icon: "warning",
-        title: "Same Defect Already Choosed",
+        title: "Same Defect Already Choosed for the Meter",
         timer: 2000,
         showConfirmButton: true,
       });
@@ -222,6 +372,9 @@ const DefectEntry = () => {
   };
 
   console.log(defectArray, "defectArray");
+  const isNoDefectSelected =
+    defectOptions?.find((d) => d.value === defectId)?.englishName ===
+    "NO DEFECT";
 
   return (
     <>
@@ -230,7 +383,8 @@ const DefectEntry = () => {
           <h1 className="text-xl ml-2 font-bold text-center">Defect Entry</h1>
           <div>
             <button
-              // onClick={saveData}
+              type="button"
+              onClick={saveData}
               className="bg-blue-600 mr-2 text-white  py-1 rounded-lg hover:bg-blue-700 transition px-2"
             >
               Save
@@ -420,7 +574,9 @@ const DefectEntry = () => {
                     <div className="grid grid-cols-5 lg:grid-cols-9 gap-4 text-sm">
                       {/* Lot No */}
                       <div className="col-span-1 lg:col-span-1 z-999">
-                        <label className="block font-medium mb-1">Meter</label>
+                        <label className="block font-medium mb-1">
+                          Meter At
+                        </label>
                         <Select
                           options={meterList}
                           value={
@@ -452,8 +608,8 @@ const DefectEntry = () => {
                           }
                           onChange={(selectedOption) => {
                             setDefectId(selectedOption?.value || "");
-                            setDefectPoints(selectedOption?.points || "");
-                            setDefectName(selectedOption?.label || "");
+                            setDefectPoints(selectedOption?.points ?? "");
+                            setDefectName(selectedOption?.englishName ?? "");
                           }}
                           placeholder="Select"
                           isClearable={false} // ✅ disable cross icon
@@ -481,8 +637,13 @@ const DefectEntry = () => {
                         <input
                           type="number"
                           value={defectTimes}
+                          disabled={isNoDefectSelected}
                           onChange={(e) => setDefectTimes(e.target.value)}
-                          className="w-full border rounded-lg px-1 py-1.5 text-right "
+                          className={`w-full border rounded-lg px-1 py-1.5 text-right ${
+                            isNoDefectSelected
+                              ? "bg-gray-200 cursor-not-allowed"
+                              : ""
+                          }`}
                         />
                       </div>
                       <div className="col-span-1 lg:col-span-1">
@@ -564,6 +725,17 @@ const DefectEntry = () => {
                         );
                       })}
                     </tbody>
+                    <tfoot>
+                      <tr className=" font-semibold text-xs">
+                        <td className="border py-1 text-right pr-1" colSpan={4}>
+                          Total Points
+                        </td>
+                        <td className="border text-right pr-1">
+                          {totalPointsSum}
+                        </td>
+                        <td className="border"></td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </>

@@ -71,11 +71,11 @@ const defectEntryApi = createApi({
       providesTags: ["defectEntryApi"],
     }),
 
-    updateTableLot: builder.mutation({
+    updateDefectEntry: builder.mutation({
       query: (payload) => {
-        const { selectedNonGridId, selectedGridId, ...body } = payload;
+        const { lotId, ...body } = payload;
         return {
-          url: `${DEFECTENTRY}/${selectedNonGridId}/${selectedGridId}`,
+          url: `${DEFECTENTRY}/update/${lotId}`,
           method: "PUT",
           body,
         };
@@ -101,7 +101,7 @@ export const {
   useGetDefectsQuery,
   useGetPiecesQuery,
   useGetlotDetailsQuery,
-  useUpdateTableLotMutation,
+  useUpdateDefectEntryMutation,
   useGetWorkStatusQuery,
 } = defectEntryApi;
 
