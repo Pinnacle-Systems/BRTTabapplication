@@ -1261,7 +1261,7 @@ const DefectEntry = () => {
       // Original piece keeps subPieceNo unchanged — always stays as "1"
       const updatedPiece = {
         ...piece,
-        subPieceNo: String(piece.pieceNo),
+        subPieceNo: String(piece.subPieceNo),
         endMeter: splitMeter,
         defects: piece.defects.filter((d) => d.meter <= splitMeter),
       };
