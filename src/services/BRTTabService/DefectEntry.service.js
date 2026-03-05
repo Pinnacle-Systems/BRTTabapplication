@@ -133,36 +133,215 @@ export async function getDefects(req, res) {
   }
 }
 
+// export async function updateDefectEntry(req, res) {
+//   const { lotId } = req.params;
+//   const {
+//     pieceId,
+//     pieceNo,
+//     tableId,
+//     tableNo,
+//     startMeter,
+//     endMeter,
+//     meters,
+//     checkerId,
+//     checkingSectionId,
+//     defectArray,
+//     totalPointsSum,
+//     allocationId,
+//   } = req.body;
+
+//   const connection = await getConnection(res);
+
+//   try {
+//     // ✅ STEP 1
+//     const step1Query = `
+//       SELECT GTPIECESDEFECTID, LOTNO
+//       FROM Gtpiecesdefect
+//       WHERE LOTNO = :lotId
+//     `;
+
+//     const step1Result = await connection.execute(
+//       step1Query,
+//       { lotId }, // bind object
+//       { outFormat: oracledb.OUT_FORMAT_OBJECT },
+//     );
+
+//     if (step1Result.rows.length === 0) {
+//       return res.status(404).json({
+//         message: "No record found in Gtpiecesdefect for this lotId",
+//       });
+//     }
+
+//     const { GTPIECESDEFECTID, LOTNO } = step1Result.rows[0];
+
+//     // ✅ STEP 2
+//     const step2Query = `
+//       SELECT GTPIECESDEFECTDETID,GTPIECESDEFECTID,RECEIPTNO
+//       FROM Gtpiecesdefectdet
+//       WHERE GTPIECESDEFECTID = :id
+//       AND RECEIPTNO = :receiptNo
+//     `;
+
+//     const step2Result = await connection.execute(
+//       step2Query,
+//       {
+//         id: GTPIECESDEFECTID,
+//         receiptNo: LOTNO,
+//       },
+//       { outFormat: oracledb.OUT_FORMAT_OBJECT },
+//     );
+//     if (step2Result.rows.length === 0) {
+//       return res.status(404).json({
+//         message: "No matching record found in Gtpiecesdefectdet",
+//       });
+//     }
+//     const { GTPIECESDEFECTDETID } = step2Result.rows[0];
+
+//     let tableNoTabValue = null;
+
+//     if (Array.isArray(tableNo)) {
+//       tableNoTabValue = tableNo.join(",");
+//     } else if (tableNo) {
+//       tableNoTabValue = String(tableNo);
+//     }
+//     const primaryKey = Date.now() + 1000 + Math.floor(Math.random() * 1000);
+
+//     const insertQuery = `
+//       INSERT INTO Gtdefectdettab (
+      
+//         GTDEFECTDETTABID,
+//         GTPIECESDEFECTID,
+//         GTPIECESDEFECTDETID,
+//         BASEPCSNO,
+//         TABLENOTAB,
+//         STARTMTR,
+//         ENDMTR,
+//         CHECKER,
+//         ALLACATIONID,
+//         PCSID,
+//         TOTPOINTSTAB
+//       )
+//       VALUES (
+//         :primaryKey,
+//         :piecesDefectId,
+//         :piecesDefectDetId,
+//         :basePcsNo,
+//         :tableNoTab,
+//         :startMtr,
+//         :meters,
+//         :checker,
+//         :allocationId,
+//         :pieceId,
+//         :totalPoints
+//       )
+//     `;
+
+//     await connection.execute(
+//       insertQuery,
+//       {
+//         primaryKey,
+//         piecesDefectId: GTPIECESDEFECTID,
+//         piecesDefectDetId: GTPIECESDEFECTDETID,
+//         basePcsNo: Number(pieceNo),
+//         tableNoTab: tableNoTabValue,
+//         startMtr: Number(startMeter),
+//         meters: Number(meters),
+//         checker: checkerId ? Number(checkerId) : null,
+//         allocationId: allocationId ? Number(allocationId) : null,
+//         pieceId: pieceId,
+//         totalPoints: totalPointsSum,
+//       },
+//       { autoCommit: false },
+//     );
+
+//     // 🔥 STEP 3 - Insert children into GTPCSDEFDET
+//     if (!Array.isArray(defectArray) || defectArray.length === 0) {
+//       throw new Error("Defect array cannot be empty");
+//     }
+//     const seen = new Set();
+
+//     for (const defect of defectArray) {
+//       const duplicateKey = `${defect.meter}_${defect.defectId}`;
+
+//       if (seen.has(duplicateKey)) {
+//         throw new Error(
+//           `Duplicate defect found for Meter ${defect.meter} and Defect ${defect.defectId}`,
+//         );
+//       }
+
+//       seen.add(duplicateKey);
+//       const childPrimaryKey = Number(
+//         `${Date.now()}${Math.floor(Math.random() * 1000)}${Math.floor(Math.random() * 100)}`,
+//       );
+//       await connection.execute(
+//         `
+//     INSERT INTO GTPCSDEFDET (
+//       GTPCSDEFDETID,
+//       GTPIECESDEFECTID,
+//       GTDEFECTDETTABID,
+//       MTRAT,
+//       DEFECTNAME1,
+//       NOOGTIME,
+//       DEFECTPOINS1,
+//       TOTPOINS1
+//     )
+//     VALUES (
+//       :childId,
+//       :piecesDefectId,
+//       :defectDetTabId,
+//       :meter,
+//       :defectId,
+//       :times,
+//       :points,
+//       :totalPoints
+//     )
+//     `,
+//         {
+//           childId: childPrimaryKey,
+//           piecesDefectId: GTPIECESDEFECTID,
+//           defectDetTabId: primaryKey,
+//           meter: Number(defect.meter),
+//           defectId: Number(defect.defectId),
+//           times: Number(defect.times),
+//           points: Number(defect.points),
+//           totalPoints: Number(defect.totalPoints),
+//         },
+//         { autoCommit: false },
+//       );
+//     }
+   
+//     await connection.commit();
+//     return res.status(200).json({
+//       message: "Defect entry updated and child record inserted successfully",
+//     });
+//   } catch (error) {
+//     await connection.rollback();
+
+//     console.error("Update Defect Entry Error:", error);
+//     return res.status(500).json({
+//       message: "Server error",
+//       error: error.message,
+//     });
+//   }
+// }
 export async function updateDefectEntry(req, res) {
   const { lotId } = req.params;
-  const {
-    pieceId,
-    pieceNo,
-    tableId,
-    tableNo,
-    startMeter,
-    endMeter,
-    meters,
-    checkerId,
-    checkingSectionId,
-    defectArray,
-    totalPointsSum,
-    allocationId,
-  } = req.body;
+  const { Lot } = req.body;
+
+  // Validate Lot array
+  if (!Array.isArray(Lot) || Lot.length === 0) {
+    return res.status(400).json({ message: "Lot array cannot be empty" });
+  }
 
   const connection = await getConnection(res);
 
   try {
-    // ✅ STEP 1
-    const step1Query = `
-      SELECT GTPIECESDEFECTID, LOTNO
-      FROM Gtpiecesdefect
-      WHERE LOTNO = :lotId
-    `;
-
+    // ✅ STEP 1 — Fetch GTPIECESDEFECTID and LOTNO once (same for all pieces)
     const step1Result = await connection.execute(
-      step1Query,
-      { lotId }, // bind object
+      `SELECT GTPIECESDEFECTID, LOTNO
+       FROM Gtpiecesdefect
+       WHERE LOTNO = :lotId`,
+      { lotId },
       { outFormat: oracledb.OUT_FORMAT_OBJECT },
     );
 
@@ -174,149 +353,169 @@ export async function updateDefectEntry(req, res) {
 
     const { GTPIECESDEFECTID, LOTNO } = step1Result.rows[0];
 
-    // ✅ STEP 2
-    const step2Query = `
-      SELECT GTPIECESDEFECTDETID,GTPIECESDEFECTID,RECEIPTNO
-      FROM Gtpiecesdefectdet
-      WHERE GTPIECESDEFECTID = :id
-      AND RECEIPTNO = :receiptNo
-    `;
-
+    // ✅ STEP 2 — Fetch GTPIECESDEFECTDETID once (same for all pieces)
     const step2Result = await connection.execute(
-      step2Query,
-      {
-        id: GTPIECESDEFECTID,
-        receiptNo: LOTNO,
-      },
+      `SELECT GTPIECESDEFECTDETID, GTPIECESDEFECTID, RECEIPTNO
+       FROM Gtpiecesdefectdet
+       WHERE GTPIECESDEFECTID = :id
+       AND RECEIPTNO = :receiptNo`,
+      { id: GTPIECESDEFECTID, receiptNo: LOTNO },
       { outFormat: oracledb.OUT_FORMAT_OBJECT },
     );
+
     if (step2Result.rows.length === 0) {
       return res.status(404).json({
         message: "No matching record found in Gtpiecesdefectdet",
       });
     }
+
     const { GTPIECESDEFECTDETID } = step2Result.rows[0];
 
-    let tableNoTabValue = null;
+    // ✅ STEP 3 — Loop through each piece in the Lot array
+    for (const piece of Lot) {
+      const {
+        pieceId,
+        pieceNo,
+        subPieceNo,       // only present for split pieces
+        tableId,
+        tableNo,
+        startMeter,
+        endMeter,
+        meters,
+        checkerId,
+        checkingSectionId,
+        allocationId,
+        totalPointsSum,
+        defects,
+      } = piece;
 
-    if (Array.isArray(tableNo)) {
-      tableNoTabValue = tableNo.join(",");
-    } else if (tableNo) {
-      tableNoTabValue = String(tableNo);
-    }
-    const primaryKey = Date.now() + 1000 + Math.floor(Math.random() * 1000);
-
-    const insertQuery = `
-      INSERT INTO Gtdefectdettab (
-      
-        GTDEFECTDETTABID,
-        GTPIECESDEFECTID,
-        GTPIECESDEFECTDETID,
-        BASEPCSNO,
-        TABLENOTAB,
-        STARTMTR,
-        ENDMTR,
-        CHECKER,
-        ALLACATIONID,
-        PCSID,
-        TOTPOINTSTAB
-      )
-      VALUES (
-        :primaryKey,
-        :piecesDefectId,
-        :piecesDefectDetId,
-        :basePcsNo,
-        :tableNoTab,
-        :startMtr,
-        :meters,
-        :checker,
-        :allocationId,
-        :pieceId,
-        :totalPoints
-      )
-    `;
-
-    await connection.execute(
-      insertQuery,
-      {
-        primaryKey,
-        piecesDefectId: GTPIECESDEFECTID,
-        piecesDefectDetId: GTPIECESDEFECTDETID,
-        basePcsNo: Number(pieceNo),
-        tableNoTab: tableNoTabValue,
-        startMtr: Number(startMeter),
-        meters: Number(meters),
-        checker: checkerId ? Number(checkerId) : null,
-        allocationId: allocationId ? Number(allocationId) : null,
-        pieceId: pieceId,
-        totalPoints: totalPointsSum,
-      },
-      { autoCommit: false },
-    );
-
-    // 🔥 STEP 3 - Insert children into GTPCSDEFDET
-    if (!Array.isArray(defectArray) || defectArray.length === 0) {
-      throw new Error("Defect array cannot be empty");
-    }
-    const seen = new Set();
-
-    for (const defect of defectArray) {
-      const duplicateKey = `${defect.meter}_${defect.defectId}`;
-
-      if (seen.has(duplicateKey)) {
+      // Validate defects for each piece
+      if (!Array.isArray(defects) || defects.length === 0) {
         throw new Error(
-          `Duplicate defect found for Meter ${defect.meter} and Defect ${defect.defectId}`,
+          `Defect array cannot be empty for piece ${subPieceNo || pieceNo}`,
         );
       }
 
-      seen.add(duplicateKey);
-      const childPrimaryKey = Number(
-        `${Date.now()}${Math.floor(Math.random() * 1000)}${Math.floor(Math.random() * 100)}`,
+      // Build tableNoTab string
+      let tableNoTabValue = null;
+      if (Array.isArray(tableNo)) {
+        tableNoTabValue = tableNo.join(",");
+      } else if (tableNo) {
+        tableNoTabValue = String(tableNo);
+      }
+
+      // Generate unique primary key for this piece's tab record
+      const primaryKey = Number(
+        `${Date.now()}${Math.floor(Math.random() * 1000)}`,
       );
+
+      // ✅ Insert into Gtdefectdettab — one row per piece (original or split)
       await connection.execute(
-        `
-    INSERT INTO GTPCSDEFDET (
-      GTPCSDEFDETID,
-      GTPIECESDEFECTID,
-      GTDEFECTDETTABID,
-      MTRAT,
-      DEFECTNAME1,
-      NOOGTIME,
-      DEFECTPOINS1,
-      TOTPOINS1
-    )
-    VALUES (
-      :childId,
-      :piecesDefectId,
-      :defectDetTabId,
-      :meter,
-      :defectId,
-      :times,
-      :points,
-      :totalPoints
-    )
-    `,
+        `INSERT INTO Gtdefectdettab (
+          GTDEFECTDETTABID,
+          GTPIECESDEFECTID,
+          GTPIECESDEFECTDETID,
+          BASEPCSNO,
+          SPLITPCSNO,
+          TABLENOTAB,
+          STARTMTR,
+          ENDMTR,
+          CHECKER,
+          ALLACATIONID,
+          PCSID,
+          TOTPOINTSTAB
+        ) VALUES (
+          :primaryKey,
+          :piecesDefectId,
+          :piecesDefectDetId,
+          :basePcsNo,
+          :subPcsNo,
+          :tableNoTab,
+          :startMtr,
+          :endMtr,
+          :checker,
+          :allocationId,
+          :pieceId,
+          :totalPoints
+        )`,
         {
-          childId: childPrimaryKey,
+          primaryKey,
           piecesDefectId: GTPIECESDEFECTID,
-          defectDetTabId: primaryKey,
-          meter: Number(defect.meter),
-          defectId: Number(defect.defectId),
-          times: Number(defect.times),
-          points: Number(defect.points),
-          totalPoints: Number(defect.totalPoints),
+          piecesDefectDetId: GTPIECESDEFECTDETID,
+          basePcsNo: Number(pieceNo),
+          subPcsNo: subPieceNo || null,   // null for original piece, "1A"/"1B" for splits
+          tableNoTab: tableNoTabValue,
+          startMtr: Number(startMeter),
+          endMtr: Number(endMeter),       // endMeter per piece (important for splits)
+          checker: checkerId ? Number(checkerId) : null,
+          allocationId: allocationId ? Number(allocationId) : null,
+          pieceId: pieceId,
+          totalPoints: totalPointsSum,
         },
         { autoCommit: false },
       );
+
+      // ✅ Insert defects for this piece into GTPCSDEFDET
+      const seen = new Set();
+
+      for (const defect of defects) {
+        const duplicateKey = `${defect.meter}_${defect.defectId}`;
+
+        if (seen.has(duplicateKey)) {
+          throw new Error(
+            `Duplicate defect found for Meter ${defect.meter} and Defect ${defect.defectId} in piece ${subPieceNo || pieceNo}`,
+          );
+        }
+
+        seen.add(duplicateKey);
+
+        const childPrimaryKey = Number(
+          `${Date.now()}${Math.floor(Math.random() * 1000)}${Math.floor(Math.random() * 100)}`,
+        );
+
+        await connection.execute(
+          `INSERT INTO GTPCSDEFDET (
+            GTPCSDEFDETID,
+            GTPIECESDEFECTID,
+            GTDEFECTDETTABID,
+            MTRAT,
+            DEFECTNAME1,
+            NOOGTIME,
+            DEFECTPOINS1,
+            TOTPOINS1
+          ) VALUES (
+            :childId,
+            :piecesDefectId,
+            :defectDetTabId,
+            :meter,
+            :defectId,
+            :times,
+            :points,
+            :totalPoints
+          )`,
+          {
+            childId: childPrimaryKey,
+            piecesDefectId: GTPIECESDEFECTID,
+            defectDetTabId: primaryKey,   // links to the parent tab row for this piece
+            meter: Number(defect.meter),
+            defectId: Number(defect.defectId),
+            times: Number(defect.times),
+            points: Number(defect.points),
+            totalPoints: Number(defect.totalPoints),
+          },
+          { autoCommit: false },
+        );
+      }
     }
-   
+
+    // ✅ Commit all inserts together
     await connection.commit();
+
     return res.status(200).json({
-      message: "Defect entry updated and child record inserted successfully",
+      message: `Defect entry updated successfully for ${Lot.length} piece(s)`,
     });
   } catch (error) {
     await connection.rollback();
-
     console.error("Update Defect Entry Error:", error);
     return res.status(500).json({
       message: "Server error",
