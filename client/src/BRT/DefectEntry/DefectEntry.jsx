@@ -34,18 +34,21 @@ const DefectEntry = () => {
   const [pieceNo, setPieceNo] = useState("");
   const [meters, setMeters] = useState("");
   const [tableNo, setTableNo] = useState([]);
-  const [expanded, setExpanded] = useState(true);
-  const [defectExpanded, setDefectExpanded] = useState(true);
+  const [expandedIndex, setExpandedIndex] = useState(null);
+  const [defectExpandedIndex, setDefectExpandedIndex] = useState(null);
   const [checkedMeter, setCheckedMeter] = useState("");
   const [defectId, setDefectId] = useState("");
   const [defectName, setDefectName] = useState("");
   const [defectTimes, setDefectTimes] = useState("");
   const [defectPoints, setDefectPoints] = useState("");
   const [totalDefectPoints, setTotalDefectPoints] = useState("");
-  const [defectArray, setDefectArray] = useState([]);
+  const [splitPieces, setSplitPieces] = useState([]);
   const [translatedDefects, setTranslatedDefects] = useState([]);
   const [startMeter, setStartMeter] = useState(1);
   const [endMeter, setEndMeter] = useState(meters);
+  const [subPieceNo, setSubPieceNo] = useState("");
+  const [subPieceId, setSubPieceId] = useState("");
+  
   const lotIdRef = useRef(null);
 
   const storedUserId = Number(localStorage.getItem("userId"));
@@ -87,7 +90,19 @@ const DefectEntry = () => {
   console.log(lotDetails, "lotDetails");
   const { data: defectEntry } = useGetDefectsQuery();
   console.log(defectEntry, "defectEntry");
+  useEffect(() => {
+    if (!pieceId || !meters) return;
 
+    setSplitPieces([
+      {
+        piece: pieceNo,
+        subPiece: "",
+        start: 1,
+        end: Number(meters),
+        defects: [],
+      },
+    ]);
+  }, [pieceId, meters]);
   const lotOptions = useMemo(
     () =>
       lots?.data?.map((lot) => ({
@@ -145,13 +160,15 @@ const DefectEntry = () => {
     setSectionName(work?.sectionName || "");
   }, [lotDetails]);
   console.log(checkerName, "checkerName");
-  const totalPointsSum = defectArray.reduce(
-    (sum, item) => sum + Number(item.totalPoints || 0),
+  const totalPointsSum = splitPieces.reduce(
+    (sum, piece) =>
+      sum +
+      piece.defects.reduce((pSum, d) => pSum + Number(d.totalPoints || 0), 0),
     0,
   );
   const data = {
     lotId: parseInt(lotId), // 👈 ADD THIS
-    allocationId:parseInt(allocationId),
+    allocationId: parseInt(allocationId),
     pieceId: parseInt(pieceId),
     pieceNo: parseInt(pieceNo),
     startMeter,
@@ -163,12 +180,69 @@ const DefectEntry = () => {
     checkerName,
     checkingSectionId: parseInt(checkingSectionId),
     sectionName,
-    defectArray,
+    splitPieces,
     totalPointsSum: parseInt(totalPointsSum),
   };
+  const handleSplit = () => {
+    if (!checkedMeter) {
+      Swal.fire({
+        icon: "warning",
+        title: "Select Meter to Split",
+        timer: 2000,
+      });
+      return;
+    }
 
-  console.log(startMeter,endMeter,meters,"tartMeter,endMeter");
-  
+    const splitMeter = Number(checkedMeter);
+
+    const index = splitPieces.findIndex(
+      (p) => splitMeter > p.start && splitMeter < p.end,
+    );
+
+    if (index === -1) return;
+
+    const current = splitPieces[index];
+
+    if (splitMeter <= current.start || splitMeter >= current.end) {
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Split Meter",
+        text: `Split must be between ${current.start + 1} and ${current.end - 1}`,
+        timer: 2000,
+      });
+      return;
+    }
+
+    const oldEnd = current.end; // ⭐ store original end
+
+    const letter = String.fromCharCode(65 + index);
+
+    const firstDefects = current.defects.filter((d) => d.meter <= splitMeter);
+    const secondDefects = current.defects.filter((d) => d.meter > splitMeter);
+
+    const updated = [...splitPieces];
+
+    updated[index] = {
+      ...current,
+      end: splitMeter,
+      defects: firstDefects,
+    };
+
+    updated.splice(index + 1, 0, {
+      piece: pieceNo,
+      subPiece: letter,
+      start: splitMeter + 1,
+      end: oldEnd,
+      defects: secondDefects,
+    });
+
+    setSplitPieces(updated);
+
+    setExpandedIndex(index + 1); // open lot accordion
+    setDefectExpandedIndex(index + 1);
+    setCheckedMeter(""); // reset meter after split
+  };
+
   const [updateData] = useUpdateDefectEntryMutation();
   const handleSubmitCustom = async (callback, data) => {
     try {
@@ -233,10 +307,23 @@ const DefectEntry = () => {
     if (!Number.isInteger(n) || n <= 0) return [];
     return Array.from({ length: n }, (_, i) => i + 1);
   };
-  const meterList = generateNumbers(meters)?.map((num) => ({
-    value: num,
-    label: num.toString(),
-  }));
+  // const meterList = generateNumbers(meters)?.map((num) => ({
+  //   value: num,
+  //   label: num.toString(),
+  // }));
+  // const meterList = generateNumbers(Number(meters))?.map((num) => ({
+  //   value: num,
+  //   label: num.toString(),
+  // }));
+  const getMeterList = (start, end) => {
+    return Array.from({ length: end - start + 1 }, (_, i) => {
+      const meter = start + i;
+      return {
+        value: meter,
+        label: meter.toString(),
+      };
+    });
+  };
   // const defectOptions = defectEntry?.data?.map((def) => ({
   //   label: def?.DEFECTNAME,
   //   value: def?.GTPIECEDEFMASTID,
@@ -293,63 +380,41 @@ const DefectEntry = () => {
 
   const FillDefectArray = (e) => {
     e.preventDefault();
-    // 🔹 Validation
+
     if (!checkedMeter) {
       Swal.fire({
         icon: "warning",
         title: "Please select Meter",
         timer: 2000,
-        showConfirmButton: true,
       });
       return;
     }
 
-    if (!defectId) {
-      Swal.fire({
-        icon: "warning",
-        title: "Please select Defect Name",
-        timer: 2000,
-        showConfirmButton: true,
-      });
-      return;
-    }
+    const meter = Number(checkedMeter);
 
-    if (defectPoints === "" || defectPoints === null) {
-      Swal.fire({
-        icon: "warning",
-        title: "Points not available",
-        timer: 2000,
-        showConfirmButton: true,
-      });
-      return;
-    }
-
-    if (defectTimes === "" || defectTimes === null) {
-      Swal.fire({
-        icon: "warning",
-        title: "Please enter No of Times",
-        timer: 2000,
-        showConfirmButton: true,
-      });
-      return;
-    }
-    const alreadyExists = defectArray.some(
-      (item) =>
-        Number(item.meter) === Number(checkedMeter) &&
-        Number(item.defectId) === Number(defectId),
+    const pieceIndex = splitPieces.findIndex(
+      (p) => meter >= p.start && meter <= p.end,
     );
 
-    if (alreadyExists) {
+    if (pieceIndex === -1) return;
+
+    const piece = splitPieces[pieceIndex];
+
+    const exists = piece.defects.some(
+      (d) => d.meter === meter && d.defectId === Number(defectId),
+    );
+
+    if (exists) {
       Swal.fire({
         icon: "warning",
-        title: "Same Defect Already Choosed for the Meter",
+        title: "Same Defect Already Exists",
         timer: 2000,
-        showConfirmButton: true,
       });
       return;
     }
-    const newItem = {
-      meter: Number(checkedMeter),
+
+    const newDefect = {
+      meter,
       defectId: Number(defectId),
       defectName,
       points: Number(defectPoints),
@@ -357,21 +422,23 @@ const DefectEntry = () => {
       totalPoints: Number(totalDefectPoints),
     };
 
-    setDefectArray((prev) => [...prev, newItem]);
+    const updated = [...splitPieces];
 
-    // Optional: Reset fields after adding
+    updated[pieceIndex].defects.push(newDefect);
+
+    setSplitPieces(updated);
+
     setCheckedMeter("");
     setDefectId("");
-    setDefectPoints("");
     setDefectTimes("");
   };
-  const deleteRow = (indexToDelete) => {
-    setDefectArray((prev) =>
-      prev.filter((_, index) => index !== indexToDelete),
-    );
-  };
+  const deleteRow = (pieceIndex, defectIndex) => {
+    const updated = [...splitPieces];
 
-  console.log(defectArray, "defectArray");
+    updated[pieceIndex].defects.splice(defectIndex, 1);
+
+    setSplitPieces(updated);
+  };
   const isNoDefectSelected =
     defectOptions?.find((d) => d.value === defectId)?.englishName ===
     "NO DEFECT";
@@ -394,354 +461,514 @@ const DefectEntry = () => {
         <div className="h-[70vh] overflow-x-auto bg-white shadow-lg rounded-xl mt-2">
           <form className=" p-2">
             {/* Lot Details */}
-            <div>
-              <Accordion
-                expanded={expanded}
-                onChange={() => setExpanded((prev) => !prev)}
-                disableGutters
-                elevation={0}
-                square
-                sx={{
-                  "&:before": { display: "none" }, // remove top divider line
-                  borderBottom: expanded ? "none" : "1px solid #d1d5db", // 👈 show line when closed
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<ExpandMore />}
-                  sx={{
-                    minHeight: "40px",
-                    "& .MuiAccordionSummary-content": {
-                      margin: "8px 0",
-                    },
-                  }}
-                >
-                  <Typography
-                    component="span"
-                    sx={{ color: "black", fontWeight: 700, marginLeft: "-9px" }} // slate-700 color
-                  >
-                    Lot Details
-                  </Typography>{" "}
-                </AccordionSummary>
-                <AccordionDetails
-                  sx={{
-                    paddingTop: 0,
-                    // backgroundColor: "#f1f1f0", // ✅ correct
-                    paddingX: 1,
-                  }}
-                >
+            {splitPieces.map((piece, pieceIndex) => {
+              const meterList = getMeterList(piece.start, piece.end);
+
+              return (
+                <div key={pieceIndex} className="mb-6">
+                  <h3 className="font-bold text-sm mb-2">
+                    Piece {piece.piece}
+                    {piece.subPiece} ({piece.start} - {piece.end})
+                  </h3>
+                  {/* Lot Details */}
+
                   <div>
-                    <div className="grid grid-cols-5 lg:grid-cols-11 gap-4 text-sm">
-                      {/* Lot No */}
-                      <div className="col-span-2 lg:col-span-2 z-999">
-                        <label className="block font-medium mb-1">Lot No</label>
-                        <Select
-                          ref={lotIdRef}
-                          options={lotOptions}
-                          value={
-                            lotOptions?.find(
-                              (option) => option.value === lotId,
-                            ) || null
-                          }
-                          onChange={(selectedOption) =>
-                            setLotId(selectedOption?.value || "")
-                          }
-                          placeholder="Select Lot"
-                          isClearable={false} // ✅ disable cross icon
-                          styles={customSelectStyles}
-                          isSearchable={true}
-                          isDisabled={!canEditLot}
-                        />
-                      </div>
-
-                      <div className="col-span-1 lg:col-span-1">
-                        <label className="block font-medium mb-1">
-                          Piece No
-                        </label>
-                        <Select
-                          options={pieceOptions}
-                          value={
-                            pieceOptions?.find(
-                              (option) => option.value === pieceId,
-                            ) || null
-                          }
-                          onChange={(selectedOption) =>
-                            setPieceId(selectedOption?.value || "")
-                          }
-                          placeholder="Select"
-                          isClearable={false} // ✅ disable cross icon
-                          styles={customSelectStyles}
-                          isSearchable={true}
-                          isDisabled={!canEditLot}
-                          className="text-right"
-                        />
-                      </div>
-
-                      {/* Meter */}
-                      <div className="col-span-1 lg:col-span-1">
-                        <label className="block font-medium mb-1">Meters</label>
-                        <input
-                          type="number"
-                          value={
-                            meters !== "" &&
-                            meters !== null &&
-                            meters !== undefined
-                              ? Number(meters).toFixed(2)
-                              : ""
-                          }
-                          readOnly
-                          className="w-full border rounded-lg px-1 py-1.5 text-right "
-                        />
-                      </div>
-                      {/* Meters in DC */}
-                      <div className="col-span-1 lg:col-span-1">
-                        <label className="block font-medium mb-1">
-                          Table No
-                        </label>
-                        <input
-                          type="number"
-                          value={tableNo?.join(", ")}
-                          readOnly
-                          className="w-full border rounded-lg px-1 py-1.5 text-right "
-                        />
-                      </div>
-                      <div className="col-span-2 lg:col-span-3">
-                        <label className="block text-sm font-medium mb-1 ">
-                          Checker Name
-                        </label>
-                        <input
-                          type="text"
-                          value={checkerName}
-                          readOnly
-                          className="border rounded-lg text-left px-2 py-1.5 w-full uppercase focus:border-none "
-                        />
-                      </div>
-
-                      {/* Meters */}
-                      <div className="col-span-2 lg:col-span-3 ">
-                        <label className="block text-sm font-medium mb-1">
-                          Checking Section Name
-                        </label>
-                        <input
-                          type="text"
-                          value={sectionName}
-                          readOnly
-                          className="border rounded-lg text-left px-2 py-1.5 w-full"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </AccordionDetails>{" "}
-              </Accordion>
-            </div>
-
-            {/* Defect Details */}
-            <div>
-              <Accordion
-                expanded={defectExpanded}
-                onChange={() => setDefectExpanded((prev) => !prev)}
-                disableGutters
-                elevation={0}
-                square
-                sx={{
-                  "&:before": { display: "none" }, // remove top divider line
-                  borderBottom: defectExpanded ? "none" : "1px solid #d1d5db", // 👈 show line when closed
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<ExpandMore />}
-                  sx={{
-                    minHeight: "40px",
-                    "& .MuiAccordionSummary-content": {
-                      margin: "8px 0",
-                    },
-                  }}
-                >
-                  <Typography
-                    component="span"
-                    sx={{ color: "black", fontWeight: 700, marginLeft: "-9px" }} // slate-700 color
-                  >
-                    Defect Details
-                  </Typography>{" "}
-                </AccordionSummary>
-                <AccordionDetails
-                  sx={{
-                    paddingTop: 0,
-                    // backgroundColor: "#f1f1f0", // ✅ correct
-                    paddingX: 1,
-                  }}
-                >
-                  <div>
-                    <div className="grid grid-cols-5 lg:grid-cols-9 gap-4 text-sm">
-                      {/* Lot No */}
-                      <div className="col-span-1 lg:col-span-1 z-999">
-                        <label className="block font-medium mb-1">
-                          Meter At
-                        </label>
-                        <Select
-                          options={meterList}
-                          value={
-                            meterList.find(
-                              (option) => option.value === checkedMeter,
-                            ) || null
-                          }
-                          onChange={(selectedOption) =>
-                            setCheckedMeter(selectedOption?.value || "")
-                          }
-                          placeholder="Select"
-                          isClearable={false} // ✅ disable cross icon
-                          styles={customSelectStyles}
-                          isSearchable={true}
-                          className="text-right"
-                        />
-                      </div>
-
-                      <div className="col-span-4 lg:col-span-4">
-                        <label className="block font-medium mb-1">
-                          Defect Name
-                        </label>
-                        <Select
-                          options={defectOptions}
-                          value={
-                            defectOptions?.find(
-                              (option) => option.value === defectId,
-                            ) || null
-                          }
-                          onChange={(selectedOption) => {
-                            setDefectId(selectedOption?.value || "");
-                            setDefectPoints(selectedOption?.points ?? "");
-                            setDefectName(selectedOption?.englishName ?? "");
-                          }}
-                          placeholder="Select"
-                          isClearable={false} // ✅ disable cross icon
-                          styles={customSelectStyles}
-                          isSearchable={true}
-                          className="text-left"
-                        />
-                      </div>
-
-                      {/* Meter */}
-                      <div className="col-span-1 lg:col-span-1">
-                        <label className="block font-medium mb-1">Points</label>
-                        <input
-                          type="number"
-                          value={defectPoints}
-                          readOnly
-                          className="w-full border rounded-lg px-1 py-1.5 text-right "
-                        />
-                      </div>
-                      {/* Meters in DC */}
-                      <div className="col-span-1 lg:col-span-1">
-                        <label className="block font-medium mb-1">
-                          No of times
-                        </label>
-                        <input
-                          type="number"
-                          value={defectTimes}
-                          disabled={isNoDefectSelected}
-                          onChange={(e) => setDefectTimes(e.target.value)}
-                          className={`w-full border rounded-lg px-1 py-1.5 text-right ${
-                            isNoDefectSelected
-                              ? "bg-gray-200 cursor-not-allowed"
-                              : ""
-                          }`}
-                        />
-                      </div>
-                      <div className="col-span-1 lg:col-span-1">
-                        <label className="block text-sm font-medium mb-1 ">
-                          Total Points
-                        </label>
-                        <input
-                          type="number"
-                          value={totalDefectPoints}
-                          readOnly
-                          className="border rounded-lg text-right px-2 py-1.5 w-full uppercase focus:border-none "
-                        />
-                      </div>
-                      <div className="col-span-1 lg:col-span-1">
-                        <button
-                          type="button"
-                          onClick={FillDefectArray}
-                          className="bg-green-600 mr-2 mt-6 text-white  py-1.5 rounded-lg hover:bg-green-700 transition px-2"
+                    <Accordion
+                      expanded={expandedIndex === pieceIndex}
+                      onChange={() =>
+                        setExpandedIndex(
+                          expandedIndex === pieceIndex ? null : pieceIndex,
+                        )
+                      }
+                      disableGutters
+                      elevation={0}
+                      square
+                      sx={{
+                        "&:before": { display: "none" }, // remove top divider line
+                        borderBottom:
+                          expandedIndex === pieceIndex
+                            ? "none"
+                            : "1px solid #d1d5db",
+                      }}
+                    >
+                      <AccordionSummary
+                        expandIcon={<ExpandMore />}
+                        sx={{
+                          minHeight: "40px",
+                          "& .MuiAccordionSummary-content": {
+                            margin: "8px 0",
+                          },
+                        }}
+                      >
+                        <Typography
+                          component="span"
+                          sx={{
+                            color: "black",
+                            fontWeight: 700,
+                            marginLeft: "-9px",
+                          }} // slate-700 color
                         >
-                          + Add
-                        </button>
-                      </div>
-                    </div>
+                          Lot Details
+                        </Typography>{" "}
+                      </AccordionSummary>
+                      <AccordionDetails
+                        sx={{
+                          paddingTop: 0,
+                          // backgroundColor: "#f1f1f0", // ✅ correct
+                          paddingX: 1,
+                        }}
+                      >
+                        <div>
+                          <div className="grid grid-cols-5 lg:grid-cols-11 gap-4 text-sm">
+                            {/* Lot No */}
+                            <div className="col-span-2 lg:col-span-2 z-999">
+                              <label className="block font-medium mb-1">
+                                Lot No
+                              </label>
+                              <Select
+                                ref={lotIdRef}
+                                options={lotOptions}
+                                value={
+                                  lotOptions?.find(
+                                    (option) => option.value === lotId,
+                                  ) || null
+                                }
+                                onChange={(selectedOption) =>
+                                  setLotId(selectedOption?.value || "")
+                                }
+                                placeholder="Select Lot"
+                                isClearable={false} // ✅ disable cross icon
+                                styles={customSelectStyles}
+                                isSearchable={true}
+                                isDisabled={!canEditLot}
+                              />
+                            </div>
+
+                            <div className="col-span-1 lg:col-span-1">
+                              <label className="block font-medium mb-1">
+                                Piece No
+                              </label>
+                              <Select
+                                options={pieceOptions}
+                                value={
+                                  pieceOptions?.find(
+                                    (option) => option.value === pieceId,
+                                  ) || null
+                                }
+                                onChange={(selectedOption) =>
+                                  setPieceId(selectedOption?.value || "")
+                                }
+                                placeholder="Select"
+                                isClearable={false} // ✅ disable cross icon
+                                styles={customSelectStyles}
+                                isSearchable={true}
+                                isDisabled={!canEditLot}
+                                className="text-right"
+                              />
+                            </div>
+
+                            {/* Meter */}
+                            <div className="col-span-1 lg:col-span-1">
+                              <label className="block font-medium mb-1">
+                                Meters
+                              </label>
+                              <input
+                                type="number"
+                                value={
+                                  meters !== "" &&
+                                  meters !== null &&
+                                  meters !== undefined
+                                    ? Number(meters).toFixed(2)
+                                    : ""
+                                }
+                                readOnly
+                                className="w-full border rounded-lg px-1 py-1.5 text-right "
+                              />
+                            </div>
+                            {/* Meters in DC */}
+                            <div className="col-span-1 lg:col-span-1">
+                              <label className="block font-medium mb-1">
+                                Table No
+                              </label>
+                              <input
+                                type="number"
+                                value={tableNo?.join(", ")}
+                                readOnly
+                                className="w-full border rounded-lg px-1 py-1.5 text-right "
+                              />
+                            </div>
+                            <div className="col-span-2 lg:col-span-3">
+                              <label className="block text-sm font-medium mb-1 ">
+                                Checker Name
+                              </label>
+                              <input
+                                type="text"
+                                value={checkerName}
+                                readOnly
+                                className="border rounded-lg text-left px-2 py-1.5 w-full uppercase focus:border-none "
+                              />
+                            </div>
+
+                            {/* Meters */}
+                            <div className="col-span-2 lg:col-span-3 ">
+                              <label className="block text-sm font-medium mb-1">
+                                Checking Section Name
+                              </label>
+                              <input
+                                type="text"
+                                value={sectionName}
+                                readOnly
+                                className="border rounded-lg text-left px-2 py-1.5 w-full"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionDetails>{" "}
+                    </Accordion>
                   </div>
-                </AccordionDetails>{" "}
-              </Accordion>
-            </div>
 
-            {/* Defect Table */}
-            {defectArray?.length > 0 ? (
-              <>
-                <div className="h-[30vh] overflow-y-auto overflow-x-auto bg-white   mt-2">
-                  <table className="w-full lg:w-[55vw] border border-gray-200 table-fixed border-collapse">
-                    <thead className="bg-gray-100 text-gray-700 text-sm ">
-                      <tr>
-                        <th className="w-8 px-1 py-1 border">Meter</th>
-                        <th className="w-44 border">Defect Name</th>
-                        <th className="w-12 border">Points</th>
-                        <th className="w-12 px-1 border">Times</th>
-                        <th className="w-20 border">Total Points</th>
-                        <th className="w-8 border">Action</th>
-                      </tr>
-                    </thead>
-
-                    <tbody className="text-xs  text-center">
-                      {defectArray?.map((defect, index) => {
-                        return (
-                          <tr
-                            key={index}
-                            className={
-                              index % 2 === 0 ? "bg-white" : "bg-gray-100"
-                            }
-                          >
-                            <td className=" py-1.5 border text-right pr-1">
-                              {defect?.meter}
-                            </td>
-                            <td className=" border text-left pl-1">
-                              {defect?.defectName}
-                            </td>
-                            <td className=" border text-right pr-1">
-                              {defect?.points}
-                            </td>
-                            <td className=" border text-right pr-1">
-                              {defect?.times}
-                            </td>
-                            <td className=" border text-right pr-1">
-                              {defect?.totalPoints}
-                            </td>
-                            <td className=" px-2  border text-center">
+                  {/* Defect Details */}
+                  <div>
+                    <Accordion
+                      expanded={defectExpandedIndex === pieceIndex}
+                      onChange={() =>
+                        setDefectExpandedIndex(
+                          defectExpandedIndex === pieceIndex
+                            ? null
+                            : pieceIndex,
+                        )
+                      }
+                      disableGutters
+                      elevation={0}
+                      square
+                      sx={{
+                        "&:before": { display: "none" }, // remove top divider line
+                        // 👈 show line when closed
+                        borderBottom:
+                          defectExpandedIndex === pieceIndex
+                            ? "none"
+                            : "1px solid #d1d5db",
+                      }}
+                    >
+                      <AccordionSummary
+                        expandIcon={<ExpandMore />}
+                        sx={{
+                          minHeight: "40px",
+                          "& .MuiAccordionSummary-content": {
+                            margin: "8px 0",
+                          },
+                        }}
+                      >
+                        <Typography
+                          component="span"
+                          sx={{
+                            color: "black",
+                            fontWeight: 700,
+                            marginLeft: "-9px",
+                          }} // slate-700 color
+                        >
+                          Defect Details
+                        </Typography>{" "}
+                      </AccordionSummary>
+                      <AccordionDetails
+                        sx={{
+                          paddingTop: 0,
+                          // backgroundColor: "#f1f1f0", // ✅ correct
+                          paddingX: 1,
+                        }}
+                      >
+                        <div>
+                          <div className="grid grid-cols-5 lg:grid-cols-9 gap-4 text-sm">
+                            {/* Lot No */}
+                            <div className="col-span-1 lg:col-span-1 z-999">
+                              <label className="block font-medium mb-1">
+                                Meter At
+                              </label>
+                              <Select
+                                options={meterList}
+                                value={
+                                  meterList.find(
+                                    (option) =>
+                                      option.value === Number(checkedMeter),
+                                  ) || null
+                                }
+                                onChange={(selectedOption) =>
+                                  setCheckedMeter(
+                                    selectedOption
+                                      ? Number(selectedOption.value)
+                                      : "",
+                                  )
+                                }
+                                placeholder="Select"
+                                isClearable={false} // ✅ disable cross icon
+                                styles={customSelectStyles}
+                                isSearchable={true}
+                                className="text-right"
+                              />
                               <button
                                 type="button"
-                                onClick={() => deleteRow(index)}
-                                className="bg-red-500 text-white px-1 py-1 rounded text-sm"
+                                onClick={handleSplit}
+                                className="bg-purple-600 text-white px-2 rounded-lg"
                               >
-                                <MdDelete />
+                                Split
                               </button>
-                            </td>
+                            </div>
+
+                            <div className="col-span-4 lg:col-span-4">
+                              <label className="block font-medium mb-1">
+                                Defect Name
+                              </label>
+                              <Select
+                                options={defectOptions}
+                                value={
+                                  defectOptions?.find(
+                                    (option) => option.value === defectId,
+                                  ) || null
+                                }
+                                onChange={(selectedOption) => {
+                                  setDefectId(selectedOption?.value || "");
+                                  setDefectPoints(selectedOption?.points ?? "");
+                                  setDefectName(
+                                    selectedOption?.englishName ?? "",
+                                  );
+                                }}
+                                placeholder="Select"
+                                isClearable={false} // ✅ disable cross icon
+                                styles={customSelectStyles}
+                                isSearchable={true}
+                                className="text-left"
+                              />
+                            </div>
+
+                            {/* Meter */}
+                            <div className="col-span-1 lg:col-span-1">
+                              <label className="block font-medium mb-1">
+                                Points
+                              </label>
+                              <input
+                                type="number"
+                                value={defectPoints}
+                                readOnly
+                                className="w-full border rounded-lg px-1 py-1.5 text-right "
+                              />
+                            </div>
+                            {/* Meters in DC */}
+                            <div className="col-span-1 lg:col-span-1">
+                              <label className="block font-medium mb-1">
+                                No of times
+                              </label>
+                              <input
+                                type="number"
+                                value={defectTimes}
+                                disabled={isNoDefectSelected}
+                                onChange={(e) => setDefectTimes(e.target.value)}
+                                className={`w-full border rounded-lg px-1 py-1.5 text-right ${
+                                  isNoDefectSelected
+                                    ? "bg-gray-200 cursor-not-allowed"
+                                    : ""
+                                }`}
+                              />
+                            </div>
+                            <div className="col-span-1 lg:col-span-1">
+                              <label className="block text-sm font-medium mb-1 ">
+                                Total Points
+                              </label>
+                              <input
+                                type="number"
+                                value={totalDefectPoints}
+                                readOnly
+                                className="border rounded-lg text-right px-2 py-1.5 w-full uppercase focus:border-none "
+                              />
+                            </div>
+                            <div className="col-span-1 lg:col-span-1">
+                              <button
+                                type="button"
+                                onClick={FillDefectArray}
+                                className="bg-green-600 mr-2 mt-6 text-white  py-1.5 rounded-lg hover:bg-green-700 transition px-2"
+                              >
+                                + Add
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionDetails>{" "}
+                    </Accordion>
+                  </div>
+
+                  {/* Piece Table */}
+                  {piece.defects?.length > 0 && (
+                    <div className="mt-2">
+                      <table className="w-full lg:w-[55vw] border border-gray-200 table-fixed border-collapse">
+                        <thead className="bg-gray-100 text-gray-700 text-sm">
+                          <tr>
+                            <th className="w-8 px-1 py-1 border">Meter</th>
+                            <th className="w-44 border">Defect Name</th>
+                            <th className="w-12 border">Points</th>
+                            <th className="w-12 px-1 border">Times</th>
+                            <th className="w-20 border">Total Points</th>
+                            <th className="w-8 border">Action</th>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot>
-                      <tr className=" font-semibold text-xs">
-                        <td className="border py-1 text-right pr-1" colSpan={4}>
-                          Total Points
-                        </td>
-                        <td className="border text-right pr-1">
-                          {totalPointsSum}
-                        </td>
-                        <td className="border"></td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                        </thead>
+
+                        <tbody className="text-xs text-center">
+                          {piece.defects.map((defect, index) => (
+                            <tr
+                              key={index}
+                              className={
+                                index % 2 === 0 ? "bg-white" : "bg-gray-100"
+                              }
+                            >
+                              <td className="py-1.5 border text-right pr-1">
+                                {defect?.meter}
+                              </td>
+
+                              <td className="border text-left pl-1">
+                                {defect?.defectName}
+                              </td>
+
+                              <td className="border text-right pr-1">
+                                {defect?.points}
+                              </td>
+
+                              <td className="border text-right pr-1">
+                                {defect?.times}
+                              </td>
+
+                              <td className="border text-right pr-1">
+                                {defect?.totalPoints}
+                              </td>
+
+                              <td className="px-2 border text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => deleteRow(pieceIndex, index)}
+                                  className="bg-red-500 text-white px-1 py-1 rounded text-sm"
+                                >
+                                  <MdDelete />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+
+                        <tfoot>
+                          <tr className="font-semibold text-xs">
+                            <td
+                              className="border py-1 text-right pr-1"
+                              colSpan={4}
+                            >
+                              Piece Total
+                            </td>
+
+                            <td className="border text-right pr-1">
+                              {piece.defects.reduce(
+                                (sum, d) => sum + Number(d.totalPoints || 0),
+                                0,
+                              )}
+                            </td>
+
+                            <td className="border"></td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
                 </div>
-              </>
-            ) : (
-              ""
-            )}
+              );
+            })}
+            {/* Defect Table */}
+            {/* {splitPieces?.some((p) => p.defects?.length > 0) && (
+              <div className="h-[30vh] overflow-y-auto overflow-x-auto bg-white mt-2">
+                {splitPieces.map((piece, pieceIndex) => {
+                  if (!piece.defects?.length) return null;
+
+                  const pieceTotal = piece.defects.reduce(
+                    (sum, d) => sum + Number(d.totalPoints || 0),
+                    0,
+                  );
+
+                  return (
+                    <div key={pieceIndex} className="mb-4">
+                      <h2 className="font-bold text-sm mb-1">
+                        Piece {piece.piece}
+                        {piece.subPiece}
+                      </h2>
+
+                      <table className="w-full lg:w-[55vw] border border-gray-200 table-fixed border-collapse">
+                        <thead className="bg-gray-100 text-gray-700 text-sm">
+                          <tr>
+                            <th className="w-8 px-1 py-1 border">Meter</th>
+                            <th className="w-44 border">Defect Name</th>
+                            <th className="w-12 border">Points</th>
+                            <th className="w-12 px-1 border">Times</th>
+                            <th className="w-20 border">Total Points</th>
+                            <th className="w-8 border">Action</th>
+                          </tr>
+                        </thead>
+
+                        <tbody className="text-xs text-center">
+                          {piece.defects.map((defect, index) => (
+                            <tr
+                              key={index}
+                              className={
+                                index % 2 === 0 ? "bg-white" : "bg-gray-100"
+                              }
+                            >
+                              <td className="py-1.5 border text-right pr-1">
+                                {defect?.meter}
+                              </td>
+
+                              <td className="border text-left pl-1">
+                                {defect?.defectName}
+                              </td>
+
+                              <td className="border text-right pr-1">
+                                {defect?.points}
+                              </td>
+
+                              <td className="border text-right pr-1">
+                                {defect?.times}
+                              </td>
+
+                              <td className="border text-right pr-1">
+                                {defect?.totalPoints}
+                              </td>
+
+                              <td className="px-2 border text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => deleteRow(pieceIndex, index)}
+                                  className="bg-red-500 text-white px-1 py-1 rounded text-sm"
+                                >
+                                  <MdDelete />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+
+                        <tfoot>
+                          <tr className="font-semibold text-xs">
+                            <td
+                              className="border py-1 text-right pr-1"
+                              colSpan={4}
+                            >
+                              Piece Total
+                            </td>
+
+                            <td className="border text-right pr-1">
+                              {pieceTotal}
+                            </td>
+
+                            <td className="border"></td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  );
+                })}
+              </div>
+            )} */}
           </form>
         </div>
       </div>
