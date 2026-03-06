@@ -1,0 +1,298 @@
+/* eslint-disable no-unused-vars */
+import { useState, useRef, useCallback } from "react";
+import {
+  useGetLotPieceReceiptQuery,
+  useUpdatePieceReceiptMutation,
+  useGetPieceReceiptByIdQuery,
+} from "../../redux/services/PieceReceipt";
+import { useEffect } from "react";
+import { MdDelete } from "react-icons/md";
+import Swal from "sweetalert2";
+import Select from "react-select";
+import { useGetFoldingPendingByIdQuery, useGetFoldingPendingQuery, useUpdateFoldingPendingMutation } from "../../redux/services/FoldingPendingList";
+
+const FoldingPendingList = ({
+  // onClose,
+  // selectedLotId,
+  // setSelectedLotId,
+  // selectedClothId,
+  // setSelectedClothId,
+  // setSelectedGridId,
+  // selectedGridId,
+}) => {
+
+
+
+
+
+  const [foldingItems, setFoldingItems] = useState([]);
+  const [foldingId, setFoldingid] = useState('')
+
+  useEffect(() => {
+    if (foldingItems?.length >= 20) return;
+    setFoldingItems((prev) => {
+      let newArray = Array.from({ length: 20 - prev.length }, (i) => {
+        return {
+          yarnId: "",
+          qty: "0.00",
+          tax: "0",
+          colorId: "",
+          uomId: "",
+          price: "0.00",
+          discountValue: "0.00",
+          noOfBags: "0",
+          discountType: "",
+          weightPerBag: "0.00",
+          poItemsId: ""
+        };
+      });
+      return [...prev, ...newArray];
+    });
+  }, [foldingItems, setFoldingItems]);
+
+
+  const { data: foldingPendingData } = useGetFoldingPendingQuery();
+
+
+
+  const {
+    data: singleData,
+    isLoading: isSingleLoading,
+    isFetching: isSingleFetching,
+  } = useGetFoldingPendingByIdQuery({ foldingId }, { skip: !foldingId },
+  );
+
+  const [updateData] = useUpdateFoldingPendingMutation();
+
+
+  const syncFormWithDb = useCallback(
+    (data) => {
+
+      setFoldingItems(data);
+
+
+    },
+    [],
+  );
+
+  console.log(foldingItems, "foldingItems");
+
+  useEffect(() => {
+    setFoldingItems([]);
+
+    if (singleData?.data) {
+      syncFormWithDb(singleData.data);
+    }
+  }, [singleData, syncFormWithDb]);
+
+  const data = {
+    foldingItems: foldingItems?.filter(i => i.ID),
+    foldingId
+  };
+
+
+
+  const handleSubmitCustom = async (callback, data) => {
+    try {
+      let returnData = await callback(data).unwrap();
+      Swal.fire({
+        title: "Added Successfully",
+        icon: "success",
+        draggable: true,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Submission error",
+        text: "Something went wrong!",
+        timer: 2000,
+      });
+    }
+  };
+
+
+  const saveData = () => {
+
+    if (foldingItems?.filter(i => i.TABAPPROVAL)?.length === 0) {
+      Swal.fire({
+
+        icon: "warning",
+        title: "Add at least Approve One Folding Items",
+
+      });
+
+      return;
+    }
+
+    handleSubmitCustom(updateData, data);
+  };
+
+
+
+
+
+
+  const flodingOptions = foldingPendingData?.data?.map((cloth) => ({
+    label: cloth?.DOCID,
+    value: cloth?.RECEIPTNO,
+  }));
+
+
+
+  const handleInputChange = (value, index, field) => {
+    console.log(value, "value", index, "index", field, "field")
+    const newBlend = structuredClone(foldingItems);
+
+    newBlend[index][field] = value ? "YES" : ""; 
+    setFoldingItems(newBlend);
+  };
+
+
+
+
+
+
+
+  return (
+    <div className="h-[75vh] pt-0">
+      <div className="flex bg-white justify-between py-1 rounded-lg">
+        <h1 className="text-xl ml-2 font-bold text-center">Folding Pending List</h1>
+        <div>
+          {/* <button
+            // onClick={onClose}
+            className="bg-red-600 mr-2 text-white  py-1 rounded-lg hover:bg-red-700 transition px-2"
+          >
+            Back
+          </button> */}
+          <button
+            onClick={saveData}
+            className="bg-blue-600 mr-2 text-white  py-1 rounded-lg hover:bg-blue-700 transition px-2"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+      <div className="h-[70vh] overflow-x-auto bg-white shadow-lg rounded-xl mt-2">
+        <form className=" p-2">
+          {/* Lot Details */}
+          <div>
+            <div>
+              <h2 className="text-lg  font-semibold mb-2 ">Lot Details</h2>
+              <div className="grid grid-cols-4 lg:grid-cols-10 gap-4 text-sm">
+
+
+                {/* Cloth Name */}
+                <div className="col-span-2 lg:col-span-2">
+                  <label className="block font-medium mb-1">Folding Name</label>
+                  <select
+                    value={foldingId}
+                    onChange={(e) => setFoldingid(e.target.value)}
+                    className="w-full bg-white border rounded-lg px-2 py-1.5"
+                  >
+                    <option value="">Select Cloth Name</option>
+                    {flodingOptions?.map((cloth) => (
+                      <option key={cloth?.value} value={cloth?.value}>
+                        {cloth?.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+
+
+
+              </div>
+            </div>
+          </div>
+
+
+        </form>
+        <div className="flex gap-4 mt-2">
+          <div className=" md:w-[100vw] lg:w-[100vw] rounded-lg overflow-y-auto mt-2 p-2">
+            <div className="max-h-[45vh] overflow-y-auto overflow-x-auto">
+              <table className="min-w-[900px] w-full text-sm border">
+                <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-2 py-2 border w-2 text-center">S.No</th>
+                    <th className="px-2 py-2 border w-5 text-center">BasePcsNo</th>
+                    <th className="px-2 py-2 border w-4 text-center">SplitPcsNo</th>
+                    <th className="px-2 py-2 border w-52 text-center">Checker</th>
+                    <th className="px-2 py-2 border w-20 text-center">Table No</th>
+                    <th className="px-2 py-2 border w-20 text-center">Start Mtr</th>
+                    <th className="px-2 py-2 border w-20 text-center">End Mtr</th>
+                    <th className="px-2 py-2 border w-32 text-center">Total Defect Points</th>
+                    <th className="px-2 py-2 border w-4 text-center">Approve</th>
+
+                  </tr>
+                </thead>
+
+                <tbody>{console.log(singleData?.data > 0, "singleData?.data > 0")}
+                  {foldingItems?.length > 0 ? (
+                    foldingItems.map((item, index) => (
+                      <tr key={index} className="text-sm hover:bg-gray-50">
+                        <td className="px-2 py-1 border text-center">
+                          {index + 1}
+                        </td>
+
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-left">
+                          {item?.BASEPCSNO}
+                        </td>
+
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-left">
+                          {item?.SPLITPCSNO}
+                        </td>
+
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-left">
+                          {item?.CHECKERNAME}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-center">
+                          {item?.TABLENOTAB}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
+                          {item?.STARTMTR}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
+                          {item?.ENDMTR}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
+                          {item?.TOTDEFPOITAB}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-center ">
+                          {item?.RECEIPTNO ?
+
+                            <input
+                              type="checkbox"
+                              onChange={(e) => handleInputChange(e.target.checked, index, "TABAPPROVAL")}
+                              checked={item.TABAPPROVAL}
+                            />
+
+                            : ""}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="9"
+                        className="text-center  py-4 border text-gray-500 font-medium"
+                      >
+                        No Data Found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default FoldingPendingList;

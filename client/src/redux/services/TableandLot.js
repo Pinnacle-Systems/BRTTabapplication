@@ -191,7 +191,7 @@ export const {
   useAddTableLotMutation,
   useUpdateTableLotMutation,
   useDeleteTableLotMutation,
-  useGetWorkStatusQuery,useRevertAllocationMutation,useDeleteWorkStatusLotMutation
+  useGetWorkStatusQuery, useRevertAllocationMutation, useDeleteWorkStatusLotMutation
 } = tableLotApi;
 
 export default tableLotApi;

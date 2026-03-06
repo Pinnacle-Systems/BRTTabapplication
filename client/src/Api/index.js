@@ -31,3 +31,4 @@ export const STOPDETAIL = "stop";
 export const PIECERECEIPT = "pieceReceipt";
 export const TABLELOTAPI = "tableLot";
 export const DEFECTENTRY = "defectEntry";
+export const FOLDINGPENINDAPI = "foldingPendinglist";
