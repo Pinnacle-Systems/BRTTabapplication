@@ -270,6 +270,8 @@ const DefectEntry = () => {
         allocationId: parseInt(allocationId),
         pieceId: parseInt(pieceId),
         pieceNo: parseInt(pieceNo),
+        subPieceNo: piece.subPieceNo, // ← add (for all pieces including index 0)
+
         startMeter: piece.startMeter,
         endMeter: piece.endMeter,
         meters: Number(meters),
@@ -282,7 +284,6 @@ const DefectEntry = () => {
         totalPointsSum: pieceTotalPoints,
         defects: piece.defects,
       };
-      if (index > 0) entry.subPieceNo = piece.subPieceNo;
       return entry;
     });
     return { lotId: parseInt(lotId), Lot };
@@ -383,6 +384,8 @@ const DefectEntry = () => {
         points: Number(defectPoints),
         times,
         totalPoints: Number(defectPoints) * times,
+        pieceNo: piece.pieceNo, // ← add
+        subPieceNo: piece.subPieceNo,
       };
 
       const newLotDetails = [...lotDetails];
@@ -764,7 +767,7 @@ const DefectEntry = () => {
 
                         {/* Add button */}
                         <div className="col-span-3 lg:col-span-1 flex items-end">
-                          <div >
+                          <div>
                             <button
                               type="button"
                               onClick={() =>
