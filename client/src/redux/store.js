@@ -11,7 +11,8 @@ import {
   WhatsAppApi,
   pieceReceiptApi,
   tableLotApi,
-  defectEntryApi
+  defectEntryApi,
+  foldingPendingApi
 } from "../redux";
 
 import { setupListeners } from "@reduxjs/toolkit/query";
@@ -25,12 +26,13 @@ export const store = configureStore({
     [UsersApi.reducerPath]: UsersApi.reducer,
     [LabApi.reducerPath]: LabApi.reducer,
     [MachineApi.reducerPath]: MachineApi.reducer,
-    [LotDetailApi.reducerPath]:  LotDetailApi.reducer,
+    [LotDetailApi.reducerPath]: LotDetailApi.reducer,
     [ProductionEntry.reducerPath]: ProductionEntry.reducer,
     [WhatsAppApi.reducerPath]: WhatsAppApi.reducer,
-    [pieceReceiptApi.reducerPath]:pieceReceiptApi.reducer,
-    [tableLotApi.reducerPath]:tableLotApi.reducer,
-    [defectEntryApi.reducerPath]:defectEntryApi.reducer,
+    [pieceReceiptApi.reducerPath]: pieceReceiptApi.reducer,
+    [tableLotApi.reducerPath]: tableLotApi.reducer,
+    [defectEntryApi.reducerPath]: defectEntryApi.reducer,
+    [foldingPendingApi.reducerPath]: foldingPendingApi.reducer
 
   }
 
@@ -45,7 +47,8 @@ export const store = configureStore({
       WhatsAppApi.middleware,
       pieceReceiptApi.middleware,
       tableLotApi.middleware,
-      defectEntryApi.middleware
+      defectEntryApi.middleware,
+      foldingPendingApi.middleware
     ]),
 });
 setupListeners(store.dispatch);
