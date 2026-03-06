@@ -1,3 +1,4 @@
+import zIndex from "@mui/material/styles/zIndex";
 import { IMAGE_UPLOAD_URL } from "../Api";
 import moment from "moment";
 import { useRef } from "react";
@@ -400,6 +401,7 @@ export const customSelectStyles = {
       "&:hover": {
         borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
       },
+      zIndex:"999"
     }),
     valueContainer: (base, state) => ({
       ...base,

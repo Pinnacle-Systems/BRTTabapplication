@@ -373,7 +373,7 @@ const NavbarHeader = ({ onLogout }) => {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  BRT Sizing Mill
+                  Banu Radha Textiles
                 </Typography>
               </Box>
 

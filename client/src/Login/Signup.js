@@ -126,7 +126,7 @@ function Signup({ autoLogout }) {
           <div className="lg:w-1/2 p-8 lg:p-10 flex flex-col justify-center">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-[#03A454]">
-                BRT Sizing Mill
+                Banu Radha Textiles
               </h2>
             </div>
 
