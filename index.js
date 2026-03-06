@@ -14,7 +14,7 @@ import {
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { socketMain } from './src/sockets/socket.js';
-import { pieceReceipt, tableLot } from './src/routes/BRTTab/index.js';
+import { pieceReceipt, tableLot,defectEntry } from './src/routes/BRTTab/index.js';
 const app = express()
 app.use(express.json())
 
@@ -67,6 +67,8 @@ app.use('/machine',machine)
 app.use('/branch',branch)
 app.use('/pieceReceipt',pieceReceipt)
 app.use('/tableLot',tableLot)
+
+app.use('/defectEntry',defectEntry)
 
 app.get("/retreiveFile/:fileName", (req, res) => {
   const { fileName } = req.params

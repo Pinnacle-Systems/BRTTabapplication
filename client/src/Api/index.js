@@ -29,4 +29,5 @@ export const BRANCHQUERY = "branch";
 export const USERSLOG_API = "userslog";
 export const STOPDETAIL = "stop";
 export const PIECERECEIPT = "pieceReceipt";
-export const TABLELOTAPI   =   "tableLot"
+export const TABLELOTAPI = "tableLot";
+export const DEFECTENTRY = "defectEntry";

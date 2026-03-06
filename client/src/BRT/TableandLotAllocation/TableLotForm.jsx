@@ -18,6 +18,8 @@ import { useEffect } from "react";
 import Swal from "sweetalert2";
 import Select from "react-select";
 import CheckingNoGrid from "./CheckingNoGrid ";
+import { push } from "../../redux/features/opentabs";
+
 const TableLotForm = ({
   onClose,
   selectedLotNo,
@@ -51,6 +53,12 @@ const TableLotForm = ({
   const [selectedTables, setSelectedTables] = useState([]);
   const [workingDetails, setWorkingDetails] = useState(null);
   const [allocationId, setAllocationId] = useState("");
+  const [allocatedCheckerId, setAllocatedCheckerId] = useState("");
+  const [allocatedCheckingSectionId, setAllocatedCheckingSectionId] =
+    useState("");
+  const [allocatedLotId, setAllocatedLotId] = useState("");
+  const [allocatedPieceId, setAllocatedPieceId] = useState("");
+  const [allocatedTableId, setAllocatedtableId] = useState([]);
   let NOOFPCSSTK = 1;
   let PCSTAKEN = "Yes";
   let NOTES1 = "YES";
@@ -119,76 +127,6 @@ const TableLotForm = ({
   }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
   console.log(isAdmin, isSuppervisor, checkerId, "sAdminisSuppervisor");
 
-  const customSelectStyles = {
-    control: (base, state) => ({
-      ...base,
-      minHeight: "13px",
-      height: "36px",
-      padding: "0px 4px",
-      fontSize: "14px",
-      borderRadius: "8px",
-
-      color: state.isDisabled ? "#6b7280" : "black",
-      backgroundColor: state.isDisabled ? "#f3f4f6" : "white", // bg-gray-100 vs bg-white
-      cursor: state.isDisabled ? "not-allowed" : "default",
-      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db", // blue-500 vs gray-300
-      boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : base.boxShadow,
-      "&:hover": {
-        borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
-      },
-    }),
-    valueContainer: (base, state) => ({
-      ...base,
-      padding: "0 3px",
-      fontSize: "14px",
-
-      color: state.isDisabled ? "#6b7280" : "black",
-    }),
-    input: (base, state) => ({
-      ...base,
-      margin: 0,
-      fontSize: "14px",
-      padding: 0,
-
-      color: state.isDisabled ? "#6b7280" : "black",
-    }),
-    singleValue: (base, state) => ({
-      ...base,
-
-      fontSize: "14px",
-      color: state.isDisabled ? "#6b7280" : "black",
-    }),
-    placeholder: (base) => ({
-      ...base,
-      // marginTop: "20px",
-
-      color: "black",
-      fontSize: "14px",
-    }),
-    menu: (base, state) => ({
-      ...base,
-
-      maxHeight: 140,
-      // overflowY: "auto",
-      fontSize: "14px",
-      color: state.isDisabled ? "#6b7280" : "black",
-    }),
-    option: (base, state) => ({
-      ...base,
-
-      fontSize: "14px",
-      color: state.isDisabled ? "#6b7280" : "black",
-      padding: "6px 8px",
-    }),
-    dropdownIndicator: () => ({}),
-
-    indicatorSeparator: () => ({ display: "none" }),
-    menuList: (base) => ({
-      ...base,
-      maxHeight: 140,
-      // overflowY: "auto",
-    }),
-  };
   // ✅ RTK Query
   const { data: lots, error, isLoading } = useGetLotsQuery();
   console.log(lots, "lots");
@@ -208,7 +146,32 @@ const TableLotForm = ({
   console.log(cloths, "cloths");
 
   console.log(pieces, "pieces");
+  useEffect(() => {
+    if (workStatus?.hasActiveWork) {
+      const work = workStatus.data;
+      setAllocationId(work?.allocationId);
+      setAllocatedCheckerId(work?.checkerId);
+      setAllocatedCheckingSectionId(work?.checkingSectionId);
+      setAllocatedLotId(work?.lotId);
+      setAllocatedPieceId(work?.pieceId);
+      // safer table mapping
+      const tableIds = work?.tables?.map((t) => t.tableId) || [];
+      const tableNumbers = work?.tables?.map((t) => t.checkingNo) || [];
 
+      setAllocatedtableId(tableIds);
+      setWorkingDetails({
+        allocationId: work.allocationId,
+        sectionName: work.sectionName,
+        userName: work.checkerName,
+        lotNo: work.docId,
+        pieceNo: work.pieceNo,
+        tableNumbers,
+        meters: work.meters,
+      });
+    } else {
+      setWorkingDetails(null);
+    }
+  }, [workStatus]);
   let singleData;
   // const { data: singleData } = useGetTableLotByIdQuery(
   //   { selectedLotNo, selectedGridId },
@@ -320,35 +283,19 @@ const TableLotForm = ({
     );
   }, [cloths?.data, selectedLotNo]);
 
-const pieceOptions = useMemo(() => {
-  if (!selectedClothId || !selectedLotNo || !lotCheckingNoId) return [];
+  const pieceOptions = useMemo(() => {
+    if (!selectedClothId || !selectedLotNo || !lotCheckingNoId) return [];
 
-  return [...(pieces?.data || [])]
-    .sort((a, b) => a.PCSNO - b.PCSNO)
-    .map((piece) => ({
-      label: piece?.PCSNO,
-      value: piece?.PCSNO,
-      meter: piece?.METER,
-      subGridId: piece?.SUBGRIDID,
-    }));
-}, [pieces?.data, selectedClothId, selectedLotNo, lotCheckingNoId]);
+    return [...(pieces?.data || [])]
+      .sort((a, b) => a.PCSNO - b.PCSNO)
+      .map((piece) => ({
+        label: piece?.PCSNO,
+        value: piece?.PCSNO,
+        meter: piece?.METER,
+        subGridId: piece?.SUBGRIDID,
+      }));
+  }, [pieces?.data, selectedClothId, selectedLotNo, lotCheckingNoId]);
 
-  useEffect(() => {
-    if (workStatus?.hasActiveWork) {
-      const work = workStatus.data;
-      setAllocationId(work?.allocationId);
-      setWorkingDetails({
-        allocationId: work.allocationId,
-        sectionName: work.sectionName,
-        userName: work.checkerName,
-        lotNo: work.docId,
-        pieceNo: work.pieceNo,
-        tableNumbers: work.tables.map((t) => t.checkingNo),
-      });
-    } else {
-      setWorkingDetails(null);
-    }
-  }, [workStatus]);
   // Filter tables for selection
   const availableTables = tables?.data?.filter(
     (t) => !t.TABLEAVAILBLE || t.TABLEAVAILBLE.toUpperCase() !== "NO",
@@ -448,56 +395,92 @@ const pieceOptions = useMemo(() => {
   }
   const handleSelect = (item) => {
     setSelectedTables((prev) => {
-      const exists = prev.find(
+      const exists = prev?.find(
         (t) => t.GTCHKTABLEMASTID === item.GTCHKTABLEMASTID,
       );
 
       if (exists) {
-        return prev.filter((t) => t.GTCHKTABLEMASTID !== item.GTCHKTABLEMASTID);
+        return prev?.filter(
+          (t) => t.GTCHKTABLEMASTID !== item.GTCHKTABLEMASTID,
+        );
       } else {
         return [...prev, item];
       }
     });
   };
+  const customSelectStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: "13px",
+      height: "36px",
+      padding: "0px 4px",
+      fontSize: "14px",
+      borderRadius: "8px",
 
-  // if (workStatus?.hasActiveWork) {
-  //   return (
-  //     <div className="h-[75vh] p-6 bg-white rounded-xl">
-  //       <h1 className="text-xl font-bold mb-4">Active Work In Progress</h1>
+      color: state.isDisabled ? "#6b7280" : "black",
+      backgroundColor: state.isDisabled ? "#f3f4f6" : "white", // bg-gray-100 vs bg-white
+      cursor: state.isDisabled ? "not-allowed" : "default",
+      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db", // blue-500 vs gray-300
+      boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : base.boxShadow,
+      "&:hover": {
+        borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
+      },
+    }),
+    valueContainer: (base, state) => ({
+      ...base,
+      padding: "0 3px",
+      fontSize: "14px",
 
-  //       <div className="bg-green-50 p-4 rounded shadow space-y-2">
-  //         <p>
-  //           <strong>Section:</strong> {workingDetails?.sectionName}
-  //         </p>
-  //         <p>
-  //           <strong>Checker:</strong> {workingDetails?.userName}
-  //         </p>
-  //         <p>
-  //           <strong>Lot No:</strong> {workingDetails?.lotNo}
-  //         </p>
-  //         <p>
-  //           <strong>Piece:</strong> {workingDetails?.pieceNo}
-  //         </p>
-  //         <p>
-  //           <strong>Tables:</strong> {workingDetails?.tableNumbers?.join(", ")}
-  //         </p>
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    input: (base, state) => ({
+      ...base,
+      margin: 0,
+      fontSize: "14px",
+      padding: 0,
 
-  //         <button
-  //           className="bg-blue-600 text-white px-4 py-1 rounded mt-3"
-  //           // onClick={() => handleDefectEntry(workingDetails)}
-  //         >
-  //           Go To Defect Entry
-  //         </button>
-  //         <button
-  //           className="bg-red-600 text-white px-4 py-1 rounded mt-3"
-  //           onClick={() => handleRevert(allocationId)}
-  //         >
-  //          Revert Work
-  //         </button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    singleValue: (base, state) => ({
+      ...base,
+
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    placeholder: (base) => ({
+      ...base,
+      // marginTop: "20px",
+
+      color: "black",
+      fontSize: "14px",
+    }),
+    menu: (base, state) => ({
+      ...base,
+
+      maxHeight: 140,
+      // overflowY: "auto",
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    option: (base, state) => ({
+      ...base,
+
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+      padding: "6px 8px",
+    }),
+    dropdownIndicator: () => ({}),
+
+    indicatorSeparator: () => ({ display: "none" }),
+    menuList: (base) => ({
+      ...base,
+      maxHeight: 140,
+      // overflowY: "auto",
+    }),
+  };
+  const handleDefectEntry = () => {
+    dispatch(push({ id: "Defect Entry", name: "Defect Entry" }));
+  };
   if (workStatus?.hasActiveWork) {
     return (
       <div className="min-h-[75vh] bg-gray-50 p-4 sm:p-6 flex items-start justify-center">
@@ -527,12 +510,16 @@ const pieceOptions = useMemo(() => {
               </div>
 
               <div>
-                <p className="text-sm text-gray-500">Piece</p>
+                <p className="text-sm text-gray-500">Piece No</p>
                 <p className="font-semibold">{workingDetails?.pieceNo}</p>
               </div>
+              <div>
+                <p className="text-sm text-gray-500">Meters</p>
+                <p className="font-semibold">{workingDetails?.meters?.toFixed(2)}</p>
+              </div>
 
-              <div className="sm:col-span-2">
-                <p className="text-sm text-gray-500">Tables</p>
+              <div>
+                <p className="text-sm text-gray-500">Table No</p>
                 <p className="font-semibold">
                   {workingDetails?.tableNumbers?.join(", ")}
                 </p>
@@ -543,7 +530,7 @@ const pieceOptions = useMemo(() => {
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <button
                 className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-2 rounded-lg font-medium"
-                // onClick={() => handleDefectEntry(workingDetails)}
+                onClick={handleDefectEntry}
               >
                 Go To Defect Entry
               </button>

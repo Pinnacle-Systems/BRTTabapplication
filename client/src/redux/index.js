@@ -6,3 +6,4 @@ export { default as WhatsAppApi } from "./whatsAppService";
 export { default as LotDetailApi } from "./services/LotDetailData";
 export { default as pieceReceiptApi } from "./services/PieceReceipt";
 export { default as tableLotApi } from "./services/TableandLot";
+export { default as defectEntryApi } from "./services/defectEntry";
