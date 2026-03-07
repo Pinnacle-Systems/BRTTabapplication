@@ -134,8 +134,12 @@ const PieceFoldingForm = ({
     { skip: !selectedPiece },
   );
 
-  console.log(gradeData?.data?.filter(i => i.STPOINTS >= singleData?.data?.TOTPOINTSTAB && i.ENDPOINTD >= singleData?.data?.TOTPOINTSTAB), "gradeData")
-
+  const value = singleData?.data?.TOTPOINTSTAB
+ 
+  const result = gradeData?.data?.find(r =>
+    value >= r.STPOINTS && (r.ENDPOINTD === null || value < r.ENDPOINTD)
+  );
+ console.log(result, "result")
   console.log(singleData?.data, "singleData")
   const {
     data: pieceData,
