@@ -37,11 +37,13 @@ LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO`;
 
 export async function getFoldingPendingById(req, res) {
   const connection = await getConnection(res);
-  const { foldingId } = req.params;
+  const { lotNo } = req.params;
 
   // console.log(foldingId, "lotId getPieces");
 
   try {
+
+
     const sql = `select 
     
 
@@ -64,8 +66,10 @@ export async function getFoldingPendingById(req, res) {
     from Gtpiecesdefectdet PD
 LEFT JOIN Gtdefectdettab DT ON  DT.GTPIECESDEFECTDETID = PD.GTPIECESDEFECTDETID
 LEFT JOIN TABUSER TB ON TB.USERID = DT.CHECKER
-WHERE PD.RECEIPTNO = ${foldingId} AND DT.TABAPPROVAL IS NULL`;
-    // console.log(sql, "sql for getPieces");
+WHERE PD.RECEIPTNO = ${lotNo} AND DT.TABAPPROVAL IS NULL`;
+
+
+
     const result = await connection.execute(sql);
 
 
@@ -89,6 +93,36 @@ WHERE PD.RECEIPTNO = ${foldingId} AND DT.TABAPPROVAL IS NULL`;
 }
 
 
+
+export async function getGradeData(req,res){
+
+    console.log("getGrdaeData")
+
+    const connection = await getConnection(res);
+
+  try {
+    const sql = `select * from GTGRADEDET`;
+
+    console.log(sql,"sql for get grade data")
+
+    const result = await connection.execute(sql);
+
+    const resp = result.rows.map((row) => {
+      let obj = {};
+      result.metaData.forEach(({ name }, idx) => {
+        obj[name] = row[idx];
+      });
+      return obj;
+    });
+
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
+  }
+}
 
 
 
@@ -197,11 +231,11 @@ export async function getDefects(req, res) {
 
 export async function updateFolding(req, res) {
 
-  const { foldingItems, foldingId } = req.body;
+  const { foldingItems, lotNo } = req.body;
 
-  console.log(foldingItems, "foldingItems");
 
   const connection = await getConnection(res);
+
 
   try {
 
@@ -209,6 +243,7 @@ export async function updateFolding(req, res) {
 
       const { TABAPPROVAL, ID } = piece;
 
+      console.log("connection: ", connection)
       await connection.execute(
         `UPDATE Gtdefectdettab
          SET TABAPPROVAL = :status
@@ -218,13 +253,15 @@ export async function updateFolding(req, res) {
           id: ID
         }
       );
+    console.log("piece", piece);
 
     }
 
     await connection.commit();
 
+
     return res.status(200).json({
-      message: `Folding entry updated successfully for ${foldingItems.length} items`,
+      message: `Folding entry updated successfully for ${foldingItems?.length} items`,
     });
 
   } catch (error) {

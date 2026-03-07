@@ -11,6 +11,9 @@ import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import Select from "react-select";
 import { useGetPiecesQuery } from "../../redux/services/TableandLot";
+import { useGetFoldingPendingQuery, useGetGradeMasterQuery } from "../../redux/services/FoldingPendingList";
+import { useGetpieceEntryByIdQuery, useGetpieceFoldingEntryByIdQuery } from "../../redux/services/PieceFoldingEntry";
+import { useGetRolesQuery, useGetUsersQuery } from "../../redux/userservice";
 
 const PieceFoldingForm = ({
   onClose,
@@ -31,6 +34,11 @@ const PieceFoldingForm = ({
   let CHK = 1;
 
   const [selectedLotNo, setSelectedLotNo] = useState('')
+  const [selectedPiece, setSelectedPiece] = useState('')
+  const [loomNo, setLoomNo] = useState('')
+  const [checkerId, setCheckerId] = useState("");
+  const [receiptMeters, setReceiptMeters] = useState('')
+  const [checkedMeters, setCheckedMeters] = useState('')
 
 
   const customSelectStyles = {
@@ -105,91 +113,84 @@ const PieceFoldingForm = ({
   };
 
 
-
-  const { data: lots, error, isLoading } = useGetLotPieceReceiptQuery();
-
+  const { data: gradeData } = useGetGradeMasterQuery();
 
 
+  const { data: foldingPendingData, isLoading, isFetching, error } = useGetFoldingPendingQuery();
+
+  const flodingOptions = foldingPendingData?.data?.map((cloth) => ({
+    label: cloth?.DOCID,
+    value: cloth?.RECEIPTNO,
+  }));
+
+
+  console.log(foldingPendingData, "foldingPendingData")
 
   const {
     data: singleData,
+
+  } = useGetpieceFoldingEntryByIdQuery(
+    { selectedPiece },
+    { skip: !selectedPiece },
+  );
+
+  console.log(gradeData?.data?.filter(i => i.STPOINTS >= singleData?.data?.TOTPOINTSTAB && i.ENDPOINTD >= singleData?.data?.TOTPOINTSTAB), "gradeData")
+
+  console.log(singleData?.data, "singleData")
+  const {
+    data: pieceData,
     isLoading: isSingleLoading,
     isFetching: isSingleFetching,
-  } = useGetPieceReceiptByIdQuery(
-    { selectedLotId, selectedGridId },
-    { skip: !selectedLotId || !selectedGridId },
+  } = useGetpieceEntryByIdQuery(
+    { selectedLotNo },
+    { skip: !selectedLotNo },
   );
 
+  const pieceOptions = pieceData?.data?.map((cloth) => ({
+    label: `${cloth?.BASEPCSNO} ${cloth?.SPLITPCSNO ? "-" : ""} ${cloth?.SPLITPCSNO ? cloth?.SPLITPCSNO : ""}`,
+    value: cloth?.ID,
+  }));
 
+  const { data: roles } = useGetRolesQuery();
+  const { data: userData } = useGetUsersQuery();
 
-  const {
-    data: pieces,
-    refetch: piecesrefetch,
-    isUninitialized: piecesUninitialized,
-  } = useGetPiecesQuery(
-    {
-      selectedLotNo,
-
-    },
-    {
-      skip: !selectedLotNo
-    },
+  const adminRole = roles?.data?.find(
+    (val) => val?.ROLENAME?.toLowerCase() === "admin",
   );
 
+  const supervisorRole = roles?.data?.find(
+    (val) => val?.ROLENAME?.toLowerCase() === "supervisor",
+  );
+  const storedUserId = Number(localStorage.getItem("userId"));
+  const storedRoleId = Number(localStorage.getItem("roleId"));
+  let adminId = adminRole?.ROLEID;
 
-  const pieceOptions = useMemo(() => {
-    if (!selectedLotNo) return [];
-
-    return [...(pieces?.data || [])]
-      .sort((a, b) => a.PCSNO - b.PCSNO)
-      .map((piece) => ({
-        label: piece?.PCSNO,
-        value: piece?.PCSNO,
-        meter: piece?.METER,
-        subGridId: piece?.SUBGRIDID,
-      }));
-  }, [pieces?.data, selectedLotNo]);
+  let supervisorId = supervisorRole?.ROLEID;
+  const isAdmin = Number(storedRoleId) === adminId;
+  const isSuppervisor = Number(storedRoleId) === supervisorId;
+  const storedUsername = localStorage.getItem("userName");
 
 
+  const userOptions = userData?.data
+    ?.filter?.((val) => val?.ROLEID != adminId && val?.ROLEID != supervisorId)
+    ?.map((user) => ({
+      label: user?.USERNAME,
+      value: user?.USERID,
+    }));
 
-
-
-
+  useEffect(() => {
+    if (!isAdmin && !isSuppervisor) {
+      setCheckerId(storedUserId);
+    }
+  }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
 
 
   const [updateData] = useUpdatePieceReceiptMutation();
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   const syncFormWithDb = useCallback(
     (data) => {
-      // Map PayStructure to include payDescription and pickFrom
-      const mapped =
-        data?.[0]?.lotItems?.flatMap((item) =>
-          item?.lotItemsSubGrid?.map((val) => ({
-            pcNo: Number(val?.sno),
-            meters: Number(val?.mtr).toFixed(2),
-            _isDbRow: true, // ✅ frontend only flag
-          })),
-        ) || [];
 
-      setLotItems(mapped);
-      console.log("Mapped:", mapped);
     },
     [selectedLotId, selectedGridId],
   );
@@ -311,15 +312,12 @@ const PieceFoldingForm = ({
     Number(dcMeter || 0) - Number(totalMetersTable)
   ).toFixed(2);
 
-  const lotOptions = lots?.data?.map((lot) => ({
-    value: lot?.GTFABRICRECEIPTID,
-    label: lot?.DOCID,
-  }));
+
 
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
-        <h1 className="text-xl ml-2 font-bold text-center">Piece Receipt</h1>
+        <h1 className="text-xl ml-2 font-bold text-center">Piece Folding Entry</h1>
         <div>
           <button
             onClick={onClose}
@@ -337,7 +335,6 @@ const PieceFoldingForm = ({
       </div>
       <div className="h-[70vh] overflow-x-auto bg-white shadow-lg rounded-xl mt-2">
         <form className=" p-2">
-          {/* Lot Details */}
           <div>
             <div>
               <h2 className="text-lg  font-semibold mb-2 ">Lot Details</h2>
@@ -346,9 +343,9 @@ const PieceFoldingForm = ({
                 <div className="col-span-2 lg:col-span-2 z-999">
                   <label className="block font-medium mb-1">Lot No</label>
                   <Select
-                    options={lotOptions}
+                    options={flodingOptions}
                     value={
-                      lotOptions?.find(
+                      flodingOptions?.find(
                         (option) => option.value === selectedLotNo,
                       ) || null
                     }
@@ -367,16 +364,14 @@ const PieceFoldingForm = ({
                   <label className="block font-medium mb-1">Piece No</label>
                   <Select
                     options={pieceOptions}
-                    // value={
-                    //   pieceOptions?.find(
-                    //     (option) => option.value === selectedPiece,
-                    //   ) || null
-                    // }
-                    // onChange={(selectedOption) => {
-                    //   setSelectedSubGridId(selectedOption?.subGridId || "");
-                    //   setSelectedPiece(selectedOption?.value || "");
-                    //   setDcMeter(selectedOption?.meter || "");
-                    // }}
+                    value={
+                      pieceOptions?.find(
+                        (option) => option.value === selectedPiece,
+                      ) || null
+                    }
+                    onChange={(selectedOption) => {
+                      setSelectedPiece(selectedOption?.value)
+                    }}
                     placeholder=" "
                     isClearable={false} // ✅ disable cross icon
                     styles={customSelectStyles}
@@ -385,226 +380,100 @@ const PieceFoldingForm = ({
                   />
                 </div>
 
-                {/* Receipt Pcs */}
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Receipt Pcs</label>
+                  <label className="block font-medium mb-1">Table No</label>
                   <input
-                    type="number"
-                    value={receiptPcs}
-                    readOnly
-                    className="w-full border rounded-lg px-1 py-1.5 text-right bg-gray-100"
+                    value={singleData?.data?.TABLENOTAB}
+                    // readOnly={readonly}
+                    disabled
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  />
+                </div>
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">Loom No</label>
+                  <input
+                    value={loomNo}
+                    onChange={(e) => setLoomNo(e.target.value)}
+                    // readOnly={readonly}
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>
 
-                {/* Meters in DC */}
-                <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Meters in DC</label>
-                  <input
-                    type="number"
-                    value={Number(dcMeter || 0)?.toFixed(2)}
-                    readOnly
-                    className="w-full border rounded-lg px-1 py-1.5 text-right bg-gray-100"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+                <div className="flex flex-col flex-1  col-span-2 max-w-[18rem]">
+                  <label className="text-sm font-medium mb-1"> Folder Name</label>
 
-          {/* Piece Details */}
-          <div>
-            <h2 className="text-lg  font-semibold  mt-2 pb-2">Piece Details</h2>
-
-            <div className="flex items-end gap-4 text-sm w-full">
-              {/* Piece No */}
-              <div className="flex flex-col flex-1 max-w-[8rem]">
-                <label className="text-sm font-medium mb-1">Piece No</label>
-                <input
-                  type="number"
-                  ref={pieceNoRef}
-                  name="pieceNo"
-                  value={pieceNo}
-                  max={receiptPcs}
-                  min={1}
-                  onChange={(e) => {
-                    const num = Number(e.target.value);
-
-                    if (num > receiptPcs) {
-                      Swal.fire({
-                        title:
-                          "Piece Number cannot be greater than Receipt Pieces",
-                        icon: "error",
-                        timer: 2000,
-                        showConfirmButton: true,
-                      });
-                      return;
-                    }
-
-                    setPieceNumber(e.target.value);
-                  }}
-                  disabled={
-                    !selectedClothId || lotItems.length === Number(receiptPcs) // ✅ disable when limit reached
-                  }
-                  className="border rounded-lg text-right px-2 py-1.5 w-full"
-                />
-              </div>
-
-              {/* Meters */}
-              <div className="flex flex-col flex-1 max-w-[8rem]">
-                <label className="text-sm font-medium mb-1">Meters</label>
-                <input
-                  type="number"
-                  name="meter"
-                  value={meter}
-                  disabled={!pieceNo}
-                  onChange={(e) => setMeter(e.target.value)}
-                  className="border rounded-lg text-right px-2 py-1.5 w-full"
-                />
-              </div>
-
-              {/* Button */}
-              <div className="flex-shrink-0">
-                <button
-                  // onClick={handleAddItem}
-                  className="bg-green-600 px-4  text-white rounded-lg py-2 whitespace-nowrap"
-                >
-                  + Add
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
-        <div className="flex gap-4 mt-2">
-          <div className="w-[70vw] lg:w-[30vw] rounded-lg overflow-hidden mt-2 p-2">
-            <div className="max-h-[35vh] overflow-y-auto overflow-x-auto">
-              <table className="min-w-full text-sm border-collapse table-fixed">
-                <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
-                  <tr>
-                    <th className="px-2 py-2 border w-4 text-center">S.No</th>
-                    <th className="px-2 py-2 border w-28 text-center">
-                      Piece No
-                    </th>
-                    <th className="px-2 py-2 border text-center w-28">
-                      Meters
-                    </th>
-                    <th className="px-2 py-2 border text-center w-16">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {lotItems?.length > 0 ? (
-                    lotItems?.map((item, index) => (
-                      <tr key={index} className="text-sm hover:bg-gray-50">
-                        <td className="px-2 py-1 border text-center">
-                          {index + 1}
-                        </td>
-
-                        <td className="py-1 border focus:ring-2 focus:border-2 text-right">
-                          <input
-                            type="number"
-                            name="pcNo"
-                            value={item?.pcNo}
-                            // onChange={(e) =>
-                            //   handleChange(index, e.target.value, "pcNo")
-                            // }
-                            className="focus:border-none pr-1  bg-transparent focus:outline-none text-right w-full"
-                          />
-                        </td>
-
-                        <td className=" py-1 border text-right focus:ring-2 focus:border-2">
-                          <input
-                            type="number"
-                            name="meters"
-                            value={item?.meters}
-                            // onChange={(e) =>
-                            //   handleChange(index, e.target.value, "meters")
-                            // }
-                            // onBlur={(e) =>
-                            //   handleChange(
-                            //     index,
-                            //     Number(e.target.value || 0).toFixed(2),
-                            //     "meters",
-                            //   )
-                            // }
-                            className="focus:border-none  pr-1 bg-transparent focus:outline-none text-right w-full"
-                          />
-                        </td>
-
-                        <td className="px-2 py-1 border text-center">
-                          <div className="flex justify-center gap-2">
-                            {/* {!item._isDbRow && (
-                              <button
-                                onClick={() => handleDeleteItem(index)}
-                                className="bg-red-500 text-white px-1 py-1 rounded text-sm"
-                              >
-                                <MdDelete />
-                              </button>
-                            )} */}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="4"
-                        className="text-center  py-4 border text-gray-500 font-medium"
-                      >
-                        No Data Found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-                <tfoot>
-                  {lotItems?.length > 0 ? (
+                  {isAdmin || isSuppervisor ? (
                     <>
-                      <tr className="bg-gray-100">
-                        <td className=" border font-bold text-center"></td>
-                        <td className="text-center border font-bold  py-1">
-                          Total
-                        </td>
-                        <td className="text-right border font-bold pr-1 py-1">
-                          {totalMetersTable}
-                        </td>
-                        <td className="text-right border font-bold px-2 py-1"></td>
-                      </tr>
+                      <Select
+                        options={userOptions}
+                        value={
+                          userOptions?.find(
+                            (option) => option.value === checkerId,
+                          ) || null
+                        }
+                        onChange={(selectedOption) => {
+                          setCheckerId(selectedOption?.value || "");
+                        }}
+                        placeholder="Select User"
+                        isClearable={false} // ✅ disable cross icon
+                        styles={customSelectStyles}
+                        className="text-left"
+                        isSearchable={true}
+                      />
                     </>
                   ) : (
-                    <></>
+                    <>
+                      <input
+                        type="text"
+                        value={storedUsername}
+                        readOnly
+                        className="border rounded-lg text-left px-1 py-[7px] w-full bg-gray-100"
+                      />
+                    </>
                   )}
-                </tfoot>
-              </table>
+                </div>
+
+
+
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">Receipt Meters</label>
+                  <input
+                    value={parseFloat(singleData?.data?.ACTUALMETER).toFixed(2)}
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                    disabled
+                  />
+                </div>
+
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">Total Defect</label>
+
+                  <input
+                    value={singleData?.data?.TOTPOINTSTAB}
+                    disabled
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  />
+                </div>
+
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">Checked Meters</label>
+
+                  <input
+                    value={checkedMeters}
+                    onBlur={(e) => setCheckedMeters(parseFloat(e.target.value).toFixed(2))}
+
+                    onChange={(e) => setCheckedMeters(e.target.value)}
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  />
+                </div>
+
+
+              </div>
             </div>
           </div>
-          <div className="min-w-[180px] h-fit mt-4 border rounded-lg bg-gray-50 p-3 mr-2 shadow">
-            <h3 className="font-semibold text-sm mb-2 text-gray-700">
-              Summary
-            </h3>
 
-            <div className="flex justify-between text-sm mb-1">
-              <span>Entered Pcs</span>
-              <span className="font-bold">{totalPieces}</span>
-            </div>
 
-            <div className="flex justify-between text-sm mb-2 text-red-600">
-              <span>Balance Pcs</span>
-              <span className="font-bold">{balancePcs}</span>
-            </div>
+        </form>
 
-            <hr className="my-2" />
-
-            <div className="flex justify-between text-sm mb-1">
-              <span>Entered Mtrs</span>
-              <span className="font-bold">{totalMetersTable}</span>
-            </div>
-
-            <div className="flex justify-between text-sm text-red-600">
-              <span>Balance Mtrs</span>
-              <span className="font-bold">{balanceMeters}</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

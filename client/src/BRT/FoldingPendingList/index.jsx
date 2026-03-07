@@ -22,11 +22,81 @@ const FoldingPendingList = ({
 }) => {
 
 
+const customSelectStyles = {
+    control: (base, state) => ({
+      ...base,
+      minHeight: "13px",
+      height: "36px",
+      padding: "0px 4px",
+      fontSize: "14px",
+      borderRadius: "8px",
 
+      color: state.isDisabled ? "#6b7280" : "black",
+      backgroundColor: state.isDisabled ? "white" : "white", // bg-gray-100 vs bg-white
+      cursor: state.isDisabled ? "not-allowed" : "default",
+      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db", // blue-500 vs gray-300
+      boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : base.boxShadow,
+      "&:hover": {
+        borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
+      },
+      zIndex:"999"
+    }),
+    valueContainer: (base, state) => ({
+      ...base,
+      padding: "0 3px",
+      fontSize: "14px",
+
+      color: state.isDisabled ? "black" : "black",
+    }),
+    input: (base, state) => ({
+      ...base,
+      margin: 0,
+      fontSize: "14px",
+      padding: 0,
+
+      color: state.isDisabled ? "black" : "black",
+    }),
+    singleValue: (base, state) => ({
+      ...base,
+
+      fontSize: "14px",
+      color: state.isDisabled ? "black" : "black",
+    }),
+    placeholder: (base) => ({
+      ...base,
+      // marginTop: "20px",
+
+      color: "black",
+      fontSize: "14px",
+    }),
+    menu: (base, state) => ({
+      ...base,
+
+      maxHeight: 140,
+      // overflowY: "auto",
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+    }),
+    option: (base, state) => ({
+      ...base,
+
+      fontSize: "14px",
+      color: state.isDisabled ? "#6b7280" : "black",
+      padding: "6px 8px",
+    }),
+    dropdownIndicator: () => ({}),
+
+    indicatorSeparator: () => ({ display: "none" }),
+    menuList: (base) => ({
+      ...base,
+      maxHeight: 140,
+      // overflowY: "auto",
+    }),
+  };
 
 
   const [foldingItems, setFoldingItems] = useState([]);
-  const [foldingId, setFoldingid] = useState('')
+  const [lotNo, setLotNo] = useState('')
 
   useEffect(() => {
     if (foldingItems?.length >= 20) return;
@@ -59,7 +129,7 @@ const FoldingPendingList = ({
     data: singleData,
     isLoading: isSingleLoading,
     isFetching: isSingleFetching,
-  } = useGetFoldingPendingByIdQuery({ foldingId }, { skip: !foldingId },
+  } = useGetFoldingPendingByIdQuery({ lotNo }, { skip: !lotNo },
   );
 
   const [updateData] = useUpdateFoldingPendingMutation();
@@ -87,7 +157,7 @@ const FoldingPendingList = ({
 
   const data = {
     foldingItems: foldingItems?.filter(i => i.ID),
-    foldingId
+    lotNo
   };
 
 
@@ -146,7 +216,7 @@ const FoldingPendingList = ({
     console.log(value, "value", index, "index", field, "field")
     const newBlend = structuredClone(foldingItems);
 
-    newBlend[index][field] = value ? "YES" : ""; 
+    newBlend[index][field] = value ? "YES" : "";
     setFoldingItems(newBlend);
   };
 
@@ -185,20 +255,23 @@ const FoldingPendingList = ({
 
 
                 {/* Cloth Name */}
-                <div className="col-span-2 lg:col-span-2">
-                  <label className="block font-medium mb-1">Folding Name</label>
-                  <select
-                    value={foldingId}
-                    onChange={(e) => setFoldingid(e.target.value)}
-                    className="w-full bg-white border rounded-lg px-2 py-1.5"
-                  >
-                    <option value="">Select Cloth Name</option>
-                    {flodingOptions?.map((cloth) => (
-                      <option key={cloth?.value} value={cloth?.value}>
-                        {cloth?.label}
-                      </option>
-                    ))}
-                  </select>
+                <div className="col-span-2 lg:col-span-2 z-40">
+                  <label className="block font-medium mb-1">Lot name</label>
+                  <Select
+                    options={flodingOptions}
+                    value={
+                      flodingOptions?.find(
+                        (option) => option.value === lotNo,
+                      ) || null
+                    }
+                    onChange={(selectedOption) => {
+                      setLotNo(selectedOption?.value || "");
+                    }}
+                    placeholder="Select Lot"
+                    isClearable={false} // ✅ disable cross icon
+                    styles={customSelectStyles}
+                    isSearchable={true}
+                  />
                 </div>
 
 
