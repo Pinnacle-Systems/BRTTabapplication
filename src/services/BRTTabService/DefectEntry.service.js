@@ -133,200 +133,9 @@ export async function getDefects(req, res) {
   }
 }
 
-// export async function updateDefectEntry(req, res) {
-//   const { lotId } = req.params;
-//   const {
-//     pieceId,
-//     pieceNo,
-//     tableId,
-//     tableNo,
-//     startMeter,
-//     endMeter,
-//     meters,
-//     checkerId,
-//     checkingSectionId,
-//     defectArray,
-//     totalPointsSum,
-//     allocationId,
-//   } = req.body;
-
-//   const connection = await getConnection(res);
-
-//   try {
-//     // ✅ STEP 1
-//     const step1Query = `
-//       SELECT GTPIECESDEFECTID, LOTNO
-//       FROM Gtpiecesdefect
-//       WHERE LOTNO = :lotId
-//     `;
-
-//     const step1Result = await connection.execute(
-//       step1Query,
-//       { lotId }, // bind object
-//       { outFormat: oracledb.OUT_FORMAT_OBJECT },
-//     );
-
-//     if (step1Result.rows.length === 0) {
-//       return res.status(404).json({
-//         message: "No record found in Gtpiecesdefect for this lotId",
-//       });
-//     }
-
-//     const { GTPIECESDEFECTID, LOTNO } = step1Result.rows[0];
-
-//     // ✅ STEP 2
-//     const step2Query = `
-//       SELECT GTPIECESDEFECTDETID,GTPIECESDEFECTID,RECEIPTNO
-//       FROM Gtpiecesdefectdet
-//       WHERE GTPIECESDEFECTID = :id
-//       AND RECEIPTNO = :receiptNo
-//     `;
-
-//     const step2Result = await connection.execute(
-//       step2Query,
-//       {
-//         id: GTPIECESDEFECTID,
-//         receiptNo: LOTNO,
-//       },
-//       { outFormat: oracledb.OUT_FORMAT_OBJECT },
-//     );
-//     if (step2Result.rows.length === 0) {
-//       return res.status(404).json({
-//         message: "No matching record found in Gtpiecesdefectdet",
-//       });
-//     }
-//     const { GTPIECESDEFECTDETID } = step2Result.rows[0];
-
-//     let tableNoTabValue = null;
-
-//     if (Array.isArray(tableNo)) {
-//       tableNoTabValue = tableNo.join(",");
-//     } else if (tableNo) {
-//       tableNoTabValue = String(tableNo);
-//     }
-//     const primaryKey = Date.now() + 1000 + Math.floor(Math.random() * 1000);
-
-//     const insertQuery = `
-//       INSERT INTO Gtdefectdettab (
-      
-//         GTDEFECTDETTABID,
-//         GTPIECESDEFECTID,
-//         GTPIECESDEFECTDETID,
-//         BASEPCSNO,
-//         TABLENOTAB,
-//         STARTMTR,
-//         ENDMTR,
-//         CHECKER,
-//         ALLACATIONID,
-//         PCSID,
-//         TOTPOINTSTAB
-//       )
-//       VALUES (
-//         :primaryKey,
-//         :piecesDefectId,
-//         :piecesDefectDetId,
-//         :basePcsNo,
-//         :tableNoTab,
-//         :startMtr,
-//         :meters,
-//         :checker,
-//         :allocationId,
-//         :pieceId,
-//         :totalPoints
-//       )
-//     `;
-
-//     await connection.execute(
-//       insertQuery,
-//       {
-//         primaryKey,
-//         piecesDefectId: GTPIECESDEFECTID,
-//         piecesDefectDetId: GTPIECESDEFECTDETID,
-//         basePcsNo: Number(pieceNo),
-//         tableNoTab: tableNoTabValue,
-//         startMtr: Number(startMeter),
-//         meters: Number(meters),
-//         checker: checkerId ? Number(checkerId) : null,
-//         allocationId: allocationId ? Number(allocationId) : null,
-//         pieceId: pieceId,
-//         totalPoints: totalPointsSum,
-//       },
-//       { autoCommit: false },
-//     );
-
-//     // 🔥 STEP 3 - Insert children into GTPCSDEFDET
-//     if (!Array.isArray(defectArray) || defectArray.length === 0) {
-//       throw new Error("Defect array cannot be empty");
-//     }
-//     const seen = new Set();
-
-//     for (const defect of defectArray) {
-//       const duplicateKey = `${defect.meter}_${defect.defectId}`;
-
-//       if (seen.has(duplicateKey)) {
-//         throw new Error(
-//           `Duplicate defect found for Meter ${defect.meter} and Defect ${defect.defectId}`,
-//         );
-//       }
-
-//       seen.add(duplicateKey);
-//       const childPrimaryKey = Number(
-//         `${Date.now()}${Math.floor(Math.random() * 1000)}${Math.floor(Math.random() * 100)}`,
-//       );
-//       await connection.execute(
-//         `
-//     INSERT INTO GTPCSDEFDET (
-//       GTPCSDEFDETID,
-//       GTPIECESDEFECTID,
-//       GTDEFECTDETTABID,
-//       MTRAT,
-//       DEFECTNAME1,
-//       NOOGTIME,
-//       DEFECTPOINS1,
-//       TOTPOINS1
-//     )
-//     VALUES (
-//       :childId,
-//       :piecesDefectId,
-//       :defectDetTabId,
-//       :meter,
-//       :defectId,
-//       :times,
-//       :points,
-//       :totalPoints
-//     )
-//     `,
-//         {
-//           childId: childPrimaryKey,
-//           piecesDefectId: GTPIECESDEFECTID,
-//           defectDetTabId: primaryKey,
-//           meter: Number(defect.meter),
-//           defectId: Number(defect.defectId),
-//           times: Number(defect.times),
-//           points: Number(defect.points),
-//           totalPoints: Number(defect.totalPoints),
-//         },
-//         { autoCommit: false },
-//       );
-//     }
-   
-//     await connection.commit();
-//     return res.status(200).json({
-//       message: "Defect entry updated and child record inserted successfully",
-//     });
-//   } catch (error) {
-//     await connection.rollback();
-
-//     console.error("Update Defect Entry Error:", error);
-//     return res.status(500).json({
-//       message: "Server error",
-//       error: error.message,
-//     });
-//   }
-// }
 export async function updateDefectEntry(req, res) {
   const { lotId } = req.params;
-  const { Lot } = req.body;
+  const { Lot , deleteWorkStatus} = req.body;
 
   // Validate Lot array
   if (!Array.isArray(Lot) || Lot.length === 0) {
@@ -370,13 +179,48 @@ export async function updateDefectEntry(req, res) {
     }
 
     const { GTPIECESDEFECTDETID } = step2Result.rows[0];
+    const pieceId = Lot[0].pieceId;
 
+    // ✅ STEP 3 — Find existing GTDEFECTDETTABID(s) for this piece
+    const existingTabResult = await connection.execute(
+      `SELECT GTDEFECTDETTABID
+       FROM Gtdefectdettab
+       WHERE GTPIECESDEFECTID = :piecesDefectId
+       AND PCSID = :pieceId`,
+      { piecesDefectId: GTPIECESDEFECTID, pieceId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT },
+    );
+
+    const existingTabIds = existingTabResult.rows.map(
+      (r) => r.GTDEFECTDETTABID,
+    );
+
+    // ✅ STEP 4 — Delete child defects first, then parent tab rows
+    if (existingTabIds.length > 0) {
+      // Delete children from GTPCSDEFDET for all existing tab IDs
+      for (const tabId of existingTabIds) {
+        await connection.execute(
+          `DELETE FROM GTPCSDEFDET WHERE GTDEFECTDETTABID = :tabId`,
+          { tabId },
+          { autoCommit: false },
+        );
+      }
+
+      // Delete parent rows from Gtdefectdettab
+      await connection.execute(
+        `DELETE FROM Gtdefectdettab
+         WHERE GTPIECESDEFECTID = :piecesDefectId
+         AND PCSID = :pieceId`,
+        { piecesDefectId: GTPIECESDEFECTID, pieceId },
+        { autoCommit: false },
+      );
+    }
     // ✅ STEP 3 — Loop through each piece in the Lot array
     for (const piece of Lot) {
       const {
         pieceId,
         pieceNo,
-        subPieceNo,       // only present for split pieces
+        subPieceNo, // only present for split pieces
         tableId,
         tableNo,
         startMeter,
@@ -387,6 +231,7 @@ export async function updateDefectEntry(req, res) {
         allocationId,
         totalPointsSum,
         defects,
+        actualMeters,
       } = piece;
 
       // Validate defects for each piece
@@ -423,7 +268,8 @@ export async function updateDefectEntry(req, res) {
           CHECKER,
           ALLACATIONID,
           PCSID,
-          TOTPOINTSTAB
+          TOTPOINTSTAB,
+          ACTUALMETER
         ) VALUES (
           :primaryKey,
           :piecesDefectId,
@@ -436,21 +282,23 @@ export async function updateDefectEntry(req, res) {
           :checker,
           :allocationId,
           :pieceId,
-          :totalPoints
+          :totalPoints,
+          :actualMeters
         )`,
         {
           primaryKey,
           piecesDefectId: GTPIECESDEFECTID,
           piecesDefectDetId: GTPIECESDEFECTDETID,
           basePcsNo: Number(pieceNo),
-          subPcsNo: subPieceNo || null,   // null for original piece, "1A"/"1B" for splits
+          subPcsNo: subPieceNo || null, // null for original piece, "1A"/"1B" for splits
           tableNoTab: tableNoTabValue,
           startMtr: Number(startMeter),
-          endMtr: Number(endMeter),       // endMeter per piece (important for splits)
+          endMtr: Number(endMeter), // endMeter per piece (important for splits)
           checker: checkerId ? Number(checkerId) : null,
           allocationId: allocationId ? Number(allocationId) : null,
           pieceId: pieceId,
           totalPoints: totalPointsSum,
+          actualMeters: Number(actualMeters),
         },
         { autoCommit: false },
       );
@@ -500,14 +348,14 @@ export async function updateDefectEntry(req, res) {
           {
             childId: childPrimaryKey,
             piecesDefectId: GTPIECESDEFECTID,
-            defectDetTabId: primaryKey,   // links to the parent tab row for this piece
+            defectDetTabId: primaryKey, // links to the parent tab row for this piece
             meter: Number(defect.meter),
             defectId: Number(defect.defectId),
             times: Number(defect.times),
             points: Number(defect.points),
             totalPoints: Number(defect.totalPoints),
-            pieceNo:Number(pieceNo),
-            subPieceNo:subPieceNo
+            pieceNo: Number(pieceNo),
+            subPieceNo: subPieceNo,
           },
           { autoCommit: false },
         );
@@ -527,5 +375,87 @@ export async function updateDefectEntry(req, res) {
       message: "Server error",
       error: error.message,
     });
+  }
+}
+
+export async function getExistingDefectEntry(req, res) {
+  const connection = await getConnection(res);
+  const { lotId, pieceId } = req.params;
+
+  try {
+    // Fetch the parent tab record(s) for this lot + piece
+    const tabResult = await connection.execute(
+      `SELECT 
+        T.GTDEFECTDETTABID,
+        T.BASEPCSNO,
+        T.SPLITPCSNO,
+        T.STARTMTR,
+        T.ENDMTR,
+        T.TOTPOINTSTAB,
+        T.TABLENOTAB,
+        T.CHECKER,
+        T.ALLACATIONID
+       FROM Gtdefectdettab T
+       JOIN Gtpiecesdefect P ON P.GTPIECESDEFECTID = T.GTPIECESDEFECTID
+       WHERE P.LOTNO = :lotId
+       AND T.PCSID = :pieceId
+       ORDER BY T.STARTMTR ASC`,
+      { lotId, pieceId },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT },
+    );
+
+    if (tabResult.rows.length === 0) {
+      // No existing data — return empty so frontend knows to start fresh
+      return res.json({ statusCode: 0, data: [] });
+    }
+
+    // For each tab row, fetch its defects from GTPCSDEFDET
+    const pieces = [];
+
+    for (const tab of tabResult.rows) {
+      const defectResult = await connection.execute(
+        `SELECT 
+          D.GTPCSDEFDETID,
+          D.MTRAT,
+          D.DEFECTNAME1,
+          D.NOOGTIME,
+          D.DEFECTPOINS1,
+          D.TOTPOINS1,
+          D.SPLITPCSNO1,
+          D.BASEPCSNO1,
+          M.DEFECTNAME
+         FROM GTPCSDEFDET D
+         LEFT JOIN gtpiecedefmast M ON M.GTPIECEDEFMASTID = D.DEFECTNAME1
+         WHERE D.GTDEFECTDETTABID = :tabId`,
+        { tabId: tab.GTDEFECTDETTABID },
+        { outFormat: oracledb.OUT_FORMAT_OBJECT },
+      );
+
+      pieces.push({
+        gtDefectDetTabId: tab.GTDEFECTDETTABID,
+        pieceNo: tab.BASEPCSNO,
+        subPieceNo: tab.SPLITPCSNO || String(tab.BASEPCSNO),
+        startMeter: tab.STARTMTR,
+        endMeter: tab.ENDMTR,
+        totalPointsSum: tab.TOTPOINTSTAB,
+        defects: defectResult.rows.map((d) => ({
+          meter: d.MTRAT,
+          defectId: d.DEFECTNAME1,
+          defectName: d.DEFECTNAME,
+          points: d.DEFECTPOINS1,
+          times: d.NOOGTIME,
+          totalPoints: d.TOTPOINS1,
+          pieceNo: d.BASEPCSNO1,
+          subPieceNo: d.SPLITPCSNO1,
+        })),
+      });
+    }
+
+    return res.json({ statusCode: 0, data: pieces });
+  } catch (err) {
+    console.error("Error fetching existing defect entry:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
   }
 }
