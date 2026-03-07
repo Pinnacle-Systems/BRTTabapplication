@@ -14,7 +14,7 @@ import {
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { socketMain } from './src/sockets/socket.js';
-import { pieceReceipt, tableLot,defectEntry, foldingPendinglist } from './src/routes/BRTTab/index.js';
+import { pieceReceipt, tableLot,defectEntry, foldingPendinglist, pieceFoldingEntry } from './src/routes/BRTTab/index.js';
 const app = express()
 app.use(express.json())
 
@@ -71,6 +71,8 @@ app.use('/tableLot',tableLot)
 app.use('/defectEntry',defectEntry)
 
 app.use('/foldingPendinglist',foldingPendinglist)
+
+app.use('/pieceFoldingEntry',pieceFoldingEntry)
 
 
 app.get("/retreiveFile/:fileName", (req, res) => {

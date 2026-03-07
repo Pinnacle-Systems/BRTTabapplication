@@ -10,26 +10,26 @@ const foldingPendingApi = createApi({
   }),
   tagTypes: ["foldingPending"],
   endpoints: (builder) => ({
-    // getLotPieceReceipt: builder.query({
-    //   query: (arg) => {
-    //     const { params, searchParams } = arg || {}; // 👈 FIX HERE
+    getGradeMaster: builder.query({
+      query: (arg) => {
+        const { params, searchParams } = arg || {}; // 👈 FIX HERE
 
-    //     if (searchParams) {
-    //       return {
-    //         url: FOLDINGPENINDAPI + "/search/" + searchParams,
-    //         method: "GET",
-    //         params,
-    //       };
-    //     }
+        if (searchParams) {
+          return {
+            url: FOLDINGPENINDAPI + "/search/" + searchParams,
+            method: "GET",
+            params,
+          };
+        }
 
-    //     return {
-    //       url: `${FOLDINGPENINDAPI}/getLot`,
-    //       method: "GET",
-    //       params,
-    //     };
-    //   },
-    //   providesTags: ["foldingPending"],
-    // }),
+        return {
+          url: `${FOLDINGPENINDAPI}/getGrade`,
+          method: "GET",
+          params,
+        };
+      },
+      providesTags: ["foldingPending"],
+    }),
     // getLotPieceReceiptDetails: builder.query({
     //   query: (selectedLotId) => ({
     //     url: `${FOLDINGPENINDAPI}/${selectedLotId}/lotReceiptDetails`,
@@ -63,9 +63,9 @@ const foldingPendingApi = createApi({
     }),
 
     getFoldingPendingById: builder.query({
-      query: ({ foldingId }) => {
+      query: ({ lotNo }) => {
         return {
-          url: `${FOLDINGPENINDAPI}/${foldingId}`,
+          url: `${FOLDINGPENINDAPI}/${lotNo}`,
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
@@ -107,13 +107,14 @@ const foldingPendingApi = createApi({
 });
 
 export const {
-  // useGetLotPieceReceiptQuery,
-  // useGetLotPieceReceiptDetailsQuery,
   useGetFoldingPendingQuery,
   useGetFoldingPendingByIdQuery,
   useAddFoldingPendingMutation,
   useUpdateFoldingPendingMutation,
   useDeleteFoldingPendingMutation,
+
+  useGetGradeMasterQuery,
+
 } = foldingPendingApi;
 
 export default foldingPendingApi;

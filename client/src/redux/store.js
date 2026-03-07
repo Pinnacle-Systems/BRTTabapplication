@@ -17,6 +17,7 @@ import {
 
 import { setupListeners } from "@reduxjs/toolkit/query";
 import { openTabs } from "./features";
+import pieceFoldingEntrygApi from "./services/PieceFoldingEntry";
 
 
 
@@ -32,7 +33,8 @@ export const store = configureStore({
     [pieceReceiptApi.reducerPath]: pieceReceiptApi.reducer,
     [tableLotApi.reducerPath]: tableLotApi.reducer,
     [defectEntryApi.reducerPath]: defectEntryApi.reducer,
-    [foldingPendingApi.reducerPath]: foldingPendingApi.reducer
+    [foldingPendingApi.reducerPath]: foldingPendingApi.reducer,
+    [pieceFoldingEntrygApi.reducerPath]: pieceFoldingEntrygApi.reducer,
 
   }
 
@@ -48,7 +50,8 @@ export const store = configureStore({
       pieceReceiptApi.middleware,
       tableLotApi.middleware,
       defectEntryApi.middleware,
-      foldingPendingApi.middleware
+      foldingPendingApi.middleware,
+      pieceFoldingEntrygApi.middleware
     ]),
 });
 setupListeners(store.dispatch);
