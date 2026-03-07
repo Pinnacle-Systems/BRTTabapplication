@@ -482,7 +482,9 @@ export async function updateDefectEntry(req, res) {
             DEFECTNAME1,
             NOOGTIME,
             DEFECTPOINS1,
-            TOTPOINS1
+            TOTPOINS1,
+            SPLITPCSNO1,
+            BASEPCSNO1
           ) VALUES (
             :childId,
             :piecesDefectId,
@@ -491,7 +493,9 @@ export async function updateDefectEntry(req, res) {
             :defectId,
             :times,
             :points,
-            :totalPoints
+            :totalPoints,            
+            :subPieceNo,
+            :pieceNo
           )`,
           {
             childId: childPrimaryKey,
@@ -502,6 +506,8 @@ export async function updateDefectEntry(req, res) {
             times: Number(defect.times),
             points: Number(defect.points),
             totalPoints: Number(defect.totalPoints),
+            pieceNo:Number(pieceNo),
+            subPieceNo:subPieceNo
           },
           { autoCommit: false },
         );
