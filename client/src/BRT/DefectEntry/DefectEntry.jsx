@@ -9,6 +9,7 @@ import {
   useGetlotDetailsQuery,
   useGetDefectsQuery,
   useUpdateDefectEntryMutation,
+  useGetDefectDetailsQuery,
 } from "../../redux/services/defectEntry.js";
 import { useGetRolesQuery } from "../../redux/userservice";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -116,6 +117,7 @@ const DefectEntry = () => {
             subPieceNo: pieceNo.toString(),
             startMeter: 1,
             endMeter: Number(meters),
+            actualMeters: Number(meters), // ← add
             meters: Number(meters),
             tableNo,
             checkerName,
@@ -130,7 +132,35 @@ const DefectEntry = () => {
 
     setPerPieceForm({});
   }, [pieceId, pieceNo, meters]);
+  const { data: existingEntry } = useGetDefectDetailsQuery(
+    { lotId, pieceId },
+    { skip: !lotId || !pieceId },
+  );
+  useEffect(() => {
+    if (!existingEntry?.data || existingEntry.data.length === 0) return;
+    if (!pieceId || !pieceNo || !meters) return;
 
+    // Map existing DB pieces into the same shape as data.lotDetails
+    const lotDetails = existingEntry.data.map((p) => ({
+      lotId,
+      pieceId,
+      pieceNo: p.pieceNo,
+      subPieceNo: p.subPieceNo,
+      startMeter: p.startMeter,
+      endMeter: p.endMeter,
+      actualMeters: p.endMeter - p.startMeter + 1,
+      meters: Number(meters),
+      tableNo,
+      checkerName,
+      checkerId,
+      checkingSectionId,
+      sectionName,
+      defects: p.defects,
+    }));
+
+    setData({ lotDetails });
+    setPerPieceForm({});
+  }, [existingEntry]);
   const lotOptions = useMemo(
     () =>
       lots?.data?.map((lot) => ({
@@ -274,6 +304,7 @@ const DefectEntry = () => {
 
         startMeter: piece.startMeter,
         endMeter: piece.endMeter,
+        actualMeters: piece.actualMeters, // ← add
         meters: Number(meters),
         tableId,
         tableNo,
@@ -312,6 +343,7 @@ const DefectEntry = () => {
         ...piece,
         subPieceNo: String(piece.subPieceNo),
         endMeter: splitMeter,
+        actualMeters: splitMeter - piece.startMeter + 1,
         defects: piece.defects.filter((d) => d.meter <= splitMeter),
       };
 
@@ -320,6 +352,7 @@ const DefectEntry = () => {
         subPieceNo: `${piece.pieceNo}${nextLetter}`,
         startMeter: splitMeter + 1,
         endMeter: piece.endMeter,
+        actualMeters: piece.endMeter - splitMeter,
         defects: piece.defects.filter((d) => d.meter > splitMeter),
       };
 
@@ -330,7 +363,61 @@ const DefectEntry = () => {
     });
     setForm(pieceIndex, buildPerPieceForm());
   };
+  const deletePiece = (pieceIndex) => {
+    setData((prev) => {
+      const lotDetails = [...prev.lotDetails];
 
+      if (lotDetails.length === 1) {
+        Swal.fire({
+          icon: "warning",
+          title: "Cannot delete the only piece",
+          timer: 2000,
+        });
+        return prev;
+      }
+
+      const pieceToDelete = lotDetails[pieceIndex];
+      const filtered = [...lotDetails];
+
+      // ── Restore the previous piece's endMeter to the deleted piece's endMeter ──
+      // So if piece[0] was 1–40 and piece[1] (1A) was 41–140,
+      // deleting piece[1] restores piece[0] endMeter back to 140
+      filtered[pieceIndex - 1] = {
+        ...filtered[pieceIndex - 1],
+        endMeter: pieceToDelete.endMeter,
+        actualMeters:
+          pieceToDelete.endMeter - filtered[pieceIndex - 1].startMeter + 1, // ← restore
+        // Also merge the deleted piece's defects back into the previous piece
+        defects: [
+          ...filtered[pieceIndex - 1].defects,
+          ...pieceToDelete.defects,
+        ],
+      };
+
+      // Now remove the deleted piece
+      const afterRemoval = filtered.filter((_, i) => i !== pieceIndex);
+
+      // Renumber — index 0 keeps original subPieceNo, rest get A, B, C...
+      const renumbered = afterRemoval.map((p, i) => {
+        if (i === 0) return { ...p, subPieceNo: String(p.pieceNo) };
+        const letter = String.fromCharCode(64 + i); // 1→A, 2→B, 3→C
+        return { ...p, subPieceNo: `${p.pieceNo}${letter}` };
+      });
+
+      return { lotDetails: renumbered };
+    });
+
+    // Shift perPieceForm keys down
+    setPerPieceForm((prev) => {
+      const updated = {};
+      Object.entries(prev).forEach(([key, value]) => {
+        const k = Number(key);
+        if (k < pieceIndex) updated[k] = value;
+        else if (k > pieceIndex) updated[k - 1] = value;
+      });
+      return updated;
+    });
+  };
   const FillDefectArray = (e, pieceIndex) => {
     e.preventDefault();
     const form = getForm(pieceIndex);
@@ -628,23 +715,51 @@ const DefectEntry = () => {
                         "& .MuiAccordionSummary-content": { margin: "8px 0" },
                       }}
                     >
-                      <Typography
-                        component="span"
-                        sx={{
-                          color: "black",
-                          fontWeight: 700,
-                          marginLeft: "-9px",
-                        }}
-                      >
-                        Piece {piece.subPieceNo} ({piece.startMeter} –{" "}
-                        {piece.endMeter})
-                        {piece.defects?.length > 0 && (
-                          <span className="ml-2 text-xs font-normal text-gray-500">
-                            ({piece.defects.length} defect
-                            {piece.defects.length > 1 ? "s" : ""})
-                          </span>
+                      <div className="flex items-center justify-between w-full pr-2">
+                        <Typography
+                          component="span"
+                          sx={{
+                            color: "black",
+                            fontWeight: 700,
+                            marginLeft: "-9px",
+                          }}
+                        >
+                          Piece {piece.subPieceNo} ({piece.startMeter} –{" "}
+                          {piece.endMeter})
+                            <span className="ml-2 text-xs font-normal text-blue-500">
+    [{piece.actualMeters}m]
+  </span>
+                          {piece.defects?.length > 0 && (
+                            <span className="ml-2 text-xs font-normal text-gray-500">
+                              ({piece.defects.length} defect
+                              {piece.defects.length > 1 ? "s" : ""})
+                            </span>
+                          )}
+                        </Typography>
+
+                        {/* Only show delete for split pieces */}
+                        {pieceIndex > 0 && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation(); // prevent accordion toggle
+                              Swal.fire({
+                                icon: "warning",
+                                title: `Delete Piece ${piece.subPieceNo}?`,
+                                text: "This will remove the piece and its defects. Remaining pieces will be renumbered.",
+                                showCancelButton: true,
+                                confirmButtonColor: "#d33",
+                                confirmButtonText: "Yes, delete",
+                              }).then((result) => {
+                                if (result.isConfirmed) deletePiece(pieceIndex);
+                              });
+                            }}
+                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded-lg ml-2 flex items-center gap-1"
+                          >
+                            <MdDelete size={14} /> Delete Piece
+                          </button>
                         )}
-                      </Typography>
+                      </div>
                     </AccordionSummary>
 
                     <AccordionDetails sx={{ paddingTop: 0, paddingX: 1 }}>

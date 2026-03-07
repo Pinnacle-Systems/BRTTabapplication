@@ -93,6 +93,16 @@ const defectEntryApi = createApi({
       }),
       providesTags: ["WorkStatus"],
     }),
+    getDefectDetails: builder.query({
+      query: ({ lotId, pieceId }) => ({
+        url: `${DEFECTENTRY}/${lotId}/${pieceId}/getDefectDetails`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      }),
+      providesTags: ["defectEntryApi"],
+    }),
   }),
 });
 
@@ -103,6 +113,7 @@ export const {
   useGetlotDetailsQuery,
   useUpdateDefectEntryMutation,
   useGetWorkStatusQuery,
+  useGetDefectDetailsQuery
 } = defectEntryApi;
 
 export default defectEntryApi;
