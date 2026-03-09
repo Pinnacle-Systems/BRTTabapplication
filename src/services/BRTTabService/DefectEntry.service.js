@@ -82,7 +82,13 @@ export async function getLotDetails(req, res) {
     const result = await connection.execute(sql);
 
     const rows = result.rows;
-
+    // ← Guard: no rows found for this pieceId
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        statusCode: 1,
+        message: `No details found for pieceId: ${pieceId}`,
+      });
+    }
     const workData = {
       checkingSectionId: rows[0][0],
       sectionName: rows[0][1],
@@ -135,7 +141,7 @@ export async function getDefects(req, res) {
 
 export async function updateDefectEntry(req, res) {
   const { lotId } = req.params;
-  const { Lot , deleteWorkStatus} = req.body;
+  const { Lot, deleteWorkStatus } = req.body;
 
   // Validate Lot array
   if (!Array.isArray(Lot) || Lot.length === 0) {
@@ -180,6 +186,7 @@ export async function updateDefectEntry(req, res) {
 
     const { GTPIECESDEFECTDETID } = step2Result.rows[0];
     const pieceId = Lot[0].pieceId;
+    const allocationId = Lot[0].allocationId; // ←
 
     // ✅ STEP 3 — Find existing GTDEFECTDETTABID(s) for this piece
     const existingTabResult = await connection.execute(
@@ -361,7 +368,42 @@ export async function updateDefectEntry(req, res) {
         );
       }
     }
+    // ✅ STEP 5 — If completed checkbox was ticked, clean up work status
+    if (deleteWorkStatus === true && allocationId) {
+      // Update GTCHKTABLEMAST — reset TABLEAVAILBLE to NULL
+      await connection.execute(
+        `UPDATE GTCHKTABLEMAST
+     SET TABLEAVAILBLE = NULL
+     WHERE TABLEAVAILBLE = 'NO'
+     AND GTCHKTABLEMASTID IN (
+       SELECT GTCHKTABLEMASTID
+       FROM CheckerWorkingTables
+       WHERE AllocationID = :allocationId
+     )`,
+        { allocationId },
+        { autoCommit: false },
+      );
 
+      // Delete child first
+      await connection.execute(
+        `DELETE FROM CheckerWorkingDetails
+     WHERE AllocationID = :allocationId`,
+        { allocationId },
+        { autoCommit: false },
+      );
+
+      // Delete parent
+      await connection.execute(
+        `DELETE FROM CheckerWorkingTables
+     WHERE AllocationID = :allocationId`,
+        { allocationId },
+        { autoCommit: false },
+      );
+
+      console.log(
+        `Work completed — tables freed for allocationId: ${allocationId}`,
+      );
+    }
     // ✅ Commit all inserts together
     await connection.commit();
 

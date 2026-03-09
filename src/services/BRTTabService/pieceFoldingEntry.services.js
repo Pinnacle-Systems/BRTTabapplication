@@ -86,7 +86,7 @@ export async function getPieceAgainstLotNo(req, res) {
 
          DT.TABLENOTAB,
     DT.SPLITPCSNO,
-    DT.TOTDEFPOITAB,
+    DT.TOTPOINTSTAB,
     DT.STARTMTR,
     DT.ENDMTR,
     DT.BASEPCSNO,

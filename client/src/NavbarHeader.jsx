@@ -256,17 +256,7 @@ const NavbarHeader = ({ onLogout }) => {
       gradient: "from-rose-500 to-pink-600",
       key: "PIECEFOLDINGENTRY",
     },
-    {
-      name: "PackingSlip",
-      icon: <RiBillLine />,
-      value: new Set(
-        InspectionDet?.data?.map(
-          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
-        ),
-      ).size,
-      gradient: "from-teal-500 to-cyan-600",
-      key: "PACKINGSLIP",
-    },
+
     {
       name: "PieceVerification",
       icon: INSPECTION_ICON,
@@ -277,6 +267,17 @@ const NavbarHeader = ({ onLogout }) => {
       ).size,
       gradient: "from-teal-500 to-cyan-600",
       key: "PIECEVERIFICATION",
+    },
+    {
+      name: "PackingSlip",
+      icon: <RiBillLine />,
+      value: new Set(
+        InspectionDet?.data?.map(
+          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
+        ),
+      ).size,
+      gradient: "from-teal-500 to-cyan-600",
+      key: "PACKINGSLIP",
     },
   ];
 

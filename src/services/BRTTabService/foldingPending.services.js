@@ -49,7 +49,7 @@ export async function getFoldingPendingById(req, res) {
 
          DT.TABLENOTAB,
     DT.SPLITPCSNO,
-    DT.TOTDEFPOITAB,
+    DT.TOTPOINTSTAB,
     DT.STARTMTR,
     DT.ENDMTR,
     DT.BASEPCSNO,

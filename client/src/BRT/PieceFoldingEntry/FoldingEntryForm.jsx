@@ -11,8 +11,14 @@ import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import Select from "react-select";
 import { useGetPiecesQuery } from "../../redux/services/TableandLot";
-import { useGetFoldingPendingQuery, useGetGradeMasterQuery } from "../../redux/services/FoldingPendingList";
-import { useGetpieceEntryByIdQuery, useGetpieceFoldingEntryByIdQuery } from "../../redux/services/PieceFoldingEntry";
+import {
+  useGetFoldingPendingQuery,
+  useGetGradeMasterQuery,
+} from "../../redux/services/FoldingPendingList";
+import {
+  useGetpieceEntryByIdQuery,
+  useGetpieceFoldingEntryByIdQuery,
+} from "../../redux/services/PieceFoldingEntry";
 import { useGetRolesQuery, useGetUsersQuery } from "../../redux/userservice";
 
 const PieceFoldingForm = ({
@@ -33,13 +39,12 @@ const PieceFoldingForm = ({
   const pieceNoRef = useRef(null);
   let CHK = 1;
 
-  const [selectedLotNo, setSelectedLotNo] = useState('')
-  const [selectedPiece, setSelectedPiece] = useState('')
-  const [loomNo, setLoomNo] = useState('')
+  const [selectedLotNo, setSelectedLotNo] = useState("");
+  const [selectedPiece, setSelectedPiece] = useState("");
+  const [loomNo, setLoomNo] = useState("");
   const [checkerId, setCheckerId] = useState("");
-  const [receiptMeters, setReceiptMeters] = useState('')
-  const [checkedMeters, setCheckedMeters] = useState('')
-
+  const [receiptMeters, setReceiptMeters] = useState("");
+  const [checkedMeters, setCheckedMeters] = useState("");
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -112,43 +117,47 @@ const PieceFoldingForm = ({
     }),
   };
 
-
   const { data: gradeData } = useGetGradeMasterQuery();
 
-
-  const { data: foldingPendingData, isLoading, isFetching, error } = useGetFoldingPendingQuery();
+  const {
+    data: foldingPendingData,
+    isLoading,
+    isFetching,
+    error,
+  } = useGetFoldingPendingQuery();
 
   const flodingOptions = foldingPendingData?.data?.map((cloth) => ({
     label: cloth?.DOCID,
     value: cloth?.RECEIPTNO,
   }));
 
+  console.log(foldingPendingData, "foldingPendingData");
 
-  console.log(foldingPendingData, "foldingPendingData")
-
-  const {
-    data: singleData,
-
-  } = useGetpieceFoldingEntryByIdQuery(
+  const { data: singleData } = useGetpieceFoldingEntryByIdQuery(
     { selectedPiece },
     { skip: !selectedPiece },
   );
 
-  const value = singleData?.data?.TOTPOINTSTAB
+  const defectPoints = Number(singleData?.data?.TOTPOINTSTAB || 0);
+  const checkedMetersNum = Number(checkedMeters || 0);
 
-  const result = gradeData?.data?.find(r =>
-    value >= r.STPOINTS && (r.ENDPOINTD === null || value < r.ENDPOINTD)
-  );
-  console.log(result, "result")
-  console.log(singleData?.data, "singleData")
+  const value =
+    checkedMetersNum > 0 ? (defectPoints / checkedMetersNum) * 100 : null;
+
+  const result =
+    value !== null
+      ? gradeData?.data?.find(
+          (r) =>
+            value >= r.STPOINTS && (r.ENDPOINTD === 0 || value < r.ENDPOINTD),
+        )
+      : null;
+  console.log(result, "result");
+  console.log(singleData?.data, "singleData");
   const {
     data: pieceData,
     isLoading: isSingleLoading,
     isFetching: isSingleFetching,
-  } = useGetpieceEntryByIdQuery(
-    { selectedLotNo },
-    { skip: !selectedLotNo },
-  );
+  } = useGetpieceEntryByIdQuery({ selectedLotNo }, { skip: !selectedLotNo });
 
   const pieceOptions = pieceData?.data?.map((cloth) => ({
     label: `${cloth?.BASEPCSNO} ${cloth?.SPLITPCSNO ? "-" : ""} ${cloth?.SPLITPCSNO ? cloth?.SPLITPCSNO : ""}`,
@@ -174,7 +183,6 @@ const PieceFoldingForm = ({
   const isSuppervisor = Number(storedRoleId) === supervisorId;
   const storedUsername = localStorage.getItem("userName");
 
-
   const userOptions = userData?.data
     ?.filter?.((val) => val?.ROLEID != adminId && val?.ROLEID != supervisorId)
     ?.map((user) => ({
@@ -188,14 +196,10 @@ const PieceFoldingForm = ({
     }
   }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
 
-
   const [updateData] = useUpdatePieceReceiptMutation();
 
-
   const syncFormWithDb = useCallback(
-    (data) => {
-
-    },
+    (data) => {},
     [selectedLotId, selectedGridId],
   );
 
@@ -218,7 +222,8 @@ const PieceFoldingForm = ({
       pcNo: parseInt(item.pcNo),
       selectedLotId: parseInt(selectedLotId),
       selectedGridId: parseInt(selectedGridId),
-      selectedClothId: parseInt(selectedClothId), CHK,
+      selectedClothId: parseInt(selectedClothId),
+      CHK,
 
       meters: parseFloat(item.meters),
     })),
@@ -284,14 +289,6 @@ const PieceFoldingForm = ({
     handleSubmitCustom(updateData, data);
   };
 
-
-
-
-
-
-
-
-
   if (isLoading) {
     return <div className="p-6 text-center">Loading...</div>;
   }
@@ -316,12 +313,12 @@ const PieceFoldingForm = ({
     Number(dcMeter || 0) - Number(totalMetersTable)
   ).toFixed(2);
 
-
-
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
-        <h1 className="text-xl ml-2 font-bold text-center">Piece Folding Entry</h1>
+        <h1 className="text-xl ml-2 font-bold text-center">
+          Piece Folding Entry
+        </h1>
         <div>
           <button
             onClick={onClose}
@@ -343,7 +340,6 @@ const PieceFoldingForm = ({
             <div>
               <h2 className="text-lg  font-semibold mb-2 ">Lot Details</h2>
               <div className="grid grid-cols-4 lg:grid-cols-10 gap-4 text-sm">
-
                 <div className="col-span-2 lg:col-span-2 z-999">
                   <label className="block font-medium mb-1">Lot No</label>
                   <Select
@@ -363,7 +359,6 @@ const PieceFoldingForm = ({
                   />
                 </div>
 
-
                 <div className="col-span-1 lg:col-span-1">
                   <label className="block font-medium mb-1">Piece No</label>
                   <Select
@@ -374,7 +369,7 @@ const PieceFoldingForm = ({
                       ) || null
                     }
                     onChange={(selectedOption) => {
-                      setSelectedPiece(selectedOption?.value)
+                      setSelectedPiece(selectedOption?.value);
                     }}
                     placeholder=" "
                     isClearable={false} // ✅ disable cross icon
@@ -404,7 +399,10 @@ const PieceFoldingForm = ({
                 </div>
 
                 <div className="flex flex-col flex-1  col-span-2 max-w-[18rem]">
-                  <label className="text-sm font-medium mb-1"> Folder Name</label>
+                  <label className="text-sm font-medium mb-1">
+                    {" "}
+                    Folder Name
+                  </label>
 
                   {isAdmin || isSuppervisor ? (
                     <>
@@ -437,19 +435,23 @@ const PieceFoldingForm = ({
                   )}
                 </div>
 
-
-
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Receipt Meters</label>
+                  <label className="block font-medium mb-1">
+                    Receipt Meters
+                  </label>
                   <input
-                    value={parseFloat(singleData?.data?.ACTUALMETER || 0).toFixed(2)}
+                    value={parseFloat(
+                      singleData?.data?.ACTUALMETER || 0,
+                    ).toFixed(2)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                     disabled
                   />
                 </div>
 
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Total Defect</label>
+                  <label className="block font-medium mb-1">
+                    Defect Points
+                  </label>
 
                   <input
                     value={singleData?.data?.TOTPOINTSTAB || 0}
@@ -459,11 +461,17 @@ const PieceFoldingForm = ({
                 </div>
 
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Checked Meters</label>
+                  <label className="block font-medium mb-1">
+                    Checked Meters
+                  </label>
 
                   <input
                     value={checkedMeters}
-                    onBlur={(e) => setCheckedMeters(parseFloat(e.target.value || 0).toFixed(2))}
+                    onBlur={(e) =>
+                      setCheckedMeters(
+                        parseFloat(e.target.value || 0).toFixed(2),
+                      )
+                    }
                     onChange={(e) => setCheckedMeters(e.target.value)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
@@ -473,21 +481,14 @@ const PieceFoldingForm = ({
                   <label className="block font-medium mb-1">GRADE</label>
 
                   <input
-                    value={result?.GRADENAME}
-
+                    value={result?.GRADENAME || ""} // ← fallback to empty string
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>
-
-
-
               </div>
             </div>
           </div>
-
-
         </form>
-
       </div>
     </div>
   );

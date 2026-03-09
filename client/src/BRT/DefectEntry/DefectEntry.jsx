@@ -41,6 +41,7 @@ const DefectEntry = () => {
   const [translatedDefects, setTranslatedDefects] = useState([]);
   const translationCacheRef = useRef({});
   const [data, setData] = useState({ lotDetails: [] });
+  const [isCompleted, setIsCompleted] = useState(false);
   const lotIdRef = useRef(null);
   const isInitialLotMount = useRef(true);
 
@@ -101,7 +102,7 @@ const DefectEntry = () => {
 
   useEffect(() => {
     if (!pieceId || !pieceNo || !meters) return;
-
+    setIsCompleted(false); // ← reset on piece change
     setData((prev) => {
       const existingDefects =
         prev.lotDetails[0]?.pieceId === pieceId
@@ -234,6 +235,7 @@ const DefectEntry = () => {
       setCheckingSectionId("");
       setData({ lotDetails: [] });
       setPerPieceForm({});
+      setIsCompleted(false); // ← reset on lot change
     }
   }, [lotId, canEditLot]);
 
@@ -301,7 +303,6 @@ const DefectEntry = () => {
         pieceId: parseInt(pieceId),
         pieceNo: parseInt(pieceNo),
         subPieceNo: piece.subPieceNo, // ← add (for all pieces including index 0)
-
         startMeter: piece.startMeter,
         endMeter: piece.endMeter,
         actualMeters: piece.actualMeters, // ← add
@@ -317,7 +318,11 @@ const DefectEntry = () => {
       };
       return entry;
     });
-    return { lotId: parseInt(lotId), Lot };
+    return {
+      lotId: parseInt(lotId),
+      deleteWorkStatus: isCompleted, // ← directly from checkbox
+      Lot,
+    };
   };
 
   const handleSplit = (pieceIndex, splitMeter) => {
@@ -581,7 +586,7 @@ const DefectEntry = () => {
           ══════════════════════════════════════════ */}
           <div className="border border-gray-300 rounded-lg p-3 mb-3">
             <p className="font-bold text-sm mb-2">Lot Details</p>
-            <div className="grid grid-cols-5 lg:grid-cols-11 gap-4 text-sm">
+            <div className="grid grid-cols-6 lg:grid-cols-12 gap-4 text-sm">
               <div className="col-span-2 lg:col-span-2 z-[999]">
                 <label className="block font-medium mb-1">Lot No</label>
                 <Select
@@ -665,6 +670,17 @@ const DefectEntry = () => {
                   className="border rounded-lg text-left px-2 py-1.5 w-full bg-gray-50"
                 />
               </div>
+              <div className="col-span-1 lg:col-span-1 flex items-end pb-1">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isCompleted}
+                    onChange={(e) => setIsCompleted(e.target.checked)}
+                    className="w-4 h-4 accent-green-600 cursor-pointer"
+                  />
+                  <span className="font-medium text-sm">Completed</span>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -726,9 +742,9 @@ const DefectEntry = () => {
                         >
                           Piece {piece.subPieceNo} ({piece.startMeter} –{" "}
                           {piece.endMeter})
-                            <span className="ml-2 text-xs font-normal text-blue-500">
-    [{piece.actualMeters}m]
-  </span>
+                          <span className="ml-2 text-xs font-normal text-blue-500">
+                            [{piece.actualMeters}m]
+                          </span>
                           {piece.defects?.length > 0 && (
                             <span className="ml-2 text-xs font-normal text-gray-500">
                               ({piece.defects.length} defect
@@ -836,7 +852,8 @@ const DefectEntry = () => {
                             type="number"
                             value={form.defectPoints}
                             readOnly
-                            className="w-full border rounded-lg px-1 py-1.5 text-right bg-gray-50"
+                            className={`w-full border rounded-lg px-1 py-1.5 text-right bg-gray-50 
+    ${Number(form.defectPoints) > 2 ? "text-red-600 font-bold" : "text-black"}`}
                           />
                         </div>
 
@@ -885,6 +902,15 @@ const DefectEntry = () => {
                           <div>
                             <button
                               type="button"
+                              onClick={(e) => FillDefectArray(e, pieceIndex)}
+                              className="bg-green-600 text-white py-1.5 rounded-lg hover:bg-green-700 transition px-2"
+                            >
+                              Add
+                            </button>
+                          </div>
+                          <div className="ml-1">
+                            <button
+                              type="button"
                               onClick={() =>
                                 handleSplit(
                                   pieceIndex,
@@ -894,15 +920,6 @@ const DefectEntry = () => {
                               className="bg-purple-600 text-white py-1.5 rounded-lg hover:bg-purple-700 transition px-2"
                             >
                               Split
-                            </button>
-                          </div>
-                          <div className="ml-1">
-                            <button
-                              type="button"
-                              onClick={(e) => FillDefectArray(e, pieceIndex)}
-                              className="bg-green-600 text-white py-1.5 rounded-lg hover:bg-green-700 transition px-2"
-                            >
-                              Add
                             </button>
                           </div>
                         </div>

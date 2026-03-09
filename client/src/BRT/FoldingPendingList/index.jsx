@@ -286,18 +286,18 @@ const customSelectStyles = {
         <div className="flex gap-4 mt-2">
           <div className=" md:w-[100vw] lg:w-[100vw] rounded-lg overflow-y-auto mt-2 p-2">
             <div className="max-h-[45vh] overflow-y-auto overflow-x-auto">
-              <table className="min-w-[900px] w-full text-sm border">
+              <table className="min-w-[900px] w-full text-sm border table-fixed">
                 <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
                   <tr>
-                    <th className="px-2 py-2 border w-2 text-center">S.No</th>
-                    <th className="px-2 py-2 border w-5 text-center">BasePcsNo</th>
-                    <th className="px-2 py-2 border w-4 text-center">SplitPcsNo</th>
-                    <th className="px-2 py-2 border w-52 text-center">Checker</th>
-                    <th className="px-2 py-2 border w-20 text-center">Table No</th>
-                    <th className="px-2 py-2 border w-20 text-center">Start Mtr</th>
-                    <th className="px-2 py-2 border w-20 text-center">End Mtr</th>
-                    <th className="px-2 py-2 border w-32 text-center">Total Defect Points</th>
-                    <th className="px-2 py-2 border w-4 text-center">Approve</th>
+                    <th className="px-1 py-2 border w-6 text-center">S.No</th>
+                    <th className="px-1 py-2 border w-16 text-center">Base Pcs No</th>
+                    <th className="px-1 py-2 border w-16 text-center">Split Pcs No</th>
+                    <th className="px-1 py-2 border w-32 text-center">Checker</th>
+                    <th className="px-1 py-2 border w-12 text-center">Table No</th>
+                    <th className="px-1 py-2 border w-12 text-center">Start Mtr</th>
+                    <th className="px-1 py-2 border w-12 text-center">End Mtr</th>
+                    <th className="px-1 py-2 border w-24 text-center">Total Defect Points</th>
+                    <th className="px-1 py-2 border w-8 text-center">Approve</th>
 
                   </tr>
                 </thead>
@@ -310,7 +310,7 @@ const customSelectStyles = {
                           {index + 1}
                         </td>
 
-                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-left">
+                        <td className="py-1 px-2  border focus:ring-2 focus:border-2 text-right">
                           {item?.BASEPCSNO}
                         </td>
 
@@ -321,7 +321,7 @@ const customSelectStyles = {
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-left">
                           {item?.CHECKERNAME}
                         </td>
-                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-center">
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
                           {item?.TABLENOTAB}
                         </td>
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
@@ -331,7 +331,7 @@ const customSelectStyles = {
                           {item?.ENDMTR}
                         </td>
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
-                          {item?.TOTDEFPOITAB}
+                          {item?.TOTPOINTSTAB}
                         </td>
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-center ">
                           {item?.RECEIPTNO ?
