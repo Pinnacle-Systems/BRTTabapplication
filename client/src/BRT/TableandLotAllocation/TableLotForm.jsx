@@ -19,6 +19,7 @@ import Swal from "sweetalert2";
 import Select from "react-select";
 import CheckingNoGrid from "./CheckingNoGrid ";
 import { push } from "../../redux/features/opentabs";
+import zIndex from "@mui/material/styles/zIndex";
 
 const TableLotForm = ({
   onClose,
@@ -425,6 +426,7 @@ const TableLotForm = ({
       "&:hover": {
         borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
       },
+      zIndex:"999"
     }),
     valueContainer: (base, state) => ({
       ...base,
