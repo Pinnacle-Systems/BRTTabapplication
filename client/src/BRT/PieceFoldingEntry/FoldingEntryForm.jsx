@@ -30,21 +30,21 @@ const PieceFoldingForm = ({
   setSelectedGridId,
   selectedGridId,
 }) => {
-  const [receiptPcs, setReceiptPcs] = useState("");
-  const [dcMeter, setDcMeter] = useState("");
-  const [pieceNo, setPieceNumber] = useState("");
-  const [meter, setMeter] = useState("");
-  const [lotItems, setLotItems] = useState([]);
   const lotIdRef = useRef(null);
-  const pieceNoRef = useRef(null);
-  let CHK = 1;
 
   const [selectedLotNo, setSelectedLotNo] = useState("");
-  const [selectedPiece, setSelectedPiece] = useState("");
+  const [tableNo, setTableNo] = useState("");
   const [loomNo, setLoomNo] = useState("");
   const [checkerId, setCheckerId] = useState("");
+  const [selectedPiece, setSelectedPiece] = useState("");
   const [receiptMeters, setReceiptMeters] = useState("");
+  const [meters, setMeters] = useState("");
+  const [defectPoints, setDefectPoints] = useState("");
   const [checkedMeters, setCheckedMeters] = useState("");
+  const [gradeName, setGradeName] = useState("");
+  const [actualPoints, setActualPoints] = useState("");
+  const [foldPercentage,setFoldPercentage] = useState("")
+  const [weight, setWeight] = useState("");
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -137,20 +137,48 @@ const PieceFoldingForm = ({
     { selectedPiece },
     { skip: !selectedPiece },
   );
+  const syncFormWithDb = useCallback(
+    (data) => {
+      setTableNo(data?.TABLENOTAB);
+      setMeters(data?.ACTUALMETER);
+      setDefectPoints(Number(data?.TOTPOINTSTAB));
+    },
+    [selectedLotId, selectedPiece],
+  );
 
-  const defectPoints = Number(singleData?.data?.TOTPOINTSTAB || 0);
+  useEffect(() => {
+    if (selectedPiece && singleData?.data) {
+      syncFormWithDb(singleData.data);
+    }
+  }, [selectedPiece, singleData, syncFormWithDb]);
   const checkedMetersNum = Number(checkedMeters || 0);
 
   const value =
     checkedMetersNum > 0 ? (defectPoints / checkedMetersNum) * 100 : null;
 
-  const result =
-    value !== null
-      ? gradeData?.data?.find(
-          (r) =>
-            value >= r.STPOINTS && (r.ENDPOINTD === 0 || value < r.ENDPOINTD),
-        )
-      : null;
+  const result = (() => {
+    if (value === null) return null;
+
+    // Grade based on points calculation
+    const pointsGrade = gradeData?.data?.find(
+      (r) => value >= r.STPOINTS && (r.ENDPOINTD === 0 || value < r.ENDPOINTD),
+    );
+
+    // Force C GRADE when checked meters < 20
+    const lowMeterGrade =
+      checkedMetersNum < 20
+        ? gradeData?.data?.find((r) => r.GRADENAME === "C GRADE") // ← exact match
+        : null;
+
+    if (pointsGrade && lowMeterGrade) {
+      // Higher STPOINTS = worse grade → pick worse one
+      return pointsGrade.STPOINTS >= lowMeterGrade.STPOINTS
+        ? pointsGrade
+        : lowMeterGrade;
+    }
+
+    return pointsGrade || lowMeterGrade || null;
+  })();
   console.log(result, "result");
   console.log(singleData?.data, "singleData");
   const {
@@ -160,7 +188,8 @@ const PieceFoldingForm = ({
   } = useGetpieceEntryByIdQuery({ selectedLotNo }, { skip: !selectedLotNo });
 
   const pieceOptions = pieceData?.data?.map((cloth) => ({
-    label: `${cloth?.BASEPCSNO} ${cloth?.SPLITPCSNO ? "-" : ""} ${cloth?.SPLITPCSNO ? cloth?.SPLITPCSNO : ""}`,
+    // label: `${cloth?.BASEPCSNO} ${cloth?.SPLITPCSNO ? "-" : ""} ${cloth?.SPLITPCSNO ? cloth?.SPLITPCSNO : ""}`,
+    label: cloth?.SPLITPCSNO,
     value: cloth?.ID,
   }));
 
@@ -195,38 +224,33 @@ const PieceFoldingForm = ({
       setCheckerId(storedUserId);
     }
   }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
-
-  const [updateData] = useUpdatePieceReceiptMutation();
-
-  const syncFormWithDb = useCallback(
-    (data) => {},
-    [selectedLotId, selectedGridId],
-  );
-
-  console.log(lotItems, "dataCheck");
-
   useEffect(() => {
-    setLotItems([]);
-
-    if (selectedClothId && singleData?.data) {
-      syncFormWithDb(singleData.data);
+    if (value !== null && checkedMetersNum > 0) {
+      setActualPoints(value.toFixed(2));
+    } else {
+      setActualPoints("");
     }
-  }, [selectedClothId, singleData, syncFormWithDb]);
+  }, [value, checkedMetersNum]);
+  useEffect(() => {
+    if (result?.GRADENAME) {
+      setGradeName(result.GRADENAME);
+    } else {
+      setGradeName("");
+    }
+  }, [result?.GRADENAME]);
+  useEffect(() => {
+  if (checkedMetersNum > 0) {
+    setFoldPercentage((checkedMetersNum / 100).toFixed(2));
+  } else {
+    setFoldPercentage("");
+  }
+}, [checkedMetersNum]);
+  const [updateData] = useUpdatePieceReceiptMutation();
 
   const data = {
     selectedLotId: parseInt(selectedLotId),
     selectedClothId: parseInt(selectedClothId),
     selectedGridId: parseInt(selectedGridId),
-
-    lotItems: lotItems?.map(({ _isDbRow, ...item }) => ({
-      pcNo: parseInt(item.pcNo),
-      selectedLotId: parseInt(selectedLotId),
-      selectedGridId: parseInt(selectedGridId),
-      selectedClothId: parseInt(selectedClothId),
-      CHK,
-
-      meters: parseFloat(item.meters),
-    })),
   };
   const handleSubmitCustom = async (callback, data) => {
     try {
@@ -238,12 +262,10 @@ const PieceFoldingForm = ({
         timer: 2000,
         showConfirmButton: false,
       });
-      setLotItems([]);
       setSelectedClothId("");
       setSelectedLotId("");
       setSelectedGridId("");
-      setPieceNumber("");
-      setMeter("");
+
       setTimeout(() => {
         lotIdRef.current?.focus();
         lotIdRef.current?.openMenu("first");
@@ -272,19 +294,6 @@ const PieceFoldingForm = ({
 
       return;
     }
-    if (lotItems?.length === 0) {
-      Swal.fire({
-        icon: "warning",
-
-        title: "Add at least one piece",
-
-        timer: 2000,
-
-        showConfirmButton: false,
-      });
-
-      return;
-    }
 
     handleSubmitCustom(updateData, data);
   };
@@ -298,20 +307,6 @@ const PieceFoldingForm = ({
       <div className="p-6 text-center text-red-500">Error loading lots</div>
     );
   }
-  const totalPcs = lotItems?.reduce(
-    (sum, item) => sum + Number(item?.pcNo || 0),
-    0,
-  );
-  const totalMetersTable = lotItems
-    ?.reduce((sum, item) => sum + Number(item?.meters || 0), 0)
-    ?.toFixed(2);
-  const totalPieces = lotItems.length;
-
-  const balancePcs = Number(receiptPcs || 0) - totalPieces;
-
-  const balanceMeters = (
-    Number(dcMeter || 0) - Number(totalMetersTable)
-  ).toFixed(2);
 
   return (
     <div className="h-[75vh] pt-0">
@@ -360,29 +355,9 @@ const PieceFoldingForm = ({
                 </div>
 
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Piece No</label>
-                  <Select
-                    options={pieceOptions}
-                    value={
-                      pieceOptions?.find(
-                        (option) => option.value === selectedPiece,
-                      ) || null
-                    }
-                    onChange={(selectedOption) => {
-                      setSelectedPiece(selectedOption?.value);
-                    }}
-                    placeholder=" "
-                    isClearable={false} // ✅ disable cross icon
-                    styles={customSelectStyles}
-                    isSearchable={true}
-                    className="text-right"
-                  />
-                </div>
-
-                <div className="col-span-1 lg:col-span-1">
                   <label className="block font-medium mb-1">Table No</label>
                   <input
-                    value={singleData?.data?.TABLENOTAB}
+                    value={tableNo}
                     // readOnly={readonly}
                     disabled
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
@@ -434,15 +409,29 @@ const PieceFoldingForm = ({
                     </>
                   )}
                 </div>
-
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">
-                    Receipt Meters
-                  </label>
+                  <label className="block font-medium mb-1">Piece No</label>
+                  <Select
+                    options={pieceOptions}
+                    value={
+                      pieceOptions?.find(
+                        (option) => option.value === selectedPiece,
+                      ) || null
+                    }
+                    onChange={(selectedOption) => {
+                      setSelectedPiece(selectedOption?.value);
+                    }}
+                    placeholder=" "
+                    isClearable={false} // ✅ disable cross icon
+                    styles={customSelectStyles}
+                    isSearchable={true}
+                    className="text-right"
+                  />
+                </div>
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">Meters</label>
                   <input
-                    value={parseFloat(
-                      singleData?.data?.ACTUALMETER || 0,
-                    ).toFixed(2)}
+                    value={meters}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                     disabled
                   />
@@ -454,7 +443,7 @@ const PieceFoldingForm = ({
                   </label>
 
                   <input
-                    value={singleData?.data?.TOTPOINTSTAB || 0}
+                    value={defectPoints}
                     disabled
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
@@ -466,11 +455,10 @@ const PieceFoldingForm = ({
                   </label>
 
                   <input
+                    type="number"
                     value={checkedMeters}
                     onBlur={(e) =>
-                      setCheckedMeters(
-                        parseFloat(e.target.value || 0).toFixed(2),
-                      )
+                      setCheckedMeters(parseFloat(e.target.value).toFixed(2))
                     }
                     onChange={(e) => setCheckedMeters(e.target.value)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
@@ -481,11 +469,89 @@ const PieceFoldingForm = ({
                   <label className="block font-medium mb-1">GRADE</label>
 
                   <input
-                    value={result?.GRADENAME || ""} // ← fallback to empty string
+                    value={gradeName || ""} // ← fallback to empty string
+                    className={`w-full border rounded-lg px-1 py-1.5 text-left font-bold
+      ${
+        gradeName === "A GRADE"
+          ? "text-green-600"
+          : gradeName === "B GRADE"
+            ? "text-orange-500"
+            : gradeName === "C GRADE"
+              ? "text-red-600"
+              : "text-gray-500"
+      }`}
+                    disabled
+                  />
+                </div>
+
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">Points</label>
+
+                  <input
+                    type="number"
+                    value={actualPoints}
+                    disabled
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  />
+                </div>
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">Fold %</label>
+
+                  <input
+                    type="number"
+                    value={foldPercentage}
+                    disabled
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  />
+                </div>
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">Weight</label>
+
+                  <input
+                    type="number"
+                    value={weight} // ← fallback to empty string
+                    onChange={(e) => setWeight(e.target.value)}
+                    onBlur={(e) =>
+                      setWeight(parseFloat(e.target.value).toFixed(2))
+                    }
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>
               </div>
+              {/* Grade Calculation Summary */}
+              {value !== null && checkedMetersNum > 0 && (
+                <div className="col-span-4 lg:col-span-10 mt-4">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-2">
+                    <span className="font-medium text-gray-700">
+                      Grade Calculation:
+                    </span>
+                    <span>
+                      ({defectPoints} ÷ {checkedMetersNum}) × 100
+                    </span>
+                    <span className="text-gray-400">=</span>
+                    <span className="font-bold text-blue-600">
+                      {value.toFixed(2)}
+                    </span>
+                    <span className="text-gray-400">→</span>
+                    <span
+                      className={`font-bold ${
+                        result?.GRADENAME === "A GRADE"
+                          ? "text-green-600"
+                          : result?.GRADENAME === "B GRADE"
+                            ? "text-orange-500"
+                            : "text-red-600"
+                      }`}
+                    >
+                      {result?.GRADENAME || "No Grade"}
+                    </span>
+                    {checkedMetersNum < 20 && (
+                      <span className="ml-2 text-xs text-red-500 font-medium">
+                        ⚠ Checked meters below 20 — minimum C GRADE applied
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </form>
