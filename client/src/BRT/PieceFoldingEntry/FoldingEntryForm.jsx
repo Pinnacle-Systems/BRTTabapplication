@@ -135,11 +135,11 @@ const PieceFoldingForm = ({
   );
 
   const value = singleData?.data?.TOTPOINTSTAB
- 
+
   const result = gradeData?.data?.find(r =>
     value >= r.STPOINTS && (r.ENDPOINTD === null || value < r.ENDPOINTD)
   );
- console.log(result, "result")
+  console.log(result, "result")
   console.log(singleData?.data, "singleData")
   const {
     data: pieceData,
@@ -442,7 +442,7 @@ const PieceFoldingForm = ({
                 <div className="col-span-1 lg:col-span-1">
                   <label className="block font-medium mb-1">Receipt Meters</label>
                   <input
-                    value={parseFloat(singleData?.data?.ACTUALMETER).toFixed(2)}
+                    value={parseFloat(singleData?.data?.ACTUALMETER || 0).toFixed(2)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                     disabled
                   />
@@ -452,7 +452,7 @@ const PieceFoldingForm = ({
                   <label className="block font-medium mb-1">Total Defect</label>
 
                   <input
-                    value={singleData?.data?.TOTPOINTSTAB}
+                    value={singleData?.data?.TOTPOINTSTAB || 0}
                     disabled
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
@@ -463,12 +463,22 @@ const PieceFoldingForm = ({
 
                   <input
                     value={checkedMeters}
-                    onBlur={(e) => setCheckedMeters(parseFloat(e.target.value).toFixed(2))}
-
+                    onBlur={(e) => setCheckedMeters(parseFloat(e.target.value || 0).toFixed(2))}
                     onChange={(e) => setCheckedMeters(e.target.value)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>
+
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">GRADE</label>
+
+                  <input
+                    value={result?.GRADENAME}
+
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  />
+                </div>
+
 
 
               </div>
