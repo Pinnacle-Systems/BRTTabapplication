@@ -60,6 +60,7 @@ const TableLotForm = ({
   const [allocatedLotId, setAllocatedLotId] = useState("");
   const [allocatedPieceId, setAllocatedPieceId] = useState("");
   const [allocatedTableId, setAllocatedtableId] = useState([]);
+  const [widerTable, setWiderTable] = useState("No");
   let NOOFPCSSTK = 1;
   let PCSTAKEN = "Yes";
   let NOTES1 = "YES";
@@ -395,19 +396,29 @@ const TableLotForm = ({
     );
   }
   const handleSelect = (item) => {
-    setSelectedTables((prev) => {
-      const exists = prev?.find(
-        (t) => t.GTCHKTABLEMASTID === item.GTCHKTABLEMASTID,
-      );
-
-      if (exists) {
-        return prev?.filter(
-          (t) => t.GTCHKTABLEMASTID !== item.GTCHKTABLEMASTID,
+    if (widerTable === "No") {
+      // Single select mode
+      setSelectedTables((prev) => {
+        const exists = prev?.find(
+          (t) => t.GTCHKTABLEMASTID === item.GTCHKTABLEMASTID,
         );
-      } else {
-        return [...prev, item];
-      }
-    });
+        return exists ? [] : [item]; // toggle: deselect if same, else replace
+      });
+    } else {
+      // Multi select mode
+      setSelectedTables((prev) => {
+        const exists = prev?.find(
+          (t) => t.GTCHKTABLEMASTID === item.GTCHKTABLEMASTID,
+        );
+        if (exists) {
+          return prev?.filter(
+            (t) => t.GTCHKTABLEMASTID !== item.GTCHKTABLEMASTID,
+          );
+        } else {
+          return [...prev, item];
+        }
+      });
+    }
   };
   const customSelectStyles = {
     control: (base, state) => ({
@@ -426,7 +437,7 @@ const TableLotForm = ({
       "&:hover": {
         borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
       },
-      zIndex:"999"
+      zIndex: 9999, // ← add this
     }),
     valueContainer: (base, state) => ({
       ...base,
@@ -479,6 +490,11 @@ const TableLotForm = ({
       maxHeight: 140,
       // overflowY: "auto",
     }),
+    menuPortal: (base) => ({
+      // ← add this entire block
+      ...base,
+      zIndex: 9999,
+    }),
   };
   const handleDefectEntry = () => {
     dispatch(push({ id: "Defect Entry", name: "Defect Entry" }));
@@ -517,7 +533,9 @@ const TableLotForm = ({
               </div>
               <div>
                 <p className="text-sm text-gray-500">Meters</p>
-                <p className="font-semibold">{workingDetails?.meters?.toFixed(2)}</p>
+                <p className="font-semibold">
+                  {workingDetails?.meters?.toFixed(2)}
+                </p>
               </div>
 
               <div>
@@ -570,7 +588,7 @@ const TableLotForm = ({
           </button>
         </div>
       </div>
-      <div className="h-[70vh] overflow-x-auto bg-white shadow-lg rounded-xl mt-2">
+      <div className="h-[70vh] overflow-y-auto overflow-x-hidden bg-white shadow-lg rounded-xl mt-2">
         <form className=" p-2">
           <div>
             <h2 className="text-lg  font-semibold  ">Table Details</h2>
@@ -599,6 +617,8 @@ const TableLotForm = ({
                   styles={customSelectStyles}
                   className="text-left"
                   isSearchable={true}
+                  menuPortalTarget={document.body} // ← renders menu outside the clipped container
+                  menuPosition="fixed"
                 />
               </div>
 
@@ -622,6 +642,8 @@ const TableLotForm = ({
                       styles={customSelectStyles}
                       className="text-left"
                       isSearchable={true}
+                      menuPortalTarget={document.body} // ← renders menu outside the clipped container
+                      menuPosition="fixed"
                     />
                   </>
                 ) : (
@@ -686,6 +708,8 @@ const TableLotForm = ({
                     isClearable={false} // ✅ disable cross icon
                     styles={customSelectStyles}
                     isSearchable={true}
+                    menuPortalTarget={document.body} // ← renders menu outside the clipped container
+                    menuPosition="fixed"
                   />
                 </div>
 
@@ -709,6 +733,8 @@ const TableLotForm = ({
                     isClearable={false} // ✅ disable cross icon
                     styles={customSelectStyles}
                     isSearchable={true}
+                    menuPortalTarget={document.body} // ← renders menu outside the clipped container
+                    menuPosition="fixed"
                   />
                 </div>
 
@@ -732,6 +758,8 @@ const TableLotForm = ({
                     styles={customSelectStyles}
                     isSearchable={true}
                     className="text-right"
+                    menuPortalTarget={document.body} // ← renders menu outside the clipped container
+                    menuPosition="fixed"
                   />
                 </div>
 
@@ -743,6 +771,27 @@ const TableLotForm = ({
                     value={Number(dcMeter || 0)?.toFixed(2)}
                     readOnly
                     className="w-full border rounded-lg px-1 py-[7px] text-right bg-gray-100"
+                  />
+                </div>
+                <div className="flex flex-col flex-1 max-w-[10rem]">
+                  <label className="text-sm font-medium mb-1">
+                    Wider Table
+                  </label>
+                  <Select
+                    options={[
+                      { value: "No", label: "No" },
+                      { value: "Yes", label: "Yes" },
+                    ]}
+                    value={{ value: widerTable, label: widerTable }}
+                    onChange={(selectedOption) => {
+                      setWiderTable(selectedOption?.value || "No");
+                      setSelectedTables([]); // reset tables on toggle
+                    }}
+                    isClearable={false}
+                    styles={customSelectStyles}
+                    isSearchable={false}
+                    menuPortalTarget={document.body}
+                    menuPosition="fixed"
                   />
                 </div>
               </div>

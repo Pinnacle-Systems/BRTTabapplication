@@ -276,7 +276,8 @@ export async function updateDefectEntry(req, res) {
           ALLACATIONID,
           PCSID,
           TOTPOINTSTAB,
-          ACTUALMETER
+          ACTUALMETER,
+          RECEIPTMETER
         ) VALUES (
           :primaryKey,
           :piecesDefectId,
@@ -290,7 +291,8 @@ export async function updateDefectEntry(req, res) {
           :allocationId,
           :pieceId,
           :totalPoints,
-          :actualMeters
+          :actualMeters,
+          :meters
         )`,
         {
           primaryKey,
@@ -306,6 +308,7 @@ export async function updateDefectEntry(req, res) {
           pieceId: pieceId,
           totalPoints: totalPointsSum,
           actualMeters: Number(actualMeters),
+          meters: Number(meters),
         },
         { autoCommit: false },
       );

@@ -651,7 +651,7 @@ const NavbarHeader = ({ onLogout }) => {
             </div>
           </div>
           {showMobileMenu && (
-            <div className="fixed inset-0 z-50 bg-black/40 md:hidden backdrop-blur-sm py-16">
+          <div className="fixed inset-0 z-[999999] bg-black/40 md:hidden backdrop-blur-sm py-16">
               <div
                 ref={ref}
                 className={`h-full w-4/5 max-w-sm ${darkMode ? "bg-gray-800/95" : "bg-white/95"} shadow-xl overflow-y-auto animate-slide-in backdrop-blur-xl`}

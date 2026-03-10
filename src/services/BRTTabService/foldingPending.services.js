@@ -47,7 +47,7 @@ export async function getFoldingPendingById(req, res) {
     const sql = `select 
     
 
-         DT.TABLENOTAB,
+    DT.TABLENOTAB,
     DT.SPLITPCSNO,
     DT.TOTPOINTSTAB,
     DT.STARTMTR,
@@ -55,11 +55,9 @@ export async function getFoldingPendingById(req, res) {
     DT.BASEPCSNO,
     DT.GTDEFECTDETTABID AS id ,
     DT.TABAPPROVAL ,
- 
-
-    
-      PD.RECEIPTNO,
-    
+    DT.RECEIPTMETER,
+    PD.RECEIPTNO,
+    DT.ACTUALMETER,
     TB.USERNAME AS CHECKERNAME
 
     

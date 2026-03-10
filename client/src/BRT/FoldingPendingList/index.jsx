@@ -284,7 +284,7 @@ const customSelectStyles = {
 
         </form>
         <div className="flex gap-4 mt-2">
-          <div className=" md:w-[100vw] lg:w-[100vw] rounded-lg overflow-y-auto mt-2 p-2">
+          <div className=" md:w-[120vw] lg:w-[100vw] rounded-lg overflow-y-auto mt-2 p-2">
             <div className="max-h-[45vh] overflow-y-auto overflow-x-auto">
               <table className="min-w-[900px] w-full text-sm border table-fixed">
                 <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
@@ -294,10 +294,12 @@ const customSelectStyles = {
                     <th className="px-1 py-2 border w-16 text-center">Split Pcs No</th>
                     <th className="px-1 py-2 border w-32 text-center">Checker</th>
                     <th className="px-1 py-2 border w-12 text-center">Table No</th>
-                    <th className="px-1 py-2 border w-12 text-center">Start Mtr</th>
+                    <th className="px-1 py-2 border w-20 text-center">Receipt Mtrs</th>
+                    <th className="px-1 py-2 border w-16 text-center">Start Mtr</th>
                     <th className="px-1 py-2 border w-12 text-center">End Mtr</th>
-                    <th className="px-1 py-2 border w-24 text-center">Total Defect Points</th>
-                    <th className="px-1 py-2 border w-8 text-center">Approve</th>
+                    <th className="px-1 py-2 border w-12 text-center">Meters</th>
+                    <th className="px-1 py-2 border w-24 text-center">Defect Points</th>
+                    <th className="px-1 py-2 border w-12 text-center">Approve</th>
 
                   </tr>
                 </thead>
@@ -325,10 +327,16 @@ const customSelectStyles = {
                           {item?.TABLENOTAB}
                         </td>
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
-                          {item?.STARTMTR}
+                          {item?.RECEIPTMETER?.toFixed(2)}
                         </td>
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
-                          {item?.ENDMTR}
+                          {item?.STARTMTR?.toFixed(2)}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
+                          {item?.ENDMTR?.toFixed(2)}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
+                          {item?.ACTUALMETER?.toFixed(2)}
                         </td>
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
                           {item?.TOTPOINTSTAB}

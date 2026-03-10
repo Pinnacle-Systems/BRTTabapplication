@@ -10,11 +10,12 @@ import {
 } from "../../redux/services/FoldingPendingList";
 import {
   useGetpieceEntryByIdQuery,
-  useGetpieceFoldingEntryByIdQuery,useUpdatepieceFoldingEntryMutation
+  useGetpieceFoldingEntryByIdQuery,
+  useUpdatepieceFoldingEntryMutation,
 } from "../../redux/services/PieceFoldingEntry";
 import { useGetRolesQuery, useGetUsersQuery } from "../../redux/userservice";
 
-const PieceFoldingForm = ({onClose}) => {
+const PieceFoldingForm = ({ onClose }) => {
   const lotIdRef = useRef(null);
 
   const [selectedLotNo, setSelectedLotNo] = useState("");
@@ -22,32 +23,32 @@ const PieceFoldingForm = ({onClose}) => {
   const [loomNo, setLoomNo] = useState("");
   const [checkerId, setCheckerId] = useState("");
   const [selectedPiece, setSelectedPiece] = useState("");
-  const [pieceNo,setPieceNo] = useState("")
+  const [pieceNo, setPieceNo] = useState("");
   const [receiptMeters, setReceiptMeters] = useState("");
   const [meters, setMeters] = useState("");
   const [defectPoints, setDefectPoints] = useState("");
   const [checkedMeters, setCheckedMeters] = useState("");
   const [gradeName, setGradeName] = useState("");
   const [actualPoints, setActualPoints] = useState("");
-  const [foldPercentage,setFoldPercentage] = useState("")
+  const [foldPercentage, setFoldPercentage] = useState("");
   const [weight, setWeight] = useState("");
 
   const resetForm = () => {
-  setSelectedLotNo("");
-  setTableNo("");
-  setLoomNo("");
-  setCheckerId("");
-  setSelectedPiece("");
-  setPieceNo("");
-  setReceiptMeters("");
-  setMeters("");
-  setDefectPoints("");
-  setCheckedMeters("");
-  setGradeName("");
-  setActualPoints("");
-  setFoldPercentage("");
-  setWeight("");
-};
+    setSelectedLotNo("");
+    setTableNo("");
+    setLoomNo("");
+    setCheckerId("");
+    setSelectedPiece("");
+    setPieceNo("");
+    setReceiptMeters("");
+    setMeters("");
+    setDefectPoints("");
+    setCheckedMeters("");
+    setGradeName("");
+    setActualPoints("");
+    setFoldPercentage("");
+    setWeight("");
+  };
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -145,8 +146,9 @@ const PieceFoldingForm = ({onClose}) => {
       setTableNo(data?.TABLENOTAB);
       setMeters(data?.ACTUALMETER);
       setDefectPoints(Number(data?.TOTPOINTSTAB));
+      setReceiptMeters(data?.RECEIPTMETER);
     },
-    [ selectedPiece],
+    [selectedPiece],
   );
 
   useEffect(() => {
@@ -242,20 +244,29 @@ const PieceFoldingForm = ({onClose}) => {
     }
   }, [result?.GRADENAME]);
   useEffect(() => {
-  if (checkedMetersNum > 0) {
-    setFoldPercentage((checkedMetersNum / 100).toFixed(2));
-  } else {
-    setFoldPercentage("");
-  }
-}, [checkedMetersNum]);
+    if (checkedMetersNum > 0) {
+      setFoldPercentage((checkedMetersNum / 100).toFixed(2));
+    } else {
+      setFoldPercentage("");
+    }
+  }, [checkedMetersNum]);
   const [updateData] = useUpdatepieceFoldingEntryMutation();
 
   const data = {
-      selectedLotNo:Number(selectedLotNo),tableNo,loomNo,
-      checkerId:Number(checkerId),selectedPiece:Number(selectedPiece),
-      pieceNo,meters:Number(meters),defectPoints:Number(defectPoints),
-      checkedMeters:Number(checkedMeters),gradeName,actualPoints:Number(actualPoints),
-      foldPercentage:Number(foldPercentage),weight:Number(weight)
+    selectedLotNo: Number(selectedLotNo),
+    tableNo,
+    loomNo,
+    checkerId: Number(checkerId),
+    selectedPiece: Number(selectedPiece),
+    pieceNo,
+    meters: Number(meters),
+    defectPoints: Number(defectPoints),
+    checkedMeters: Number(checkedMeters),
+    gradeName,
+    actualPoints: Number(actualPoints),
+    foldPercentage: Number(foldPercentage),
+    weight: Number(weight),
+    receiptMeters: Number(receiptMeters),
   };
   const handleSubmitCustom = async (callback, data) => {
     try {
@@ -267,7 +278,7 @@ const PieceFoldingForm = ({onClose}) => {
         timer: 2000,
         showConfirmButton: false,
       });
-       resetForm();
+      resetForm();
 
       setTimeout(() => {
         lotIdRef.current?.focus();
@@ -356,16 +367,27 @@ const PieceFoldingForm = ({onClose}) => {
                     isSearchable={true}
                   />
                 </div>
-
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Table No</label>
-                  <input
-                    value={tableNo}
-                    // readOnly={readonly}
-                    disabled
-                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  <label className="block font-medium mb-1">Piece No</label>
+                  <Select
+                    options={pieceOptions}
+                    value={
+                      pieceOptions?.find(
+                        (option) => option.value === selectedPiece,
+                      ) || null
+                    }
+                    onChange={(selectedOption) => {
+                      setSelectedPiece(selectedOption?.value);
+                      setPieceNo(selectedOption?.label);
+                    }}
+                    placeholder=" "
+                    isClearable={false} // ✅ disable cross icon
+                    styles={customSelectStyles}
+                    isSearchable={true}
+                    className="text-right"
                   />
                 </div>
+
                 <div className="col-span-1 lg:col-span-1">
                   <label className="block font-medium mb-1">Loom No</label>
                   <input
@@ -413,29 +435,28 @@ const PieceFoldingForm = ({onClose}) => {
                   )}
                 </div>
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Piece No</label>
-                  <Select
-                    options={pieceOptions}
-                    value={
-                      pieceOptions?.find(
-                        (option) => option.value === selectedPiece,
-                      ) || null
-                    }
-                    onChange={(selectedOption) => {
-                      setSelectedPiece(selectedOption?.value);
-                      setPieceNo(selectedOption?.label)
-                    }}
-                    placeholder=" "
-                    isClearable={false} // ✅ disable cross icon
-                    styles={customSelectStyles}
-                    isSearchable={true}
-                    className="text-right"
+                  <label className="block font-medium mb-1">Table No</label>
+                  <input
+                    value={tableNo}
+                    // readOnly={readonly}
+                    disabled
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  />
+                </div>
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">
+                    Receipt Meters
+                  </label>
+                  <input
+                    value={Number(receiptMeters)?.toFixed(2)}
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                    disabled
                   />
                 </div>
                 <div className="col-span-1 lg:col-span-1">
                   <label className="block font-medium mb-1">Meters</label>
                   <input
-                    value={meters}
+                    value={Number(meters)?.toFixed(2)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                     disabled
                   />

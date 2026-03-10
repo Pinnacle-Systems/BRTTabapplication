@@ -68,7 +68,7 @@ export async function getPieceAgainstLotNo(req, res) {
     const sql = `select 
     
 
-         DT.TABLENOTAB,
+    DT.TABLENOTAB,
     DT.SPLITPCSNO,
     DT.TOTPOINTSTAB,
     DT.STARTMTR,
@@ -76,11 +76,7 @@ export async function getPieceAgainstLotNo(req, res) {
     DT.BASEPCSNO,
     DT.GTDEFECTDETTABID AS id ,
     DT.TABAPPROVAL ,
- 
-
-    
-      PD.RECEIPTNO,
-    
+    PD.RECEIPTNO,
     TB.USERNAME AS CHECKERNAME
 
     
@@ -126,6 +122,7 @@ export async function updateFoldingEntry(req, res) {
     actualPoints,
     foldPercentage,
     weight,
+    receiptMeters,
   } = req.body;
 
   const { selectedLotNo } = req.params;
@@ -133,7 +130,6 @@ export async function updateFoldingEntry(req, res) {
   const connection = await getConnection(res);
 
   try {
-    // 1️⃣ Generate DOCID
     let docId;
 
     // 1️⃣ Check if LOT already exists
@@ -143,100 +139,148 @@ export async function updateFoldingEntry(req, res) {
     );
 
     if (lotCheck.rows.length > 0) {
-      // LOT exists → use existing DOCID
       docId = lotCheck.rows[0][0];
     } else {
-      // 2️⃣ Generate new DOCID
+      // Generate DOCID
       const docResult = await connection.execute(
         `SELECT NVL(MAX(DOCID),0)+1 FROM PCS_APPROVAL`,
       );
 
       docId = docResult.rows[0][0];
 
-      // 3️⃣ Insert Parent Table
+      // Insert parent
       await connection.execute(
         `INSERT INTO PCS_APPROVAL (DOCID, LOTNO, APPROVAL_DATE)
          VALUES (:docId, :lotNo, SYSDATE)`,
         {
-          docId: docId,
+          docId,
           lotNo: selectedLotNo,
         },
       );
     }
 
-    // 4️⃣ Generate ID for child table
-    const idResult = await connection.execute(
-      `SELECT NVL(MAX(ID),0)+1 FROM PCS_APPROVAL_DETAILS`,
-    );
-
-    const detailId = idResult.rows[0][0];
-
-    // 5️⃣ Insert Child Table
-    await connection.execute(
-      `INSERT INTO PCS_APPROVAL_DETAILS
-      (
-        ID,
-        DOCID,
-        TABLE_NO,
-        LOOM_NO,
-        FOLDER_ID,
-        PCSNO,
-        PICID,
-        MTR,
-        RECEPITMTR,
-        DEFECTPOINTS,
-        CHKMTR,
-        GRADEE,
-        WEIGHTTT,
-        ACTPOITS,
-        FOLD_PERCENTAGE
-      )
-      VALUES
-      (
-        :id,
-        :docId,
-        :tableNo,
-        :loomNo,
-        :checkerId,
-        :pcsNo,
-        :picId,
-        :meters,
-        :receiptMtr,
-        :defectPoints,
-        :checkedMeters,
-        :gradeName,
-        :weight,
-        :actualPoints,
-        :foldPercentage
-      )`,
+    // 2️⃣ Check if piece already exists
+    const pieceCheck = await connection.execute(
+      `SELECT ID 
+       FROM PCS_APPROVAL_DETAILS
+       WHERE DOCID = :docId
+       AND PICID = :picId`,
       {
-        id: detailId,
-        docId: docId,
-        tableNo: tableNo,
-        loomNo: loomNo,
-        checkerId: checkerId,
-        pcsNo: pieceNo,
+        docId,
         picId: selectedPiece,
-        meters: meters,
-        receiptMtr: meters,
-        defectPoints: defectPoints,
-        checkedMeters: checkedMeters,
-        gradeName: gradeName,
-        weight: weight,
-        actualPoints: actualPoints,
-        foldPercentage: foldPercentage,
       },
     );
+
+    if (pieceCheck.rows.length > 0) {
+      // 🔁 UPDATE existing record
+      const existingId = pieceCheck.rows[0][0];
+
+      await connection.execute(
+        `UPDATE PCS_APPROVAL_DETAILS
+         SET TABLE_NO = :tableNo,
+             LOOM_NO = :loomNo,
+             FOLDER_ID = :checkerId,
+             PCSNO = :pcsNo,
+             MTR = :meters,
+             RECEPITMTR = :receiptMtr,
+             DEFECTPOINTS = :defectPoints,
+             CHKMTR = :checkedMeters,
+             GRADEE = :gradeName,
+             WEIGHTTT = :weight,
+             ACTPOITS = :actualPoints,
+             FOLD_PERCENTAGE = :foldPercentage
+         WHERE ID = :id`,
+        {
+          id: existingId,
+          tableNo,
+          loomNo,
+          checkerId,
+          pcsNo: pieceNo,
+          meters,
+          receiptMtr: receiptMeters,
+          defectPoints,
+          checkedMeters,
+          gradeName,
+          weight,
+          actualPoints,
+          foldPercentage,
+        },
+      );
+    } else {
+      // 3️⃣ Generate new ID
+      const idResult = await connection.execute(
+        `SELECT NVL(MAX(ID),0)+1 FROM PCS_APPROVAL_DETAILS`,
+      );
+
+      const detailId = idResult.rows[0][0];
+
+      // ➕ INSERT new record
+      await connection.execute(
+        `INSERT INTO PCS_APPROVAL_DETAILS
+        (
+          ID,
+          DOCID,
+          TABLE_NO,
+          LOOM_NO,
+          FOLDER_ID,
+          PCSNO,
+          PICID,
+          MTR,
+          RECEPITMTR,
+          DEFECTPOINTS,
+          CHKMTR,
+          GRADEE,
+          WEIGHTTT,
+          ACTPOITS,
+          FOLD_PERCENTAGE
+        )
+        VALUES
+        (
+          :id,
+          :docId,
+          :tableNo,
+          :loomNo,
+          :checkerId,
+          :pcsNo,
+          :picId,
+          :meters,
+          :receiptMtr,
+          :defectPoints,
+          :checkedMeters,
+          :gradeName,
+          :weight,
+          :actualPoints,
+          :foldPercentage
+        )`,
+        {
+          id: detailId,
+          docId,
+          tableNo,
+          loomNo,
+          checkerId,
+          pcsNo: pieceNo,
+          picId: selectedPiece,
+          meters,
+          receiptMtr: receiptMeters,
+          defectPoints,
+          checkedMeters,
+          gradeName,
+          weight,
+          actualPoints,
+          foldPercentage,
+        },
+      );
+    }
 
     await connection.commit();
 
     return res.status(200).json({
-      message: `Successfully Saved`,
+      message: "Successfully Saved / Updated",
     });
   } catch (error) {
     await connection.rollback();
 
-    console.error("Update Defect Entry Error:", error);
+    console.error("Update Folding Entry Error:", error);
 
     return res.status(500).json({
       message: "Server error",
