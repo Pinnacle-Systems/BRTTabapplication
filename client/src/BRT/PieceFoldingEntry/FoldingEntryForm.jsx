@@ -1,35 +1,20 @@
 /* eslint-disable no-unused-vars */
-import { useState, useRef, useCallback, useMemo } from "react";
-import {
-  useGetLotPieceReceiptQuery,
-  useGetLotPieceReceiptDetailsQuery,
-  useUpdatePieceReceiptMutation,
-  useGetPieceReceiptByIdQuery,
-} from "../../redux/services/PieceReceipt";
+import { useState, useRef, useCallback } from "react";
+
 import { useEffect } from "react";
-import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import Select from "react-select";
-import { useGetPiecesQuery } from "../../redux/services/TableandLot";
 import {
   useGetFoldingPendingQuery,
   useGetGradeMasterQuery,
 } from "../../redux/services/FoldingPendingList";
 import {
   useGetpieceEntryByIdQuery,
-  useGetpieceFoldingEntryByIdQuery,
+  useGetpieceFoldingEntryByIdQuery,useUpdatepieceFoldingEntryMutation
 } from "../../redux/services/PieceFoldingEntry";
 import { useGetRolesQuery, useGetUsersQuery } from "../../redux/userservice";
 
-const PieceFoldingForm = ({
-  onClose,
-  selectedLotId,
-  setSelectedLotId,
-  selectedClothId,
-  setSelectedClothId,
-  setSelectedGridId,
-  selectedGridId,
-}) => {
+const PieceFoldingForm = ({onClose}) => {
   const lotIdRef = useRef(null);
 
   const [selectedLotNo, setSelectedLotNo] = useState("");
@@ -37,6 +22,7 @@ const PieceFoldingForm = ({
   const [loomNo, setLoomNo] = useState("");
   const [checkerId, setCheckerId] = useState("");
   const [selectedPiece, setSelectedPiece] = useState("");
+  const [pieceNo,setPieceNo] = useState("")
   const [receiptMeters, setReceiptMeters] = useState("");
   const [meters, setMeters] = useState("");
   const [defectPoints, setDefectPoints] = useState("");
@@ -45,6 +31,23 @@ const PieceFoldingForm = ({
   const [actualPoints, setActualPoints] = useState("");
   const [foldPercentage,setFoldPercentage] = useState("")
   const [weight, setWeight] = useState("");
+
+  const resetForm = () => {
+  setSelectedLotNo("");
+  setTableNo("");
+  setLoomNo("");
+  setCheckerId("");
+  setSelectedPiece("");
+  setPieceNo("");
+  setReceiptMeters("");
+  setMeters("");
+  setDefectPoints("");
+  setCheckedMeters("");
+  setGradeName("");
+  setActualPoints("");
+  setFoldPercentage("");
+  setWeight("");
+};
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -143,7 +146,7 @@ const PieceFoldingForm = ({
       setMeters(data?.ACTUALMETER);
       setDefectPoints(Number(data?.TOTPOINTSTAB));
     },
-    [selectedLotId, selectedPiece],
+    [ selectedPiece],
   );
 
   useEffect(() => {
@@ -245,12 +248,14 @@ const PieceFoldingForm = ({
     setFoldPercentage("");
   }
 }, [checkedMetersNum]);
-  const [updateData] = useUpdatePieceReceiptMutation();
+  const [updateData] = useUpdatepieceFoldingEntryMutation();
 
   const data = {
-    selectedLotId: parseInt(selectedLotId),
-    selectedClothId: parseInt(selectedClothId),
-    selectedGridId: parseInt(selectedGridId),
+      selectedLotNo:Number(selectedLotNo),tableNo,loomNo,
+      checkerId:Number(checkerId),selectedPiece:Number(selectedPiece),
+      pieceNo,meters:Number(meters),defectPoints:Number(defectPoints),
+      checkedMeters:Number(checkedMeters),gradeName,actualPoints:Number(actualPoints),
+      foldPercentage:Number(foldPercentage),weight:Number(weight)
   };
   const handleSubmitCustom = async (callback, data) => {
     try {
@@ -262,9 +267,7 @@ const PieceFoldingForm = ({
         timer: 2000,
         showConfirmButton: false,
       });
-      setSelectedClothId("");
-      setSelectedLotId("");
-      setSelectedGridId("");
+       resetForm();
 
       setTimeout(() => {
         lotIdRef.current?.focus();
@@ -281,7 +284,7 @@ const PieceFoldingForm = ({
   };
 
   const saveData = () => {
-    if (!selectedLotId || !selectedClothId) {
+    if (!selectedLotNo) {
       Swal.fire({
         icon: "warning",
 
@@ -420,6 +423,7 @@ const PieceFoldingForm = ({
                     }
                     onChange={(selectedOption) => {
                       setSelectedPiece(selectedOption?.value);
+                      setPieceNo(selectedOption?.label)
                     }}
                     placeholder=" "
                     isClearable={false} // ✅ disable cross icon
@@ -512,7 +516,7 @@ const PieceFoldingForm = ({
                     value={weight} // ← fallback to empty string
                     onChange={(e) => setWeight(e.target.value)}
                     onBlur={(e) =>
-                      setWeight(parseFloat(e.target.value).toFixed(2))
+                      setWeight(parseFloat(e.target.value).toFixed(3))
                     }
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />

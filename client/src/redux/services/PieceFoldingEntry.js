@@ -69,9 +69,9 @@ const pieceFoldingEntrygApi = createApi({
     }),
     updatepieceFoldingEntry: builder.mutation({
       query: (payload) => {
-        const { selectedLotId, selectedGridId, ...body } = payload;
+        const {selectedLotNo, ...body } = payload;
         return {
-          url: `${PIECEFOLDINGENTRY}`,
+          url: `${PIECEFOLDINGENTRY}/${selectedLotNo}/updatePieceFolding`,
           method: "PUT",
           body,
         };

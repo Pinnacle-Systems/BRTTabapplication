@@ -8,3 +8,4 @@ export { default as pieceReceiptApi } from "./services/PieceReceipt";
 export { default as tableLotApi } from "./services/TableandLot";
 export { default as defectEntryApi } from "./services/defectEntry";
 export { default as foldingPendingApi } from "./services/FoldingPendingList";
+export {default as pieceVerificationApi} from './services/pieceVerification'
