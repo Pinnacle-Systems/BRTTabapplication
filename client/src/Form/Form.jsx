@@ -80,6 +80,7 @@ const Form = ({ onClose, primaryColor, Roles }) => {
     { id: 5, label: "Piece Folding Entry" },
     { id: 6, label: "PackingSlip" },
     { id: 7, label: "PieceVerification" },
+    { id: 8, label: "ClothDelivery" },
     // { id: 8, label: "User" },
   ];
 

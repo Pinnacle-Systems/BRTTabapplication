@@ -67,6 +67,7 @@ const Form = ({ onClose, primaryColor }) => {
     { id: 5, label: "Piece Folding Entry" },
     { id: 6, label: "PackingSlip" },
     { id: 7, label: "PieceVerification" },
+    { id: 8, label: "ClothDelivery" },
   ];
 
   const handleCheckboxChange = (id) => {

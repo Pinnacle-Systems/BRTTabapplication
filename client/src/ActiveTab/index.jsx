@@ -26,7 +26,7 @@ import { useGetLotDetailQuery,useGetLoadingDetailQuery,useGetUnLoadingDetailQuer
     useGetApprovalDetailQuery, useGetRevertDetailQuery } from '../redux/services/LotDetailData';
 import { useGetUserslogQuery } from "../redux/userservice";
 import { useGetInspectionDetailQuery } from "../redux/services/LotDetailData";
-import { PieceReceipt, TableLotAllot,DefectEntry,FoldingPendingList,PieceFoldingEntry,PackingSlip,PieceVerification } from "../BRT";
+import { PieceReceipt, TableLotAllot,DefectEntry,FoldingPendingList,PieceFoldingEntry,PackingSlip,PieceVerification,ClothDelivery } from "../BRT";
 
 
 const ActiveTabList = () => {
@@ -75,7 +75,8 @@ useEffect(() => {
         "Folding Pending List": <FoldingPendingList />,
         "Piece Folding Entry": <PieceFoldingEntry />,
         "PackingSlip": <PackingSlip />,
-        "PieceVerification":<PieceVerification />
+        "PieceVerification":<PieceVerification />,
+        "ClothDelivery": <ClothDelivery />
     };
 const tabData = [
   {
@@ -139,6 +140,15 @@ const tabData = [
     gradient: "from-teal-500 to-cyan-600",
     key: "PIECEVERIFICATION"
   },
+  {
+    name:"ClothDelivery",
+    icon: INSPECTION_ICON,
+    value: new Set(
+      InspectionDet?.data?.map(item => `${item.BATCHNO}_${item.PROCESSNAME}`)
+    ).size,
+    gradient: "from-teal-500 to-cyan-600",
+    key: "CLOTHDELIVERY"
+  }
 ];
 
 

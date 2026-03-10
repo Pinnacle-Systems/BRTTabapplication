@@ -31,6 +31,7 @@ import {
   PieceFoldingEntry,
   PackingSlip,
   PieceVerification,
+  ClothDelivery,
 } from "./BRT";
 import {
   MdLogout,
@@ -205,6 +206,7 @@ const NavbarHeader = ({ onLogout }) => {
     "Defect Entry": <DefectEntry />,
     "Folding Pending List": <FoldingPendingList />,
     "Piece Folding Entry": <PieceFoldingEntry />,
+    "ClothDelivery": <ClothDelivery />,
     PackingSlip: <PackingSlip />,
     PieceVerification: <PieceVerification />,
     User: <OutlinedCard />,
@@ -278,6 +280,17 @@ const NavbarHeader = ({ onLogout }) => {
       ).size,
       gradient: "from-teal-500 to-cyan-600",
       key: "PACKINGSLIP",
+    },
+    {
+      name: "ClothDelivery",
+      icon: <RiBillLine />,
+      value: new Set(
+        InspectionDet?.data?.map(
+          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
+        ),
+      ).size,
+      gradient: "from-teal-500 to-cyan-600",
+      key: "CLOTHDELIVERY",
     },
   ];
 
