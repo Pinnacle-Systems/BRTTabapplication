@@ -162,23 +162,28 @@ const DefectEntry = () => {
     setData({ lotDetails });
     setPerPieceForm({});
   }, [existingEntry]);
-  const lotOptions = useMemo(
-    () =>
-      lots?.data?.map((lot) => ({
+  const lotOptions = useMemo(() => {
+    const seen = new Set();
+    return lots?.data
+      ?.filter((lot) => {
+        if (seen.has(lot.LOTID)) return false;
+        seen.add(lot.LOTID);
+        return true;
+      })
+      .map((lot) => ({
         value: lot?.LOTID,
         label: lot?.DOCID,
-        allocationId: lot?.ALLOCATIONID,
-      })),
-    [lots?.data],
-  );
+      }));
+  }, [lots?.data]);
 
   const pieceOptions = useMemo(() => {
     if (!lotId) return [];
     return [...(pieces?.data || [])]
-      .sort((a, b) => a.PCSNO - b.PCSNO)
+      .sort((a, b) => a.PIECENO - b.PIECENO)
       .map((piece) => ({
         label: piece?.PIECENO,
         value: piece?.PIECEID,
+        allocationId: piece?.ALLOCATIONID, // ← already in response!
       }));
   }, [pieces?.data, lotId]);
 
@@ -549,6 +554,20 @@ const DefectEntry = () => {
       });
       return false;
     }
+    // ← add this block
+    const emptyPiece = data.lotDetails.find(
+      (piece) => piece.defects.length === 0,
+    );
+    if (emptyPiece) {
+      Swal.fire({
+        icon: "warning",
+        title: `Piece ${emptyPiece.subPieceNo} has no defects`,
+        text: "Please add at least one defect for every piece before saving.",
+        timer: 2500,
+        showConfirmButton: false,
+      });
+      return false;
+    }
     return true;
   };
 
@@ -595,7 +614,7 @@ const DefectEntry = () => {
                   value={lotOptions?.find((o) => o.value === lotId) || null}
                   onChange={(sel) => {
                     setLotId(sel?.value || "");
-                    setAllocationId(sel?.allocationId || "");
+                    // setAllocationId(sel?.allocationId || "");
                   }}
                   placeholder="Select Lot"
                   isClearable={false}
@@ -613,6 +632,7 @@ const DefectEntry = () => {
                   onChange={(sel) => {
                     setPieceId(sel?.value || "");
                     setPieceNo(sel?.label || "");
+                    setAllocationId(sel?.allocationId || ""); // ← auto-set correctly
                   }}
                   placeholder="Select"
                   isClearable={false}

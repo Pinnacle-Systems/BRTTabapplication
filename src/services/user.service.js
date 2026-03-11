@@ -49,7 +49,6 @@ export async function login(req, res) {
   return res.json({ statusCode: 0, message: "Login Successful", token, user });
 }
 
-
 export async function create(req, res) {
   const connection = await getConnection();
   const { username, password, roleId } = req.body;
@@ -88,7 +87,6 @@ export async function create(req, res) {
     );
 
     // ⭐ Generated USERID
-
 
     // const userLogValues = {
     //   userId,
@@ -134,16 +132,75 @@ export async function create(req, res) {
     });
   }
 }
+export async function update(req, res) {
+  const connection = await getConnection();
+  const { userId } = req.params;
+  const { username, password, roleId } = req.body;
 
+  if (!username || !roleId) {
+    return res.json({
+      statusCode: 1,
+      message: "Username and Role are Required",
+    });
+  }
+
+  try {
+    // Check if username already exists for a DIFFERENT user
+    const userNameResult = await connection.execute(
+      "SELECT COUNT(*) as count FROM TABUSER WHERE USERNAME = :username AND USERID != :userId",
+      { username, userId },
+    );
+
+    if (userNameResult.rows[0][0] > 0) {
+      await connection.close();
+      return res.json({ statusCode: 1, message: "Username Already Exists" });
+    }
+
+    // If password provided, hash it; otherwise keep existing
+    if (password) {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      await connection.execute(
+        `UPDATE TABUSER 
+         SET USERNAME = :username, 
+             PASSWORD = :password, 
+             ROLEID = :roleId 
+         WHERE USERID = :userId`,
+        { username, password: hashedPassword, roleId, userId },
+      );
+    } else {
+      // ← No password change
+      await connection.execute(
+        `UPDATE TABUSER 
+         SET USERNAME = :username, 
+             ROLEID = :roleId 
+         WHERE USERID = :userId`,
+        { username, roleId, userId },
+      );
+    }
+
+    await connection.commit();
+    await connection.close();
+
+    return res.json({ statusCode: 0, message: "User updated successfully" });
+  } catch (error) {
+    console.error(error);
+    await connection.close();
+    return res.json({
+      statusCode: 1,
+      message: "An error occurred while updating the user",
+    });
+  }
+}
 export async function get(req, res) {
   const connection = await getConnection(res);
   try {
     const sql = `  
- select * from TABUSER
-`;
+select A.USERNAME,B.ROLENAME,A.ROLEID,A.USERID from  TABUSER A
+ left join roletab B ON A.ROLEID = B.ROLEID`;
 
     const result = await connection.execute(sql);
-
 
     const resp = result.rows.map((row) => {
       let obj = {};
@@ -219,38 +276,12 @@ export async function remove(req, res) {
   } catch (err) {}
 }
 
-export async function getRoles(req, res) {
-  const connection = await getConnection(res);
-  try {
-    const sql = `  
- select * from roletab
-`;
-
-    const result = await connection.execute(sql);
-
-
-    const resp = result.rows.map((row) => {
-      let obj = {};
-      result.metaData.forEach(({ name }, idx) => {
-        obj[name] = row[idx];
-      });
-      return obj;
-    });
-    return res.json({ statusCode: 0, data: resp });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Internal Server Error" });
-  } finally {
-    await connection.close();
-  }
-}
-
 export async function createRole(req, res) {
   const connection = await getConnection();
   const { rolename, checkboxes } = req.body;
   const roles = checkboxes?.map((item) => item.label.toUpperCase());
 
-  if (!rolename ) {
+  if (!rolename) {
     return res.json({
       statusCode: 1,
       message: "RoleName is Required",
@@ -267,7 +298,6 @@ export async function createRole(req, res) {
       await connection.close();
       return res.json({ statusCode: 1, message: "RoleName Already Exists" });
     }
-
 
     const result = await connection.execute(
       `INSERT INTO ROLETAB (ROLENAME)
@@ -303,13 +333,19 @@ export async function createRole(req, res) {
 
       pieceVerification: roles.includes("PIECE VERIFICATION") ? "Yes" : "No",
 
+      clothDelivery: roles.includes("CLOTH DELIVERY") ? "Yes" : "No", // ← add
+      stockVerification: roles.includes("STOCK VERIFICATION") ? "Yes" : "No", // ← add
+      dispatchVerification: roles.includes("DISPATCH VERIFICATION")
+        ? "Yes"
+        : "No", // ← add
     };
 
     const tabpagetableSql = `
       INSERT INTO TABPAGE (
-        ROLEID, PIECERECEIPT, TABLEANDLOTALLOCATION, DEFECTENTRY, FOLDINGPENDINGLIST, PIECEFOLDINGENTRY, PACKINGSLIP, PIECEVERIFICATION
+        ROLEID, PIECERECEIPT, TABLEANDLOTALLOCATION, DEFECTENTRY, FOLDINGPENDINGLIST, PIECEFOLDINGENTRY, PACKINGSLIP, PIECEVERIFICATION,CLOTHDELIVERY, STOCKVERIFICATION, DISPATCHVERIFICATION
       ) VALUES (
-        :roleId, :pieceReceipt,:tableAndLotAllocation,:defectEntry,:foldingPendingList, :pieceFoldingEntry, :packingSlip, :pieceVerification
+        :roleId, :pieceReceipt,:tableAndLotAllocation,:defectEntry,:foldingPendingList, :pieceFoldingEntry, :packingSlip, :pieceVerification,
+        :clothDelivery, :stockVerification, :dispatchVerification
       )
     `;
 
@@ -326,5 +362,119 @@ export async function createRole(req, res) {
       statusCode: 1,
       message: "An error occurred while creating the role",
     });
+  }
+}
+
+export async function getRoles(req, res) {
+  const connection = await getConnection();
+  try {
+    const result = await connection.execute(
+      `SELECT 
+        r.ROLEID, 
+        r.ROLENAME,
+        p.PIECERECEIPT,
+        p.TABLEANDLOTALLOCATION,
+        p.DEFECTENTRY,
+        p.FOLDINGPENDINGLIST,
+        p.PIECEFOLDINGENTRY,
+        p.PACKINGSLIP,
+        p.PIECEVERIFICATION,
+         p.CLOTHDELIVERY, p.STOCKVERIFICATION, p.DISPATCHVERIFICATION 
+      FROM ROLETAB r
+      LEFT JOIN TABPAGE p ON p.ROLEID = r.ROLEID
+      ORDER BY r.ROLEID`,
+    );
+
+    const rows = result.rows.map((row) => ({
+      ROLEID: row[0],
+      ROLENAME: row[1],
+      PIECERECEIPT: row[2],
+      TABLEANDLOTALLOCATION: row[3],
+      DEFECTENTRY: row[4],
+      FOLDINGPENDINGLIST: row[5],
+      PIECEFOLDINGENTRY: row[6],
+      PACKINGSLIP: row[7],
+      PIECEVERIFICATION: row[8],
+      CLOTHDELIVERY: row[9], // ← add
+      STOCKVERIFICATION: row[10], // ← add
+      DISPATCHVERIFICATION: row[11],
+    }));
+
+    await connection.close();
+    return res.json({ statusCode: 0, data: rows });
+  } catch (error) {
+    console.error(error);
+    await connection.close();
+    return res.json({ statusCode: 1, message: "Error fetching roles" });
+  }
+}
+
+export async function updateRole(req, res) {
+  const connection = await getConnection();
+  const { roleId } = req.params;
+  const { rolename, checkboxes } = req.body;
+  const roles = checkboxes?.map((item) => item.label.toUpperCase());
+
+  if (!rolename) {
+    return res.json({ statusCode: 1, message: "RoleName is Required" });
+  }
+
+  try {
+    const roleNameResult = await connection.execute(
+      "SELECT COUNT(*) as count FROM ROLETAB WHERE ROLENAME = :rolename AND ROLEID != :roleId",
+      { rolename, roleId },
+    );
+
+    if (roleNameResult.rows[0][0] > 0) {
+      await connection.close();
+      return res.json({ statusCode: 1, message: "RoleName Already Exists" });
+    }
+
+    await connection.execute(
+      `UPDATE ROLETAB SET ROLENAME = :rolename WHERE ROLEID = :roleId`,
+      { rolename, roleId },
+    );
+
+    await connection.execute(
+      `UPDATE TABPAGE SET
+        PIECERECEIPT          = :pieceReceipt,
+        TABLEANDLOTALLOCATION = :tableAndLotAllocation,
+        DEFECTENTRY           = :defectEntry,
+        FOLDINGPENDINGLIST    = :foldingPendingList,
+        PIECEFOLDINGENTRY     = :pieceFoldingEntry,
+        PACKINGSLIP           = :packingSlip,
+        PIECEVERIFICATION     = :pieceVerification,
+        CLOTHDELIVERY         = :clothDelivery,
+        STOCKVERIFICATION     = :stockVerification,
+        DISPATCHVERIFICATION  = :dispatchVerification
+      WHERE ROLEID = :roleId`,
+      {
+        roleId,
+        pieceReceipt: roles.includes("PIECE RECEIPT") ? "Yes" : "No",
+        tableAndLotAllocation: roles.includes("TABLE AND LOT ALLOCATION")
+          ? "Yes"
+          : "No",
+        defectEntry: roles.includes("DEFECT ENTRY") ? "Yes" : "No",
+        foldingPendingList: roles.includes("FOLDING PENDING LIST")
+          ? "Yes"
+          : "No",
+        pieceFoldingEntry: roles.includes("PIECE FOLDING ENTRY") ? "Yes" : "No",
+        packingSlip: roles.includes("PACKING SLIP") ? "Yes" : "No",
+        pieceVerification: roles.includes("PIECE VERIFICATION") ? "Yes" : "No",
+        clothDelivery: roles.includes("CLOTH DELIVERY") ? "Yes" : "No", // ← was missing
+        stockVerification: roles.includes("STOCK VERIFICATION") ? "Yes" : "No", // ← was missing
+        dispatchVerification: roles.includes("DISPATCH VERIFICATION")
+          ? "Yes"
+          : "No", // ← was missing
+      },
+    );
+
+    await connection.commit();
+    await connection.close();
+    return res.json({ statusCode: 0, message: "Role updated successfully" });
+  } catch (error) {
+    console.error(error);
+    await connection.close();
+    return res.json({ statusCode: 1, message: "Error updating role" });
   }
 }

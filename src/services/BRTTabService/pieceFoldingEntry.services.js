@@ -78,8 +78,6 @@ export async function getPieceAgainstLotNo(req, res) {
     DT.TABAPPROVAL ,
     PD.RECEIPTNO,
     TB.USERNAME AS CHECKERNAME
-
-    
     from Gtpiecesdefectdet PD
 LEFT JOIN Gtdefectdettab DT ON  DT.GTPIECESDEFECTDETID = PD.GTPIECESDEFECTDETID
 LEFT JOIN TABUSER TB ON TB.USERID = DT.CHECKER

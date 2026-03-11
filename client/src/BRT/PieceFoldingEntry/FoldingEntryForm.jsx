@@ -164,25 +164,17 @@ const PieceFoldingForm = ({ onClose }) => {
   const result = (() => {
     if (value === null) return null;
 
-    // Grade based on points calculation
     const pointsGrade = gradeData?.data?.find(
       (r) => value >= r.STPOINTS && (r.ENDPOINTD === 0 || value < r.ENDPOINTD),
     );
 
-    // Force C GRADE when checked meters < 20
-    const lowMeterGrade =
-      checkedMetersNum < 20
-        ? gradeData?.data?.find((r) => r.GRADENAME === "C GRADE") // ← exact match
-        : null;
-
-    if (pointsGrade && lowMeterGrade) {
-      // Higher STPOINTS = worse grade → pick worse one
-      return pointsGrade.STPOINTS >= lowMeterGrade.STPOINTS
-        ? pointsGrade
-        : lowMeterGrade;
+    // ← Force C GRADE when checked meters < 20, no comparison needed
+    if (checkedMetersNum <= 20) {
+      const cGrade = gradeData?.data?.find((r) => r.GRADENAME === "C GRADE");
+      return cGrade || pointsGrade || null;
     }
 
-    return pointsGrade || lowMeterGrade || null;
+    return pointsGrade || null;
   })();
   console.log(result, "result");
   console.log(singleData?.data, "singleData");
@@ -293,21 +285,89 @@ const PieceFoldingForm = ({ onClose }) => {
       });
     }
   };
-
-  const saveData = () => {
+  const validateSaveData = () => {
     if (!selectedLotNo) {
       Swal.fire({
         icon: "warning",
 
-        title: "Select Lot and Cloth",
+        title: "Select Lot",
 
         timer: 2000,
 
-        showConfirmButton: false,
+        showConfirmButton: true,
       });
 
-      return;
+      return false;
     }
+    if (!selectedPiece) {
+      Swal.fire({
+        icon: "warning",
+
+        title: "Select Piece",
+
+        timer: 2000,
+
+        showConfirmButton: true,
+      });
+
+      return false;
+    }
+    if (!loomNo) {
+      Swal.fire({
+        icon: "warning",
+
+        title: "Entry Loom No",
+
+        timer: 2000,
+
+        showConfirmButton: true,
+      });
+
+      return false;
+    }
+    if (!checkerId) {
+      Swal.fire({
+        icon: "warning",
+
+        title: "Choose Folder Name",
+
+        timer: 2000,
+
+        showConfirmButton: true,
+      });
+
+      return false;
+    }
+    if (!checkedMeters) {
+      Swal.fire({
+        icon: "warning",
+
+        title: "Entry checked Meters",
+
+        timer: 2000,
+
+        showConfirmButton: true,
+      });
+
+      return false;
+    }
+    if (!weight) {
+      Swal.fire({
+        icon: "warning",
+
+        title: "Entry Weight",
+
+        timer: 2000,
+
+        showConfirmButton: true,
+      });
+
+      return false;
+    }
+    return true;
+  };
+  const saveData = () => {
+    if (!validateSaveData()) return;
 
     handleSubmitCustom(updateData, data);
   };

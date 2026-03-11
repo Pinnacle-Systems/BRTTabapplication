@@ -32,6 +32,8 @@ import {
   PackingSlip,
   PieceVerification,
   ClothDelivery,
+  DispatchVerification,
+  StockVerification,
 } from "./BRT";
 import {
   MdLogout,
@@ -83,6 +85,7 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
   boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
   borderBottom: `1px solid ${alpha(colors.textPrimary, 0.12)}`,
   transition: "all 0.3s ease",
+  zIndex: 999999,
 }));
 
 const UserMenuPaper = styled(Paper)(({ theme }) => ({
@@ -206,9 +209,11 @@ const NavbarHeader = ({ onLogout }) => {
     "Defect Entry": <DefectEntry />,
     "Folding Pending List": <FoldingPendingList />,
     "Piece Folding Entry": <PieceFoldingEntry />,
-    "ClothDelivery": <ClothDelivery />,
-    PackingSlip: <PackingSlip />,
-    PieceVerification: <PieceVerification />,
+    "Cloth Delivery": <ClothDelivery />,
+    "Dispatch Verification": <DispatchVerification />,
+    "Stock Verification": <StockVerification />,
+    "Packing Slip": <PackingSlip />,
+    "Piece Verification": <PieceVerification />,
     User: <OutlinedCard />,
     Role: <RoleManagement />,
   };
@@ -260,7 +265,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
 
     {
-      name: "PieceVerification",
+      name: "Piece Verification",
       icon: INSPECTION_ICON,
       value: new Set(
         InspectionDet?.data?.map(
@@ -271,7 +276,7 @@ const NavbarHeader = ({ onLogout }) => {
       key: "PIECEVERIFICATION",
     },
     {
-      name: "PackingSlip",
+      name: "Packing Slip",
       icon: <RiBillLine />,
       value: new Set(
         InspectionDet?.data?.map(
@@ -282,7 +287,7 @@ const NavbarHeader = ({ onLogout }) => {
       key: "PACKINGSLIP",
     },
     {
-      name: "ClothDelivery",
+      name: "Cloth Delivery",
       icon: <RiBillLine />,
       value: new Set(
         InspectionDet?.data?.map(
@@ -291,6 +296,28 @@ const NavbarHeader = ({ onLogout }) => {
       ).size,
       gradient: "from-teal-500 to-cyan-600",
       key: "CLOTHDELIVERY",
+    },
+    {
+      name: "Dispatch Verification",
+      icon: <RiBillLine />,
+      value: new Set(
+        InspectionDet?.data?.map(
+          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
+        ),
+      ).size,
+      gradient: "from-teal-500 to-cyan-600",
+      key: "DispatchVerification",
+    },
+    {
+      name: "Stock Verification",
+      icon: <RiBillLine />,
+      value: new Set(
+        InspectionDet?.data?.map(
+          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
+        ),
+      ).size,
+      gradient: "from-teal-500 to-cyan-600",
+      key: "StockVerification",
     },
   ];
 
@@ -447,6 +474,7 @@ const NavbarHeader = ({ onLogout }) => {
                       sx: {
                         overflow: "visible",
                         mt: 1.5,
+                        zIndex: 99999999, // ← add this
                         "&:before": {
                           content: '""',
                           display: "block",
@@ -461,6 +489,7 @@ const NavbarHeader = ({ onLogout }) => {
                         },
                       },
                     }}
+                    sx={{ zIndex: 99999999 }} // ← add this too
                     transformOrigin={{ horizontal: "right", vertical: "top" }}
                     anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
                   >
@@ -590,9 +619,9 @@ const NavbarHeader = ({ onLogout }) => {
 
         <div className="flex-1 flex flex-col md:flex-row ">
           <div
-            className={`hidden md:flex md:w-72 ${cardBg} shadow-lg flex-col space-y-1 p-4  border-r ${borderColor} transition-all duration-300`}
+            className={`hidden md:flex md:w-72 ${cardBg} shadow-lg flex-col space-y-1 p-4 h-full min-h-[88vh] max-h-[90vh] overflow-y-auto border-r ${borderColor} transition-all duration-300`}
           >
-            <div className="flex  justify-between items-center px-3 mb-2 border-b border-gray-500/20 ">
+            <div className="flex h-full  justify-between items-center px-3 mb-2 border-b border-gray-500/20 ">
               <div>
                 <h2 className={`text-xl font-bold ${textColor}`}>Operations</h2>
               </div>
@@ -651,7 +680,7 @@ const NavbarHeader = ({ onLogout }) => {
             </div>
           </div>
           {showMobileMenu && (
-          <div className="fixed inset-0 z-[999999] bg-black/40 md:hidden backdrop-blur-sm py-16">
+            <div className="fixed inset-0 z-[999999] bg-black/40 md:hidden backdrop-blur-sm py-16">
               <div
                 ref={ref}
                 className={`h-full w-4/5 max-w-sm ${darkMode ? "bg-gray-800/95" : "bg-white/95"} shadow-xl overflow-y-auto animate-slide-in backdrop-blur-xl`}
@@ -713,6 +742,7 @@ const NavbarHeader = ({ onLogout }) => {
               </div>
             </div>
           )}
+
           <div
             className={`flex-1 flex flex-col h-full overflow-hidden ${darkMode ? "bg-gray-900/30" : "bg-gray-50/50"}`}
           >
@@ -762,7 +792,7 @@ const NavbarHeader = ({ onLogout }) => {
                 ))
               ) : (
                 <div
-                  className={`h-[70vh] flex flex-col items-center justify-center ${emptyStateBg} rounded-xl border-2 border-dashed ${darkMode ? "border-gray-700" : "border-gray-300"} backdrop-blur-sm`}
+                  className={`h-[80vh] flex flex-col items-center justify-center ${emptyStateBg} rounded-xl border-2 border-dashed ${darkMode ? "border-gray-700" : "border-gray-300"} backdrop-blur-sm`}
                 >
                   <div className="text-center p-6 max-w-md">
                     <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 bg-gradient-to-r from-cyan-500 to-blue-600">

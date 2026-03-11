@@ -64,9 +64,19 @@ const CompactTableRow = styled(TableRow)({
 
 export default function RoleManagement() {
   const [open, setOpen] = React.useState(false);
-  const handleOpen = () => setOpen(true);
+  const [editRole, setEditRole] = React.useState(null);
+
+  const handleOpen = () => {
+    setEditRole(null);
+    setOpen(true);
+  };
+  const handleEdit = (role) => {
+    setEditRole(role);
+    setOpen(true);
+  };
   const handleClose = () => {
     setOpen(false);
+    setEditRole(null);
     refetch();
   };
 
@@ -92,24 +102,34 @@ export default function RoleManagement() {
 
   if (!userData?.data) {
     return (
-      <Typography variant="body1" color="textSecondary" textAlign="center" mt={2}>
+      <Typography
+        variant="body1"
+        color="textSecondary"
+        textAlign="center"
+        mt={2}
+      >
         No user data available
       </Typography>
     );
   }
 
- 
-
   return (
-    <Box sx={{ p: 2 }}>
+    <Box
+      sx={{
+        p: 2,
+        height: "75vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           mb: 2,
-          gap: 1,
-          flexWrap: "wrap",
+          flexShrink: 0,
         }}
       >
         <Typography variant="h6" fontWeight="600" sx={{ color: primaryColor }}>
@@ -124,17 +144,46 @@ export default function RoleManagement() {
         </CompactButton>
       </Box>
 
-      <CompactPaper elevation={0}>
-        <TableContainer>
-          <Table size="small" sx={{ minWidth: 650 }}>
+      <CompactPaper
+        elevation={0}
+        sx={{
+          flex: 1,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+        }}
+      >
+        <TableContainer sx={{ height: "100%", overflow: "auto" }}>
+          <Table size="small" sx={{ minWidth: 450 }} stickyHeader>
             <TableHead>
-              <TableRow sx={{ bgcolor: alpha(primaryColor, 0.05) }}>
-                <TableCell sx={{ fontWeight: "600", py: 1 }}>User</TableCell>
+              <TableRow>
+                <TableCell
+                  sx={{
+                    fontWeight: "600",
+                    py: 1,
+                    bgcolor: "black",
+                    color: "white",
+                  }}
+                >
+                  Role Name
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: "600",
+                    py: 1,
+                    bgcolor: "black",
+                    color: "white",
+                  }}
+                >
+                  Edit
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {userData?.data?.map((user, index) => (
                 <CompactTableRow key={index} hover>
+                  {/* ROLE NAME COLUMN */}
                   <TableCell sx={{ py: 1 }}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <Avatar
@@ -150,6 +199,17 @@ export default function RoleManagement() {
                       </Avatar>
                       <Typography variant="body2">{user?.ROLENAME}</Typography>
                     </Box>
+                  </TableCell>
+
+                  {/* EDIT COLUMN */}
+                  <TableCell sx={{ py: 1 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEdit(user)}
+                      sx={{ color: primaryColor }}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </CompactTableRow>
               ))}
@@ -174,7 +234,11 @@ export default function RoleManagement() {
               outline: "none",
             }}
           >
-            <Form onClose={handleClose} primaryColor={primaryColor} />
+            <Form
+              onClose={handleClose}
+              primaryColor={primaryColor}
+              editRole={editRole}
+            />
           </Box>
         </Fade>
       </Modal>

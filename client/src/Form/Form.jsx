@@ -1,5 +1,8 @@
-import React, { useState } from "react";
-import { useCreateUserMutation } from "../redux/userservice";
+import React, { useEffect, useState } from "react";
+import {
+  useCreateUserMutation,
+  useUpdateUserMutation,
+} from "../redux/userservice";
 import { toast } from "react-toastify";
 import {
   Box,
@@ -64,61 +67,74 @@ const CompactCheckbox = styled(FormControlLabel)(({ primarycolor }) => ({
   },
 }));
 
-const Form = ({ onClose, primaryColor, Roles }) => {
-  const [username, setUserName] = useState("");
-  const [roleId, setRoleId] = useState("");
+const Form = ({ onClose, primaryColor, Roles, editUser }) => {
+  const isEditMode = !!editUser; // ← derive mode
+  console.log(editUser, "editUser"); // ← check exact field names
+  const [username, setUserName] = useState(editUser?.USERNAME || "");
+  const [roleId, setRoleId] = useState(editUser?.ROLEID || "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [createUser, { isLoading }] = useCreateUserMutation();
-  const [checkboxes, setCheckboxes] = useState({});
+  const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
+  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
+  const isLoading = isCreating || isUpdating;
 
-  const pageNames = [
-    { id: 1, label: "Piece Receipt" },
-    { id: 2, label: "Table and Lot Allocation" },
-    { id: 3, label: "Defect Entry" },
-    { id: 4, label: "Folding Pending List" },
-    { id: 5, label: "Piece Folding Entry" },
-    { id: 6, label: "PackingSlip" },
-    { id: 7, label: "PieceVerification" },
-    { id: 8, label: "ClothDelivery" },
-    // { id: 8, label: "User" },
-  ];
-
-  const handleCheckboxChange = (id) => {
-    setCheckboxes((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
+  useEffect(() => {
+    if (editUser) {
+      setUserName(editUser.USERNAME || "");
+      setRoleId(Number(editUser.ROLEID) || ""); // ← cast to Number
+      setPassword("");
+    } else {
+      setUserName("");
+      setRoleId("");
+      setPassword("");
+    }
+  }, [editUser]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // const selectedCheckboxes = pageNames
-    //   .filter((checkbox) => checkboxes[checkbox.id])
-    //   .map((checkbox) => ({ id: checkbox.id, label: checkbox.label }));
 
-    const formData = { username, password, roleId };
-
-    if (!username || !password || !roleId) {
+    if (!username || !roleId || (!isEditMode && !password)) {
       toast.info("Please fill all required fields");
       return;
     }
 
-    if (!window.confirm("Create this user?")) return;
+    if (!window.confirm(isEditMode ? "Update this user?" : "Create this user?"))
+      return;
 
-    createUser(formData)
-      .unwrap()
-      .then((response) => {
-        if (response.statusCode === 1) {
-          toast.error(response.message);
-        } else {
-          toast.success("User created");
-          onClose();
-        }
-      })
-      .catch((error) => {
-        toast.error(`Error: ${error.message}`);
-      });
+    if (isEditMode) {
+      // ← Edit mode: send userId + changed fields
+      const formData = {
+        userId: editUser.USERID,
+        username,
+        roleId: Number(roleId),
+        ...(password ? { password } : {}), // ← only send password if changed
+      };
+      updateUser(formData)
+        .unwrap()
+        .then((response) => {
+          if (response.statusCode === 1) {
+            toast.error(response.message);
+          } else {
+            toast.success("User updated");
+            onClose();
+          }
+        })
+        .catch((error) => toast.error(`Error: ${error.message}`));
+    } else {
+      // ← Create mode
+      const formData = { username, password, roleId };
+      createUser(formData)
+        .unwrap()
+        .then((response) => {
+          if (response.statusCode === 1) {
+            toast.error(response.message);
+          } else {
+            toast.success("User created");
+            onClose();
+          }
+        })
+        .catch((error) => toast.error(`Error: ${error.message}`));
+    }
   };
 
   return (
@@ -134,7 +150,7 @@ const Form = ({ onClose, primaryColor, Roles }) => {
         }}
       >
         <Typography variant="subtitle1" fontWeight="600">
-          Create User
+          {isEditMode ? "Edit User" : "Create User"} {/* ← dynamic title */}
         </Typography>
         <IconButton onClick={onClose} size="small" sx={{ color: "white" }}>
           <CloseIcon fontSize="small" />
@@ -170,7 +186,9 @@ const Form = ({ onClose, primaryColor, Roles }) => {
               <CompactTextField
                 fullWidth
                 size="small"
-                label="Password"
+                label={
+                  isEditMode ? "New Password (leave blank to keep)" : "Password"
+                }
                 type={showPassword ? "text" : "password"}
                 variant="outlined"
                 value={password}
@@ -212,7 +230,7 @@ const Form = ({ onClose, primaryColor, Roles }) => {
                   labelId="role-label"
                   label="Role"
                   value={roleId}
-                  onChange={(e) => setRoleId(e.target.value)}
+                  onChange={(e) => setRoleId(Number(e.target.value))} // ← cast to Number
                   startAdornment={
                     <InputAdornment position="start">
                       <BadgeIcon
@@ -263,7 +281,13 @@ const Form = ({ onClose, primaryColor, Roles }) => {
                     ) : null
                   }
                 >
-                  {isLoading ? "Creating..." : "Create"}
+                  {isLoading
+                    ? isEditMode
+                      ? "Updating..."
+                      : "Creating..."
+                    : isEditMode
+                      ? "Update"
+                      : "Create"}
                 </CompactButton>
               </Box>
             </Grid>

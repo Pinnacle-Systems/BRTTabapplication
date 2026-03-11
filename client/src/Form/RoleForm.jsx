@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { useCreateRoleMutation } from "../redux/userservice";
+import {
+  useCreateRoleMutation,
+  useUpdateRoleMutation,
+} from "../redux/userservice";
 import { toast } from "react-toastify";
 import {
   Box,
@@ -17,6 +20,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import BadgeIcon from "@mui/icons-material/Badge";
+import { useEffect } from "react";
 const CompactTextField = styled(TextField)(({ theme, primarycolor }) => ({
   "& .MuiOutlinedInput-root": {
     borderRadius: "6px",
@@ -53,23 +57,46 @@ const CompactCheckbox = styled(FormControlLabel)(({ primarycolor }) => ({
   },
 }));
 
-const Form = ({ onClose, primaryColor }) => {
+const Form = ({ onClose, primaryColor, editRole }) => {
   const [rolename, setrolename] = useState("");
- 
-  const [createRole, { isLoading }] = useCreateRoleMutation();
+  const isEditMode = !!editRole;
+
+  const [createRole, { isLoading: isCreating }] = useCreateRoleMutation();
+  const [updateRole, { isLoading: isUpdating }] = useUpdateRoleMutation();
+  const isLoading = isCreating || isUpdating;
   const [checkboxes, setCheckboxes] = useState({});
 
   const pageNames = [
-    { id: 1, label: "Piece Receipt" },
-    { id: 2, label: "Table and Lot Allocation" },
-    { id: 3, label: "Defect Entry" },
-    { id: 4, label: "Folding Pending List" },
-    { id: 5, label: "Piece Folding Entry" },
-    { id: 6, label: "PackingSlip" },
-    { id: 7, label: "PieceVerification" },
-    { id: 8, label: "ClothDelivery" },
+    { id: 1, label: "Piece Receipt", dbKey: "PIECERECEIPT" },
+    {
+      id: 2,
+      label: "Table and Lot Allocation",
+      dbKey: "TABLEANDLOTALLOCATION",
+    },
+    { id: 3, label: "Defect Entry", dbKey: "DEFECTENTRY" },
+    { id: 4, label: "Folding Pending List", dbKey: "FOLDINGPENDINGLIST" },
+    { id: 5, label: "Piece Folding Entry", dbKey: "PIECEFOLDINGENTRY" },
+    { id: 6, label: "Packing Slip", dbKey: "PACKINGSLIP" },
+    { id: 7, label: "Piece Verification", dbKey: "PIECEVERIFICATION" },
+    { id: 8, label: "Cloth Delivery", dbKey: "CLOTHDELIVERY" },
+    { id: 9, label: "Stock Verification", dbKey: "STOCKVERIFICATION" },
+    { id: 10, label: "Dispatch Verification", dbKey: "DISPATCHVERIFICATION" },
   ];
-
+  // ← Pre-fill form on edit
+  useEffect(() => {
+    if (editRole) {
+      setrolename(editRole.ROLENAME || "");
+      // Pre-check checkboxes based on DB values
+      const preChecked = {};
+      pageNames.forEach((page) => {
+        preChecked[page.id] = editRole[page.dbKey] === "Yes";
+      });
+      setCheckboxes(preChecked);
+    } else {
+      setrolename("");
+      setCheckboxes({});
+    }
+  }, [editRole]);
   const handleCheckboxChange = (id) => {
     setCheckboxes((prev) => ({
       ...prev,
@@ -80,30 +107,43 @@ const Form = ({ onClose, primaryColor }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const selectedCheckboxes = pageNames
-      .filter((checkbox) => checkboxes[checkbox.id])
-      .map((checkbox) => ({ id: checkbox.id, label: checkbox.label }));
+      .filter((p) => checkboxes[p.id])
+      .map((p) => ({ id: p.id, label: p.label }));
 
     const formData = { rolename, checkboxes: selectedCheckboxes };
 
-    if (!rolename  ) {
+    if (!rolename) {
       toast.info("Please fill all required fields");
       return;
     }
+    if (!window.confirm(isEditMode ? "Update this role?" : "Create this role?"))
+      return;
 
-
-    createRole(formData)
-      .unwrap()
-      .then((response) => {
-        if (response.statusCode === 1) {
-          toast.error(response.message);
-        } else {
-          toast.success("User created");
-          onClose();
-        }
-      })
-      .catch((error) => {
-        toast.error(`Error: ${error.message}`);
-      });
+    if (isEditMode) {
+      updateRole({ ...formData, roleId: editRole.ROLEID })
+        .unwrap()
+        .then((res) => {
+          if (res.statusCode === 1) {
+            toast.error(res.message);
+          } else {
+            toast.success("Role updated");
+            onClose();
+          }
+        })
+        .catch((err) => toast.error(`Error: ${err.message}`));
+    } else {
+      createRole(formData)
+        .unwrap()
+        .then((res) => {
+          if (res.statusCode === 1) {
+            toast.error(res.message);
+          } else {
+            toast.success("Role created");
+            onClose();
+          }
+        })
+        .catch((err) => toast.error(`Error: ${err.message}`));
+    }
   };
 
   return (
@@ -119,7 +159,7 @@ const Form = ({ onClose, primaryColor }) => {
         }}
       >
         <Typography variant="subtitle1" fontWeight="600">
-          Create Role
+          {isEditMode ? "Edit Role" : "Create Role"}
         </Typography>
         <IconButton onClick={onClose} size="small" sx={{ color: "white" }}>
           <CloseIcon fontSize="small" />
@@ -140,7 +180,7 @@ const Form = ({ onClose, primaryColor }) => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <BadgeIcon    
+                      <BadgeIcon
                         fontSize="small"
                         sx={{ color: alpha("#000", 0.6) }}
                       />
@@ -150,8 +190,6 @@ const Form = ({ onClose, primaryColor }) => {
                 primarycolor={primaryColor}
               />
             </Grid>
-
-      
 
             <Grid item xs={12}>
               <Typography variant="body2" fontWeight="500" gutterBottom>
@@ -201,7 +239,13 @@ const Form = ({ onClose, primaryColor }) => {
                     ) : null
                   }
                 >
-                  {isLoading ? "Creating..." : "Create"}
+                  {isLoading
+                    ? isEditMode
+                      ? "Updating..."
+                      : "Creating..."
+                    : isEditMode
+                      ? "Update"
+                      : "Create"}
                 </CompactButton>
               </Box>
             </Grid>

@@ -69,9 +69,9 @@ const PackingSlip = () => {
         </div>
       </div>
 
-      <div className="h-auto md:h-[70vh] overflow-y-auto bg-white shadow-lg rounded-xl mt-2 p-3 md:p-4">
+      <div className="h-auto md:h-[70vh] overflow-y-auto bg-white shadow-lg rounded-xl mt-2 p-3 md:p-3">
         {/* Selection Section */}
-        <div className="mb-6">
+        <div className="mb-2">
           <h2 className="text-lg font-semibold mb- border-b pb-1">Selection</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-10 gap-6 text-sm">
             <div className="sm:col-span-1 lg:col-span-3">
@@ -111,7 +111,7 @@ const PackingSlip = () => {
         </div>
 
         {/* Bale Details Section */}
-        <div className="mb-6">
+        <div className="mb-2">
           <h2 className="text-lg font-semibold mb-3 border-b pb-1">Bale Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-10 gap-4 text-sm">
             <div className="md:col-span-2 xl:col-span-4">
@@ -177,9 +177,9 @@ const PackingSlip = () => {
         </div>
 
         {/* Print Bale and BarCode Selection Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Print Bale Section - MATCHING BARCODE STYLE */}
-          <div className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm flex flex-col justify-center">
+          {/* <div className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm flex flex-col justify-center">
             <h3 className="text-sm font-semibold mb-3 text-gray-700">Print Bale</h3>
             <div className="flex flex-wrap sm:flex-nowrap items-end gap-3">
               <div className="flex flex-col flex-1 w-full">
@@ -193,7 +193,7 @@ const PackingSlip = () => {
                 Print Bale
               </button>
             </div>
-          </div>
+          </div> */}
 
           {/* BarCode Selection Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm flex flex-col justify-center">
@@ -214,7 +214,7 @@ const PackingSlip = () => {
         </div>
 
         {/* Piece Details Section */}
-        <div className="mt-6">
+        <div className="mt-2">
           <h2 className="text-lg font-semibold mb-3 border-b pb-1">Piece Details</h2>
           <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">

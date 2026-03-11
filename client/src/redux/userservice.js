@@ -66,6 +66,14 @@ const UsersApi = createApi({
       }),
       invalidatesTags: ["Login"],
     }),
+    updateUser: builder.mutation({
+      query: (data) => ({
+        url: `${USERS_API}/${data.userId}/updateUser`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Users"],
+    }),
     createRole: builder.mutation({
       query: (payload) => ({
         url: `${USERS_API}/role`,
@@ -77,6 +85,14 @@ const UsersApi = createApi({
       }),
       invalidatesTags: ["Users"],
     }),
+    updateRole: builder.mutation({
+      query: (data) => ({
+        url: `${USERS_API}/${data.roleId}/updateRole`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Users"],
+    }),
   }),
 });
 
@@ -85,8 +101,10 @@ export const {
   useGetUsersQuery,
   useGetUserslogQuery,
   useCreateUserMutation,
+  useUpdateUserMutation,
   useGetRolesQuery,
-  useCreateRoleMutation
+  useCreateRoleMutation,
+  useUpdateRoleMutation,
 } = UsersApi;
 
 export default UsersApi;
