@@ -19,7 +19,124 @@ import Swal from "sweetalert2";
 import Select from "react-select";
 import CheckingNoGrid from "./CheckingNoGrid ";
 import { push } from "../../redux/features/opentabs";
-import zIndex from "@mui/material/styles/zIndex";
+import { useLanguage } from "../../Context/LanguageContext";
+
+const translations = {
+  en: {
+    title: "Table and Lot Piece Allocation",
+    back: "Back",
+    save: "Save",
+    tableDetails: "Table Details",
+    checkingSection: "Checking Section",
+    selectSection: "Select section",
+    checkerName: "Checker Name",
+    selectUser: "Select User",
+    tablesChoosed: "Tables Choosed",
+    lotDetails: "Lot Details",
+    lotNo: "Lot No",
+    selectLot: "Select Lot",
+    clothName: "Cloth Name",
+    selectCloth: "Select cloth",
+    pieceNo: "Piece No",
+    meters: "Meters",
+    widerTable: "Multi Table",
+    loading: "Loading...",
+    errorLoading: "Error loading lots",
+    activeWork: "Active Work In Progress",
+    section: "Section",
+    checker: "Checker",
+    piece: "Piece No",
+    tableNo: "Table No",
+    goToDefect: "Go To Defect Entry",
+    revertWork: "Revert Work",
+    addedSuccess: "Added Successfully",
+    submissionFailed: "Submission Failed",
+    revertSuccess: "Work reverted successfully",
+    revertFailed: "Failed to revert",
+    validCheckingSection: "Please Select Checking Section",
+    validCheckerName: "Please Select Checker Name",
+    validLotNo: "Please Select Lot No",
+    validCloth: "Please Select Cloth",
+    validPiece: "Please Select Piece",
+    validTable: "Please Select Table",
+  },
+  ta: {
+    title: "மேஜை,லாட் துண்டு ஒதுக்கீடு",
+    back: "பின்செல்",
+    save: "சேமி",
+    tableDetails: "மேஜை விவரங்கள்",
+    checkingSection: "சரிபார்ப்பு பிரிவு",
+    selectSection: "பிரிவை தேர்ந்தெடு",
+    checkerName: "சரிபார்ப்பாளர் பெயர்",
+    selectUser: "பயனரை தேர்ந்தெடு",
+    tablesChoosed: "மேஜைகள்",
+    lotDetails: "லாட் விவரங்கள்",
+    lotNo: "லாட் எண்",
+    selectLot: "லாட் தேர்ந்தெடு",
+    clothName: "துணி பெயர்",
+    selectCloth: "துணியை தேர்ந்தெடு",
+    pieceNo: "துண்டு எண்",
+    meters: "மீட்டர்கள்",
+    widerTable: "பல மேஜைகள்",
+    loading: "ஏற்றுகிறது...",
+    errorLoading: "லாட்டை ஏற்றுவதில் பிழை",
+    activeWork: "தற்போது செயலில் உள்ள பணி",
+    section: "பிரிவு",
+    checker: "சரிபார்ப்பாளர்",
+    piece: "துண்டு எண்",
+    tableNo: "மேஜை எண்",
+    goToDefect: "குறைபாடு பதிவுக்கு செல்",
+    revertWork: "பணியை திரும்பப் பெறு",
+    addedSuccess: "வெற்றிகரமாக சேர்க்கப்பட்டது",
+    submissionFailed: "சமர்ப்பிப்பு தோல்வி",
+    revertSuccess: "பணி வெற்றிகரமாக திரும்பப் பெறப்பட்டது",
+    revertFailed: "திரும்பப் பெற முடியவில்லை",
+    validCheckingSection: "சரிபார்ப்பு பிரிவை தேர்ந்தெடுக்கவும்",
+    validCheckerName: "சரிபார்ப்பாளர் பெயரை தேர்ந்தெடுக்கவும்",
+    validLotNo: "லாட் எண்ணை தேர்ந்தெடுக்கவும்",
+    validCloth: "துணியை தேர்ந்தெடுக்கவும்",
+    validPiece: "துண்டை தேர்ந்தெடுக்கவும்",
+    validTable: "மேஜையை தேர்ந்தெடுக்கவும்",
+  },
+  hi: {
+    title: "टेबल और लॉट पीस आवंटन",
+    back: "वापस",
+    save: "सहेजें",
+    tableDetails: "टेबल विवरण",
+    checkingSection: "जांच अनुभाग",
+    selectSection: "अनुभाग चुनें",
+    checkerName: "जांचकर्ता का नाम",
+    selectUser: "उपयोगकर्ता चुनें",
+    tablesChoosed: "चुनी गई टेबलें",
+    lotDetails: "लॉट विवरण",
+    lotNo: "लॉट नं.",
+    selectLot: "लॉट चुनें",
+    clothName: "कपड़े का नाम",
+    selectCloth: "कपड़ा चुनें",
+    pieceNo: "पीस नं.",
+    meters: "मीटर",
+    widerTable: "कई टेबल",
+    loading: "लोड हो रहा है...",
+    errorLoading: "लॉट लोड करने में त्रुटि",
+    activeWork: "सक्रिय कार्य प्रगति में",
+    section: "अनुभाग",
+    checker: "जांचकर्ता",
+    piece: "पीस नं.",
+    tableNo: "टेबल नं.",
+    goToDefect: "दोष प्रविष्टि पर जाएं",
+    revertWork: "कार्य वापस करें",
+    addedSuccess: "सफलतापूर्वक जोड़ा गया",
+    submissionFailed: "सबमिशन विफल",
+    revertSuccess: "कार्य सफलतापूर्वक वापस किया गया",
+    revertFailed: "वापस करने में विफल",
+    validCheckingSection: "कृपया जांच अनुभाग चुनें",
+    validCheckerName: "कृपया जांचकर्ता का नाम चुनें",
+    validLotNo: "कृपया लॉट नं. चुनें",
+    validCloth: "कृपया कपड़ा चुनें",
+    validPiece: "कृपया पीस चुनें",
+    validTable: "कृपया टेबल चुनें",
+  },
+};
 
 const TableLotForm = ({
   onClose,
@@ -49,6 +166,8 @@ const TableLotForm = ({
   onNew,
   TABDATE,
 }) => {
+  const { lang } = useLanguage();
+  const t = translations[lang] ?? translations["en"];
   const socketRef = useRef(null);
   const [dcMeter, setDcMeter] = useState("");
   const [selectedTables, setSelectedTables] = useState([]);
@@ -223,7 +342,7 @@ const TableLotForm = ({
     try {
       let returnData = await callback(data).unwrap();
       Swal.fire({
-        title: "Added Successfully",
+        title: t.addedSuccess,
         icon: "success",
         draggable: true,
         timer: 2000,
@@ -247,7 +366,7 @@ const TableLotForm = ({
 
       Swal.fire({
         icon: "error",
-        title: "Submission Failed",
+        title: t.submissionFailed,
         text: backendMessage,
         timer: 2500,
       });
@@ -307,20 +426,13 @@ const TableLotForm = ({
 
   const validateSaveData = () => {
     const validations = [
-      {
-        condition: !checkingSectionId,
-        message: "Please Select Checking Section",
-      },
-      { condition: !checkerId, message: "Please Select Checker Name" },
-      { condition: !selectedLotNo, message: "Please Select Lot No" },
-      { condition: !selectedClothId, message: "Please Select Cloth" },
-      { condition: !selectedPiece, message: "Please Select Piece" },
-      {
-        condition: selectedTables?.length === 0,
-        message: "Please Select Table",
-      },
+      { condition: !checkingSectionId, message: t.validCheckingSection },
+      { condition: !checkerId, message: t.validCheckerName },
+      { condition: !selectedLotNo, message: t.validLotNo },
+      { condition: !selectedClothId, message: t.validCloth },
+      { condition: !selectedPiece, message: t.validPiece },
+      { condition: selectedTables?.length === 0, message: t.validTable },
     ];
-
     for (const item of validations) {
       if (item.condition) {
         Swal.fire({
@@ -332,7 +444,6 @@ const TableLotForm = ({
         return false;
       }
     }
-
     return true;
   };
   const saveData = () => {
@@ -364,7 +475,7 @@ const TableLotForm = ({
       await revertAllocation(allocationId).unwrap();
       Swal.fire({
         icon: "success",
-        title: "Work reverted successfully",
+        title: t.revertSuccess,
         timer: 2000,
         showConfirmButton: false,
       });
@@ -372,7 +483,7 @@ const TableLotForm = ({
     } catch (err) {
       Swal.fire({
         icon: "Warning",
-        title: "Failed to revert",
+        title: t.revertFailed,
         timer: 2000,
         showConfirmButton: false,
       });
@@ -387,13 +498,11 @@ const TableLotForm = ({
   }, [selectedSubGridId, cloths]);
 
   if (isLoading) {
-    return <div className="p-6 text-center">Loading...</div>;
+    return <div className="p-6 text-center">{t.loading}</div>;
   }
 
   if (error) {
-    return (
-      <div className="p-6 text-center text-red-500">Error loading lots</div>
-    );
+    return <div className="p-6 text-center text-red-500">{t.errorLoading}</div>;
   }
   const handleSelect = (item) => {
     if (widerTable === "No") {
@@ -505,7 +614,7 @@ const TableLotForm = ({
         <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-6 sm:p-8">
           {/* Header */}
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">
-            Active Work In Progress
+            {t.activeWork}
           </h1>
 
           {/* Details Card */}
@@ -513,33 +622,29 @@ const TableLotForm = ({
             {/* Responsive Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
               <div>
-                <p className="text-sm text-gray-500">Section</p>
+                <p className="text-sm text-gray-500">{t.section}</p>
                 <p className="font-semibold">{workingDetails?.sectionName}</p>
               </div>
-
               <div>
-                <p className="text-sm text-gray-500">Checker</p>
+                <p className="text-sm text-gray-500">{t.checker}</p>
                 <p className="font-semibold">{workingDetails?.userName}</p>
               </div>
-
               <div>
-                <p className="text-sm text-gray-500">Lot No</p>
+                <p className="text-sm text-gray-500">{t.lotNo}</p>
                 <p className="font-semibold">{workingDetails?.lotNo}</p>
               </div>
-
               <div>
-                <p className="text-sm text-gray-500">Piece No</p>
+                <p className="text-sm text-gray-500">{t.piece}</p>
                 <p className="font-semibold">{workingDetails?.pieceNo}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Meters</p>
+                <p className="text-sm text-gray-500">{t.meters}</p>
                 <p className="font-semibold">
                   {workingDetails?.meters?.toFixed(2)}
                 </p>
               </div>
-
               <div>
-                <p className="text-sm text-gray-500">Table No</p>
+                <p className="text-sm text-gray-500">{t.tableNo}</p>
                 <p className="font-semibold">
                   {workingDetails?.tableNumbers?.join(", ")}
                 </p>
@@ -552,14 +657,14 @@ const TableLotForm = ({
                 className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-2 rounded-lg font-medium"
                 onClick={handleDefectEntry}
               >
-                Go To Defect Entry
+                {t.goToDefect}
               </button>
 
               <button
                 className="w-full sm:w-auto bg-red-600 hover:bg-red-700 transition text-white px-6 py-2 rounded-lg font-medium"
                 onClick={() => handleRevert(allocationId)}
               >
-                Revert Work
+                {t.revertWork}
               </button>
             </div>
           </div>
@@ -570,36 +675,35 @@ const TableLotForm = ({
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
-        <h1 className="text-xl ml-2 font-bold text-center">
-          Table and Lot Piece Allocation
-        </h1>
+        <h1 className="text-xl ml-2 font-bold text-center">{t.title}</h1>
         <div>
           <button
             onClick={onClose}
             className="bg-red-600 mr-2 text-white  py-1 rounded-lg hover:bg-red-700 transition px-2"
           >
-            Back
+            {t.back}
           </button>
           <button
             onClick={saveData}
-            className="bg-blue-600 mr-2 text-white  py-1 rounded-lg hover:bg-blue-700 transition px-2"
+            className="bg-blue-600 mr-2 text-white py-1 rounded-lg hover:bg-blue-700 transition px-2"
           >
-            Save
+            {t.save}
           </button>
         </div>
       </div>
       <div className="h-[70vh] overflow-y-auto overflow-x-hidden bg-white shadow-lg rounded-xl mt-2">
         <form className=" p-2">
           <div>
-            <h2 className="text-lg  font-semibold  ">Table Details</h2>
+            <h2 className="text-lg font-semibold">{t.tableDetails}</h2>
 
             <div className="flex items-end gap-4 mt-2 text-sm w-full">
               {/* Piece No */}
 
               <div className="flex flex-col flex-1 max-w-[18rem]">
                 <label className="text-sm font-medium mb-1">
-                  Checking Section
+                  {t.checkingSection}
                 </label>
+
                 <Select
                   ref={lotIdRef}
                   options={checkingOptions}
@@ -612,7 +716,7 @@ const TableLotForm = ({
                     setCheckingSectionId(selectedOption?.value || "");
                   }}
                   autoFocus
-                  placeholder="Select section"
+                  placeholder={t.selectSection}
                   isClearable={false} // ✅ disable cross icon
                   styles={customSelectStyles}
                   className="text-left"
@@ -623,7 +727,9 @@ const TableLotForm = ({
               </div>
 
               <div className="flex flex-col flex-1 max-w-[18rem]">
-                <label className="text-sm font-medium mb-1">Checker Name</label>
+                <label className="text-sm font-medium mb-1">
+                  {t.checkerName}
+                </label>
 
                 {isAdmin || isSuppervisor ? (
                   <>
@@ -637,7 +743,7 @@ const TableLotForm = ({
                       onChange={(selectedOption) => {
                         setCheckerId(selectedOption?.value || "");
                       }}
-                      placeholder="Select User"
+                      placeholder={t.selectUser}
                       isClearable={false} // ✅ disable cross icon
                       styles={customSelectStyles}
                       className="text-left"
@@ -659,7 +765,7 @@ const TableLotForm = ({
               </div>
               <div className="flex flex-col flex-1 max-w-[8rem]">
                 <label className="text-sm font-medium mb-1">
-                  Tables Choosed
+                  {t.tablesChoosed}
                 </label>
 
                 <input
@@ -688,11 +794,11 @@ const TableLotForm = ({
           {/* Lot Details */}
           <div className="mt-2">
             <div>
-              <h2 className="text-lg  font-semibold  ">Lot Details</h2>
+              <h2 className="text-lg font-semibold">{t.lotDetails}</h2>
               <div className="grid grid-cols-4 lg:grid-cols-10 gap-4 mt-2 text-sm">
                 {/* Lot No */}
                 <div className="col-span-2 lg:col-span-2 z-999">
-                  <label className="block font-medium mb-1">Lot No</label>
+                  <label className="block font-medium mb-1">{t.lotNo}</label>
                   <Select
                     options={lotOptions}
                     value={
@@ -704,7 +810,7 @@ const TableLotForm = ({
                       setSelectedLotNo(selectedOption?.value || "");
                       setSelectedNonGridId(selectedOption?.nonGridId || "");
                     }}
-                    placeholder="Select Lot"
+                    placeholder={t.selectLot}
                     isClearable={false} // ✅ disable cross icon
                     styles={customSelectStyles}
                     isSearchable={true}
@@ -714,8 +820,10 @@ const TableLotForm = ({
                 </div>
 
                 {/* Cloth Name */}
-                <div className="col-span-4 lg:col-span-5">
-                  <label className="block font-medium mb-1">Cloth Name</label>
+                <div className="col-span-4 lg:col-span-4">
+                  <label className="block font-medium mb-1">
+                    {t.clothName}
+                  </label>
 
                   <Select
                     options={clothOptions}
@@ -729,7 +837,7 @@ const TableLotForm = ({
                       setSelectedClothId(selectedOption?.clothId || "");
                       setLotCheckingNoId(selectedOption?.lotchkId || "");
                     }}
-                    placeholder="Select cloth"
+                    placeholder={t.selectCloth}
                     isClearable={false} // ✅ disable cross icon
                     styles={customSelectStyles}
                     isSearchable={true}
@@ -740,7 +848,7 @@ const TableLotForm = ({
 
                 {/* Receipt Pcs */}
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Piece No</label>
+                  <label className="block font-medium mb-1">{t.pieceNo}</label>
                   <Select
                     options={pieceOptions}
                     value={
@@ -765,7 +873,7 @@ const TableLotForm = ({
 
                 {/* Meters in DC */}
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Meters</label>
+                  <label className="block font-medium mb-1">{t.meters}</label>
                   <input
                     type="number"
                     value={Number(dcMeter || 0)?.toFixed(2)}
@@ -773,10 +881,11 @@ const TableLotForm = ({
                     className="w-full border rounded-lg px-1 py-[7px] text-right bg-gray-100"
                   />
                 </div>
-                <div className="flex flex-col flex-1 max-w-[10rem]">
+                <div className="flex flex-col flex-1 lg:min-w-[8rem] ">
                   <label className="text-sm font-medium mb-1">
-                    Wider Table
+                    {t.widerTable}
                   </label>
+
                   <Select
                     options={[
                       { value: "No", label: "No" },

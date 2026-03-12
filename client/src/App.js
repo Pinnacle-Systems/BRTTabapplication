@@ -1,32 +1,39 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
-import Signup from './Login/Signup';
-import ActiveTabList from './ActiveTab';
-import DrawerAppBar from './Dashboard';
-import { Toaster } from 'react-hot-toast';
+import React, { useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
+import Signup from "./Login/Signup";
+import ActiveTabList from "./ActiveTab";
+import DrawerAppBar from "./Dashboard";
+import { Toaster } from "react-hot-toast";
 import BranchFinYearSelection from "./Login/BranchFinyearSelection";
-import { useIdleLogout } from './Utils/helper';
-import secureLocalStorage from 'react-secure-storage';
-import { useState } from 'react';
-import NavbarHeader from './NavbarHeader';
+import { useIdleLogout } from "./Utils/helper";
+import secureLocalStorage from "react-secure-storage";
+import { useState } from "react";
+import NavbarHeader from "./NavbarHeader";
+import { LanguageProvider } from "./Context/LanguageContext.jsx";
+
 const ProtectedRoute = ({ children }) => {
-  const storedUsername = localStorage.getItem('userName');
+  const storedUsername = localStorage.getItem("userName");
   const navigate = useNavigate();
 
-
   const handleNavigation = (e) => {
-    const storedUsername = localStorage.getItem('userName');
+    const storedUsername = localStorage.getItem("userName");
     if (!storedUsername) {
       e.preventDefault();
-      window.history.pushState(null, null, '/');
-      navigate('/');
+      window.history.pushState(null, null, "/");
+      navigate("/");
     }
   };
 
   useEffect(() => {
-    window.addEventListener('popstate', handleNavigation);
+    window.addEventListener("popstate", handleNavigation);
     return () => {
-      window.removeEventListener('popstate', handleNavigation);
+      window.removeEventListener("popstate", handleNavigation);
     };
   }, []);
 
@@ -34,19 +41,13 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const App = () => {
-
-
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
 
   const handleLogout = () => {
     secureLocalStorage.clear();
     sessionStorage.clear();
-    window.location.href = '/';
-
+    window.location.href = "/";
   };
-
 
   useEffect(() => {
     setIsLoggedIn(!!sessionStorage.getItem("sessionId"));
@@ -55,8 +56,8 @@ const App = () => {
   useIdleLogout(handleLogout, isLoggedIn);
 
   function autoLogout(parmam) {
-    console.log('dummy function to satisfy diff checker', parmam);
-    setIsLoggedIn(parmam)
+    console.log("dummy function to satisfy diff checker", parmam);
+    setIsLoggedIn(parmam);
   }
 
   return (
@@ -65,11 +66,11 @@ const App = () => {
         <Route path="/" element={<Signup autoLogout={autoLogout} />} />
         <Route
           path="/dashboard"
-
           element={
             <>
-              <Toaster position="top-right" reverseOrder={false} />
-              {/* <div>
+              <LanguageProvider>
+                <Toaster position="top-right" reverseOrder={false} />
+                {/* <div>
                 <div className="w-screen h-[20%]">
                   <DrawerAppBar onLogout={handleLogout} />
                 </div>
@@ -77,8 +78,9 @@ const App = () => {
                   <ActiveTabList />
                 </div>
               </div> */}
-              <NavbarHeader onLogout={handleLogout}/>
-              </>
+                <NavbarHeader onLogout={handleLogout} />
+              </LanguageProvider>
+            </>
           }
         />
         <Route path="/branch-finyear" element={<BranchFinYearSelection />} />

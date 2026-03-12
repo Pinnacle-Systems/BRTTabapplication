@@ -22,8 +22,169 @@ import {
 import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import { ExpandMore } from "@mui/icons-material";
+import { useLanguage } from "../../Context/LanguageContext.jsx";
+
+// ─── Translations ──────────────────────────────────────────────────────────────
+const translations = {
+  en: {
+    title: "Defect Entry",
+    save: "Save",
+    // Lot Details section
+    lotDetails: "Lot Details",
+    lotNo: "Lot No",
+    selectLot: "Select Lot",
+    pieceNo: "Piece No",
+    selectPiece: "Select",
+    meters: "Meters",
+    tableNo: "Table No",
+    checkerName: "Checker Name",
+    checkingSectionName: "Checking Section Name",
+    completed: "Completed",
+    // Piece accordion
+    piece: "Piece",
+    defectDetails: "Defect Details",
+    meterAt: "Meter At",
+    defectName: "Defect Name",
+    points: "Points",
+    noOfTimes: "No of times",
+    totalPoints: "Total Points",
+    add: "Add",
+    split: "Split",
+    deletePiece: "Delete Piece",
+    // Table headers
+    meter: "Meter",
+    action: "Action",
+    times: "Times",
+    // Empty state
+    emptyAdmin: "Select a Lot and Piece above to begin defect entry.",
+    emptyChecker: "Loading piece details...",
+    // Swal messages
+    invalidSplitMeter: "Invalid Split Meter",
+    cannotDeleteOnlyPiece: "Cannot delete the only piece",
+    pleaseSelectMeter: "Please select Meter",
+    pleaseSelectDefect: "Please select a Defect",
+    pleaseEnterTimes: "Please enter No of Times",
+    sameDefectExists: "Same Defect Already Exists",
+    pleaseSelectLot: "Please select a Lot",
+    pleaseSelectPiece: "Please select a Piece",
+    noPieceData: "No piece data to save",
+    pieceHasNoDefects: "has no defects",
+    addDefectForEveryPiece:
+      "Please add at least one defect for every piece before saving.",
+    addedSuccess: "Added Successfully",
+    submissionFailed: "Submission Failed",
+    deletePieceConfirmTitle: "Delete Piece",
+    deletePieceConfirmText:
+      "This will remove the piece and its defects. Remaining pieces will be renumbered.",
+    yesDelete: "Yes, delete",
+    defect: "defect",
+    defects: "defects",
+    tablePoints: "Points",
+  },
+  ta: {
+    title: "குறைபாடு பதிவு",
+    save: "சேமி",
+    lotDetails: "லாட் விவரங்கள்",
+    lotNo: "லாட் எண்",
+    selectLot: "லாட் தேர்ந்தெடு",
+    pieceNo: "துண்டு",
+    selectPiece: "தேர்ந்தெடு",
+    meters: "மீட்டர்கள்",
+    tableNo: "மேஜை",
+    checkerName: "சரிபார்ப்பாளர் பெயர்",
+    checkingSectionName: "சரிபார்ப்பு பிரிவு பெயர்",
+    completed: "முடிந்தது",
+    piece: "துண்டு",
+    defectDetails: "குறைபாடு விவரங்கள்",
+    meterAt: "மீட்டர்",
+    defectName: "குறைபாடு பெயர்",
+    points: "புள்ளிகள்",
+    noOfTimes: "எத்தனை முறை",
+    totalPoints: "மொத்தம்",
+    add: "சேர்",
+    split: "பிரி",
+    deletePiece: "துண்டை நீக்கு",
+    meter: "மீட்டர்",
+    action: "செயல்",
+    times: "முறை",
+    emptyAdmin: "குறைபாடு பதிவை தொடங்க மேலே லாட் மற்றும் துண்டை தேர்ந்தெடு.",
+    emptyChecker: "துண்டு விவரங்கள் ஏற்றப்படுகின்றன...",
+    invalidSplitMeter: "தவறான பிரிவு மீட்டர்",
+    cannotDeleteOnlyPiece: "ஒரே ஒரு துண்டை நீக்க முடியாது",
+    pleaseSelectMeter: "மீட்டரை தேர்ந்தெடுக்கவும்",
+    pleaseSelectDefect: "குறைபாட்டை தேர்ந்தெடுக்கவும்",
+    pleaseEnterTimes: "எத்தனை முறை என்று உள்ளிடவும்",
+    sameDefectExists: "இதே குறைபாடு ஏற்கனவே உள்ளது",
+    pleaseSelectLot: "லாட்டை தேர்ந்தெடுக்கவும்",
+    pleaseSelectPiece: "துண்டை தேர்ந்தெடுக்கவும்",
+    noPieceData: "சேமிக்க துண்டு தரவு இல்லை",
+    pieceHasNoDefects: "துண்டுக்கு குறைபாடு இல்லை",
+    addDefectForEveryPiece:
+      "சேமிக்கும் முன் ஒவ்வொரு துண்டுக்கும் குறைந்தது ஒரு குறைபாடு சேர்க்கவும்.",
+    addedSuccess: "வெற்றிகரமாக சேர்க்கப்பட்டது",
+    submissionFailed: "சமர்ப்பிப்பு தோல்வி",
+    deletePieceConfirmTitle: "துண்டை நீக்கு",
+    deletePieceConfirmText:
+      "இது துண்டு மற்றும் அதன் குறைபாடுகளை நீக்கும். மீதமுள்ள துண்டுகள் மறுவரிசைப்படுத்தப்படும்.",
+    yesDelete: "ஆம், நீக்கு",
+    defect: "குறைபாடு",
+    defects: "குறைபாடுகள்",
+    tablePoints: "புள்ளி",
+  },
+  hi: {
+    title: "दोष प्रविष्टि",
+    save: "सहेजें",
+    lotDetails: "लॉट विवरण",
+    lotNo: "लॉट नं.",
+    selectLot: "लॉट चुनें",
+    pieceNo: "पीस नं.",
+    selectPiece: "चुनें",
+    meters: "मीटर",
+    tableNo: "टेबल नं.",
+    checkerName: "जांचकर्ता का नाम",
+    checkingSectionName: "जांच अनुभाग नाम",
+    completed: "पूर्ण",
+    piece: "पीस",
+    defectDetails: "दोष विवरण",
+    meterAt: "मीटर पर",
+    defectName: "दोष का नाम",
+    points: "अंक",
+    noOfTimes: "कितनी बार",
+    totalPoints: "कुल अंक",
+    add: "जोड़ें",
+    split: "विभाजित",
+    deletePiece: "पीस हटाएं",
+    meter: "मीटर",
+    action: "कार्रवाई",
+    times: "बार",
+    emptyAdmin: "दोष प्रविष्टि शुरू करने के लिए ऊपर लॉट और पीस चुनें।",
+    emptyChecker: "पीस विवरण लोड हो रहा है...",
+    invalidSplitMeter: "अमान्य विभाजन मीटर",
+    cannotDeleteOnlyPiece: "एकमात्र पीस को हटाया नहीं जा सकता",
+    pleaseSelectMeter: "कृपया मीटर चुनें",
+    pleaseSelectDefect: "कृपया दोष चुनें",
+    pleaseEnterTimes: "कृपया बार की संख्या दर्ज करें",
+    sameDefectExists: "यही दोष पहले से मौजूद है",
+    pleaseSelectLot: "कृपया लॉट चुनें",
+    pleaseSelectPiece: "कृपया पीस चुनें",
+    noPieceData: "सहेजने के लिए कोई पीस डेटा नहीं",
+    pieceHasNoDefects: "में कोई दोष नहीं है",
+    addDefectForEveryPiece: "सहेजने से पहले हर पीस में कम से कम एक दोष जोड़ें।",
+    addedSuccess: "सफलतापूर्वक जोड़ा गया",
+    submissionFailed: "सबमिशन विफल",
+    deletePieceConfirmTitle: "पीस हटाएं",
+    deletePieceConfirmText:
+      "यह पीस और उसके दोषों को हटा देगा। शेष पीस पुनः क्रमबद्ध होंगे।",
+    yesDelete: "हाँ, हटाएं",
+    defect: "दोष",
+    defects: "दोष",
+    tablePoints: "अंक",
+  },
+};
 
 const DefectEntry = () => {
+  const { lang } = useLanguage();
+  const t = translations[lang] ?? translations["en"];
   const [allocationId, setAllocationId] = useState("");
   const [checkerId, setCheckerId] = useState("");
   const [checkingSectionId, setCheckingSectionId] = useState("");
@@ -337,7 +498,7 @@ const DefectEntry = () => {
       const piece = { ...lotDetails[pieceIndex] };
 
       if (splitMeter <= piece.startMeter || splitMeter >= piece.endMeter) {
-        Swal.fire({ icon: "warning", title: "Invalid Split Meter" });
+        Swal.fire({ icon: "warning", title: t.invalidSplitMeter });
         return prev;
       }
 
@@ -380,7 +541,7 @@ const DefectEntry = () => {
       if (lotDetails.length === 1) {
         Swal.fire({
           icon: "warning",
-          title: "Cannot delete the only piece",
+          title: t.cannotDeleteOnlyPiece,
           timer: 2000,
         });
         return prev;
@@ -435,13 +596,13 @@ const DefectEntry = () => {
       form;
 
     if (!checkedMeter) {
-      Swal.fire({ icon: "warning", title: "Please select Meter", timer: 2000 });
+      Swal.fire({ icon: "warning", title: t.pleaseSelectMeter, timer: 2000 });
       return;
     }
     if (!defectId) {
       Swal.fire({
         icon: "warning",
-        title: "Please select a Defect",
+        title: t.pleaseSelectDefect,
         timer: 2000,
       });
       return;
@@ -449,7 +610,7 @@ const DefectEntry = () => {
     if (!defectTimes && defectName !== "NO DEFECT") {
       Swal.fire({
         icon: "warning",
-        title: "Please enter No of Times",
+        title: t.pleaseEnterTimes,
         timer: 2000,
       });
       return;
@@ -467,7 +628,7 @@ const DefectEntry = () => {
       if (exists) {
         Swal.fire({
           icon: "warning",
-          title: "Same Defect Already Exists",
+          title: t.sameDefectExists,
           timer: 2000,
         });
         return prev;
@@ -515,7 +676,7 @@ const DefectEntry = () => {
     try {
       await callback(data).unwrap();
       Swal.fire({
-        title: "Added Successfully",
+        title: t.addedSuccess,
         icon: "success",
         draggable: true,
         timer: 2000,
@@ -526,7 +687,7 @@ const DefectEntry = () => {
         error?.data?.message || error?.data?.error || "Something went wrong!";
       Swal.fire({
         icon: "error",
-        title: "Submission Failed",
+        title: t.submissionFailed,
         text: backendMessage,
         timer: 2500,
       });
@@ -535,13 +696,13 @@ const DefectEntry = () => {
 
   const validateSaveData = () => {
     if (!lotId) {
-      Swal.fire({ icon: "warning", title: "Please select a Lot", timer: 2000 });
+      Swal.fire({ icon: "warning", title: t.pleaseSelectLot, timer: 2000 });
       return false;
     }
     if (!pieceId) {
       Swal.fire({
         icon: "warning",
-        title: "Please select a Piece",
+        title: t.pleaseSelectPiece,
         timer: 2000,
       });
       return false;
@@ -549,7 +710,7 @@ const DefectEntry = () => {
     if (data.lotDetails.length === 0) {
       Swal.fire({
         icon: "warning",
-        title: "No piece data to save",
+        title: t.noPieceData,
         timer: 2000,
       });
       return false;
@@ -561,8 +722,8 @@ const DefectEntry = () => {
     if (emptyPiece) {
       Swal.fire({
         icon: "warning",
-        title: `Piece ${emptyPiece.subPieceNo} has no defects`,
-        text: "Please add at least one defect for every piece before saving.",
+        title: `${t.piece} ${emptyPiece.subPieceNo} ${t.pieceHasNoDefects}`,
+        text: t.addDefectForEveryPiece,
         timer: 2500,
         showConfirmButton: false,
       });
@@ -587,13 +748,13 @@ const DefectEntry = () => {
       <div className="h-[75vh] pt-0">
         {/* ── Header ── */}
         <div className="flex bg-white justify-between py-1 rounded-lg">
-          <h1 className="text-xl ml-2 font-bold">Defect Entry</h1>
+          <h1 className="text-xl ml-2 font-bold">{t.title}</h1>
           <button
             type="button"
             onClick={saveData}
             className="bg-blue-600 mr-2 text-white py-1 rounded-lg hover:bg-blue-700 transition px-2"
           >
-            Save
+            {t.save}
           </button>
         </div>
 
@@ -604,10 +765,10 @@ const DefectEntry = () => {
               Checker sees auto-filled read-only values
           ══════════════════════════════════════════ */}
           <div className="border border-gray-300 rounded-lg p-3 mb-3">
-            <p className="font-bold text-sm mb-2">Lot Details</p>
-            <div className="grid grid-cols-6 lg:grid-cols-12 gap-4 text-sm">
-              <div className="col-span-2 lg:col-span-2 z-[999]">
-                <label className="block font-medium mb-1">Lot No</label>
+            <p className="font-bold text-sm mb-2">{t.lotDetails}</p>
+            <div className="grid grid-cols-10 lg:grid-cols-12 gap-4 text-sm">
+              <div className="col-span-4 lg:col-span-2 z-[999]">
+                <label className="block font-medium mb-1">{t.lotNo}</label>
                 <Select
                   ref={lotIdRef}
                   options={lotOptions}
@@ -616,7 +777,7 @@ const DefectEntry = () => {
                     setLotId(sel?.value || "");
                     // setAllocationId(sel?.allocationId || "");
                   }}
-                  placeholder="Select Lot"
+                  placeholder={t.selectLot}
                   isClearable={false}
                   styles={customSelectStyles}
                   isSearchable
@@ -624,8 +785,8 @@ const DefectEntry = () => {
                 />
               </div>
 
-              <div className="col-span-1 lg:col-span-1 z-[998]">
-                <label className="block font-medium mb-1">Piece No</label>
+              <div className="col-span-2 lg:col-span-1 z-[998]">
+                <label className="block font-medium mb-1">{t.pieceNo}</label>
                 <Select
                   options={pieceOptions}
                   value={pieceOptions?.find((o) => o.value === pieceId) || null}
@@ -634,7 +795,7 @@ const DefectEntry = () => {
                     setPieceNo(sel?.label || "");
                     setAllocationId(sel?.allocationId || ""); // ← auto-set correctly
                   }}
-                  placeholder="Select"
+                  placeholder={t.selectPiece}
                   isClearable={false}
                   styles={customSelectStyles}
                   isSearchable
@@ -643,8 +804,8 @@ const DefectEntry = () => {
                 />
               </div>
 
-              <div className="col-span-1 lg:col-span-1">
-                <label className="block font-medium mb-1">Meters</label>
+              <div className="col-span-2 lg:col-span-1">
+                <label className="block font-medium mb-1">{t.meters}</label>
                 <input
                   type="number"
                   value={
@@ -657,8 +818,8 @@ const DefectEntry = () => {
                 />
               </div>
 
-              <div className="col-span-1 lg:col-span-1">
-                <label className="block font-medium mb-1">Table No</label>
+              <div className="col-span-2 lg:col-span-1">
+                <label className="block font-medium mb-1">{t.tableNo}</label>
                 <input
                   type="text"
                   value={tableNo?.join(", ")}
@@ -667,9 +828,9 @@ const DefectEntry = () => {
                 />
               </div>
 
-              <div className="col-span-2 lg:col-span-3">
+              <div className="col-span-4 lg:col-span-3">
                 <label className="block text-sm font-medium mb-1">
-                  Checker Name
+                  {t.checkerName}
                 </label>
                 <input
                   type="text"
@@ -679,9 +840,9 @@ const DefectEntry = () => {
                 />
               </div>
 
-              <div className="col-span-2 lg:col-span-3">
+              <div className="col-span-4 lg:col-span-3">
                 <label className="block text-sm font-medium mb-1">
-                  Checking Section Name
+                  {t.checkingSectionName}
                 </label>
                 <input
                   type="text"
@@ -690,16 +851,16 @@ const DefectEntry = () => {
                   className="border rounded-lg text-left px-2 py-1.5 w-full bg-gray-50"
                 />
               </div>
-              <div className="col-span-1 lg:col-span-1 flex items-end pb-1">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isCompleted}
-                    onChange={(e) => setIsCompleted(e.target.checked)}
-                    className="w-4 h-4 accent-green-600 cursor-pointer"
-                  />
-                  <span className="font-medium text-sm">Completed</span>
+              <div className="col-span-2 lg:col-span-1  pb-1 flex flex-col items-center">
+                <label className="block text-sm font-medium mb-1">
+                  {t.completed}
                 </label>
+                <input
+                  type="checkbox"
+                  checked={isCompleted}
+                  onChange={(e) => setIsCompleted(e.target.checked)}
+                  className="w-4 h-4 flex items-center accent-green-600 cursor-pointer"
+                />
               </div>
             </div>
           </div>
@@ -711,9 +872,7 @@ const DefectEntry = () => {
           <form>
             {data.lotDetails.length === 0 && (
               <p className="text-center text-gray-400 text-sm mt-6">
-                {canEditLot
-                  ? "Select a Lot and Piece above to begin defect entry."
-                  : "Loading piece details..."}
+                {canEditLot ? t.emptyAdmin : t.emptyChecker}
               </p>
             )}
 
@@ -781,8 +940,8 @@ const DefectEntry = () => {
                               e.stopPropagation(); // prevent accordion toggle
                               Swal.fire({
                                 icon: "warning",
-                                title: `Delete Piece ${piece.subPieceNo}?`,
-                                text: "This will remove the piece and its defects. Remaining pieces will be renumbered.",
+                                title: `${t.deletePieceConfirmTitle} ${piece.subPieceNo}?`,
+                                text: t.deletePieceConfirmText,
                                 showCancelButton: true,
                                 confirmButtonColor: "#d33",
                                 confirmButtonText: "Yes, delete",
@@ -792,7 +951,8 @@ const DefectEntry = () => {
                             }}
                             className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded-lg ml-2 flex items-center gap-1"
                           >
-                            <MdDelete size={14} /> Delete Piece
+                            <MdDelete size={14} />
+                            {t.deletePiece}
                           </button>
                         )}
                       </div>
@@ -800,12 +960,14 @@ const DefectEntry = () => {
 
                     <AccordionDetails sx={{ paddingTop: 0, paddingX: 1 }}>
                       {/* ── Defect Input Row ── */}
-                      <p className="font-bold text-sm mb-2">Defect Details</p>
+                      <p className="font-bold text-sm mb-2">
+                        {t.defectDetails}
+                      </p>
                       <div className="grid grid-cols-6 lg:grid-cols-9 gap-4 text-sm">
                         {/* Meter At + Split button */}
                         <div className="col-span-1 lg:col-span-1 z-[999]">
                           <div className="flex justify-between items-center mb-1">
-                            <label className="font-medium">Meter At</label>
+                            <label className="font-medium">{t.meterAt}</label>
                           </div>
                           <Select
                             options={meterList}
@@ -823,7 +985,7 @@ const DefectEntry = () => {
                                 totalDefectPoints: "",
                               })
                             }
-                            placeholder="Select"
+                            placeholder={t.selectPiece}
                             isClearable={false}
                             styles={customSelectStyles}
                             isSearchable
@@ -836,7 +998,7 @@ const DefectEntry = () => {
                         {/* Defect Name */}
                         <div className="col-span-5 lg:col-span-4">
                           <label className="block font-medium mb-1">
-                            Defect Name
+                            {t.defectName}
                           </label>
                           <Select
                             options={defectOptions}
@@ -856,7 +1018,7 @@ const DefectEntry = () => {
                                   sel?.englishName === "NO DEFECT" ? 0 : "",
                               })
                             }
-                            placeholder="Select"
+                            placeholder={t.selectPiece}
                             isClearable={false}
                             styles={customSelectStyles}
                             isSearchable
@@ -866,7 +1028,7 @@ const DefectEntry = () => {
                         {/* Points */}
                         <div className="col-span-1 lg:col-span-1">
                           <label className="block font-medium mb-1">
-                            Points
+                            {t.points}
                           </label>
                           <input
                             type="number"
@@ -878,9 +1040,9 @@ const DefectEntry = () => {
                         </div>
 
                         {/* No of times */}
-                        <div className="col-span-1 lg:col-span-1">
+                        <div className="col-span-2 lg:col-span-1">
                           <label className="block font-medium mb-1">
-                            No of times
+                            {t.noOfTimes}
                           </label>
                           <input
                             type="number"
@@ -907,7 +1069,7 @@ const DefectEntry = () => {
                         {/* Total Points */}
                         <div className="col-span-1 lg:col-span-1">
                           <label className="block text-sm font-medium mb-1">
-                            Total Points
+                            {t.totalPoints}
                           </label>
                           <input
                             type="number"
@@ -918,14 +1080,14 @@ const DefectEntry = () => {
                         </div>
 
                         {/* Add button */}
-                        <div className="col-span-3 lg:col-span-1 flex items-end">
+                        <div className="col-span-2 lg:col-span-1 flex items-end">
                           <div>
                             <button
                               type="button"
                               onClick={(e) => FillDefectArray(e, pieceIndex)}
                               className="bg-green-600 text-white py-1.5 rounded-lg hover:bg-green-700 transition px-2"
                             >
-                              Add
+                              {t.add}
                             </button>
                           </div>
                           <div className="ml-1">
@@ -939,7 +1101,7 @@ const DefectEntry = () => {
                               }
                               className="bg-purple-600 text-white py-1.5 rounded-lg hover:bg-purple-700 transition px-2"
                             >
-                              Split
+                              {t.split}
                             </button>
                           </div>
                         </div>
@@ -951,12 +1113,14 @@ const DefectEntry = () => {
                           <table className="w-full lg:w-[55vw] border border-gray-200 table-fixed border-collapse">
                             <thead className="bg-gray-100 text-gray-700 text-sm">
                               <tr>
-                                <th className="w-8 px-1 py-1 border">Meter</th>
-                                <th className="w-44 border">Defect Name</th>
-                                <th className="w-12 border">Points</th>
-                                <th className="w-12 px-1 border">Times</th>
-                                <th className="w-20 border">Total Points</th>
-                                <th className="w-8 border">Action</th>
+                                <th className="w-8 px-1 py-1 border">
+                                  {t.meter}
+                                </th>
+                                <th className="w-44 border">{t.defectName}</th>
+                                <th className="w-12 border">{t.tablePoints}</th>
+                                <th className="w-12 px-1 border">{t.times}</th>
+                                <th className="w-20 border">{t.totalPoints}</th>
+                                <th className="w-8 border">{t.action}</th>
                               </tr>
                             </thead>
                             <tbody className="text-xs text-center">
@@ -1002,7 +1166,7 @@ const DefectEntry = () => {
                                   className="border py-1 font-extrabold text-right pr-1"
                                   colSpan={4}
                                 >
-                                  Total Points
+                                  {t.totalPoints}
                                 </td>
                                 <td className="border text-right pr-1">
                                   {piece.defects.reduce(

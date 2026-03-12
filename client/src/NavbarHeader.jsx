@@ -1,5 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useLanguage } from "./Context/LanguageContext";
+
 import OutlinedCard from "./Users/Users";
 import RoleManagement from "./Roles/Roles";
 import { push, remove } from "./redux/features/opentabs";
@@ -40,6 +42,7 @@ import {
   MdArrowDropDown,
   MdPersonAdd,
   MdSettings,
+  MdLanguage, // ← NEW
 } from "react-icons/md";
 import { FaTableCells } from "react-icons/fa6";
 import { MdOutlinePendingActions } from "react-icons/md";
@@ -115,6 +118,255 @@ function HideOnScroll({ children }) {
     </Slide>
   );
 }
+
+// ── Language options ─────────────────────────────────────────────────────────
+const LANGUAGES = [
+  {
+    code: "en",
+    label: "English",
+    // Flag using flagcdn.com image — works on all browsers including Windows desktop
+    flagImg: "https://flagcdn.com/w40/gb.png",
+    shortName: "EN",
+  },
+  {
+    code: "ta",
+    label: "தமிழ்",
+    flagImg: "https://flagcdn.com/w40/in.png",
+    shortName: "TA",
+  },
+  {
+    code: "hi",
+    label: "हिन्दी",
+    flagImg: "https://flagcdn.com/w40/in.png",
+    shortName: "HI",
+  },
+];
+
+// ── Language Popup (shown when user clicks Language Settings) ────────────────
+const LanguagePopup = ({ currentLang, onSelect, onClose }) => {
+  const [selected, setSelected] = useState(currentLang);
+
+  const handleApply = () => {
+    onSelect(selected);
+    onClose();
+  };
+
+  return (
+    // backdrop
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 99999999,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* modal */}
+      <div
+        style={{
+          background: "white",
+          borderRadius: "16px",
+          width: "320px",
+          overflow: "hidden",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+            padding: "16px 20px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <p
+              style={{
+                color: "white",
+                fontWeight: 700,
+                fontSize: "16px",
+                margin: 0,
+              }}
+            >
+              Language Settings
+            </p>
+            <p
+              style={{
+                color: "rgba(255,255,255,0.8)",
+                fontSize: "12px",
+                margin: "4px 0 0",
+              }}
+            >
+              Choose your preferred language
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "white",
+              borderRadius: "50%",
+              width: "28px",
+              height: "28px",
+              fontSize: "16px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Language options */}
+        <div
+          style={{
+            padding: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          {LANGUAGES.map((lang) => {
+            const isSelected = selected === lang.code;
+            const isCurrent = currentLang === lang.code;
+            return (
+              <button
+                key={lang.code}
+                onClick={() => setSelected(lang.code)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "12px 14px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  border: isSelected
+                    ? "2px solid #1976d2"
+                    : "2px solid #e5e7eb",
+                  background: isSelected ? "#eff6ff" : "white",
+                  textAlign: "left",
+                  width: "100%",
+                  transition: "all 0.15s",
+                }}
+              >
+                <img
+                  src={lang.flagImg}
+                  alt={lang.shortName}
+                  style={{
+                    width: "28px",
+                    height: "20px",
+                    borderRadius: "3px",
+                    objectFit: "cover",
+                  }}
+                />
+                <span
+                  style={{
+                    flex: 1,
+                    fontWeight: 600,
+                    fontSize: "14px",
+                    color: isSelected ? "#1976d2" : "#374151",
+                  }}
+                >
+                  {lang.label}
+                </span>
+
+                {/* Current badge */}
+                {isCurrent && (
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      background: "#dcfce7",
+                      color: "#16a34a",
+                      borderRadius: "20px",
+                      padding: "2px 8px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Current
+                  </span>
+                )}
+
+                {/* Radio dot */}
+                <div
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    borderRadius: "50%",
+                    border: isSelected
+                      ? "2px solid #1976d2"
+                      : "2px solid #d1d5db",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {isSelected && (
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        background: "#1976d2",
+                      }}
+                    />
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "0 16px 16px", display: "flex", gap: "8px" }}>
+          <button
+            onClick={onClose}
+            style={{
+              flex: 1,
+              padding: "10px",
+              borderRadius: "8px",
+              border: "1px solid #d1d5db",
+              background: "white",
+              color: "#374151",
+              fontWeight: 600,
+              fontSize: "14px",
+              cursor: "pointer",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleApply}
+            disabled={selected === currentLang}
+            style={{
+              flex: 1,
+              padding: "10px",
+              borderRadius: "8px",
+              border: "none",
+              background: selected === currentLang ? "#e5e7eb" : "#1976d2",
+              color: selected === currentLang ? "#9ca3af" : "white",
+              fontWeight: 600,
+              fontSize: "14px",
+              cursor: selected === currentLang ? "not-allowed" : "pointer",
+            }}
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+//
+
 const NavbarHeader = ({ onLogout }) => {
   const openTabs = useSelector((state) => state.openTabs);
   const dispatch = useDispatch();
@@ -126,6 +378,16 @@ const NavbarHeader = ({ onLogout }) => {
   const [userMenuEl, setUserMenuEl] = useState(null);
   const { data: userData } = useGetUsersQuery();
   const { data: roles } = useGetRolesQuery();
+  // ── Language via context ─────────────────────────────────────────────────
+  const { lang: currentLang, changeLang } = useLanguage();
+  const [showLangPopup, setShowLangPopup] = useState(false);
+
+  const handleLangSelect = (code) => {
+    changeLang(code); // updates context + localStorage globally
+  };
+
+  const activeLang = LANGUAGES.find((l) => l.code === currentLang);
+  
   console.log(roles, "roles");
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -306,7 +568,7 @@ const NavbarHeader = ({ onLogout }) => {
         ),
       ).size,
       gradient: "from-teal-500 to-cyan-600",
-      key: "DispatchVerification",
+      key: "DISPATCHVERIFICATION",
     },
     {
       name: "Stock Verification",
@@ -317,7 +579,7 @@ const NavbarHeader = ({ onLogout }) => {
         ),
       ).size,
       gradient: "from-teal-500 to-cyan-600",
-      key: "StockVerification",
+      key: "STOCKVERIFICATION",
     },
   ];
 
@@ -360,6 +622,13 @@ const NavbarHeader = ({ onLogout }) => {
     : "bg-white border-gray-200";
   return (
     <>
+      {showLangPopup && (
+        <LanguagePopup
+          currentLang={currentLang}
+          onSelect={handleLangSelect}
+          onClose={() => setShowLangPopup(false)}
+        />
+      )}
       <div
         className={`flex flex-col mt-16   w-full ${bgColor} overflow-hidden transition-colors duration-300`}
       >
@@ -518,7 +787,37 @@ const NavbarHeader = ({ onLogout }) => {
                       </UserInfoSection>
 
                       <Divider sx={{ my: 1 }} />
+                      {/* ── LANGUAGE SETTINGS MENU ITEM (NEW) ── */}
+                      <MenuItem
+                        onClick={() => {
+                          handleUserMenuClose();
+                          setShowLangPopup(true);
+                        }}
+                        sx={{
+                          borderRadius: "8px",
+                          py: 1.5,
+                          "&:hover": { backgroundColor: colors.hover },
+                        }}
+                      >
+                        <ListItemIcon>
+                          <MdLanguage fontSize="20px" color={colors.primary} />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Language Settings"
+                          secondary={
+                            <span
+                              style={{
+                                fontSize: "12px",
+                                color: colors.textSecondary,
+                              }}
+                            >
+                              {activeLang?.flag} {activeLang?.label}
+                            </span>
+                          }
+                        />
+                      </MenuItem>
 
+                      <Divider sx={{ my: 1 }} />
                       {/* Menu Items - Only show for admin */}
                       {isAdmin && (
                         <Box sx={{ py: 1 }}>
@@ -538,7 +837,7 @@ const NavbarHeader = ({ onLogout }) => {
                                 color={colors.primary}
                               />
                             </ListItemIcon>
-                            <ListItemText primary="Create New User" />
+                            <ListItemText primary="Users" />
                           </MenuItem>
 
                           <MenuItem
