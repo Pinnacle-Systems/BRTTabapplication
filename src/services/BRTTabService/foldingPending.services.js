@@ -3,15 +3,11 @@ import { io } from "../../../index.js"; // adjust path properly
 import oracledb from "oracledb";
 
 export async function getFoldingPending(req, res) {
-
-
-
   const connection = await getConnection(res);
 
   try {
     const sql = `select FR.DOCID,GT.RECEIPTNO from Gtpiecesdefectdet   GT
 LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO`;
-
 
     const result = await connection.execute(sql);
 
@@ -32,9 +28,6 @@ LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO`;
   }
 }
 
-
-
-
 export async function getFoldingPendingById(req, res) {
   const connection = await getConnection(res);
   const { lotNo } = req.params;
@@ -42,8 +35,6 @@ export async function getFoldingPendingById(req, res) {
   // console.log(foldingId, "lotId getPieces");
 
   try {
-
-
     const sql = `select 
     
 
@@ -53,7 +44,7 @@ export async function getFoldingPendingById(req, res) {
     DT.STARTMTR,
     DT.ENDMTR,
     DT.BASEPCSNO,
-    DT.GTDEFECTDETTABID AS id ,
+    DT.GTDEFECTDETTABID AS subGridId ,
     DT.TABAPPROVAL ,
     DT.RECEIPTMETER,
     PD.RECEIPTNO,
@@ -66,10 +57,7 @@ LEFT JOIN Gtdefectdettab DT ON  DT.GTPIECESDEFECTDETID = PD.GTPIECESDEFECTDETID
 LEFT JOIN TABUSER TB ON TB.USERID = DT.CHECKER
 WHERE PD.RECEIPTNO = ${lotNo} AND DT.TABAPPROVAL IS NULL AND DT.GTDEFECTDETTABID IS NOT NULL `;
 
-
-
     const result = await connection.execute(sql);
-
 
     // console.log(result?.rows, "result.rows")
 
@@ -90,18 +78,15 @@ WHERE PD.RECEIPTNO = ${lotNo} AND DT.TABAPPROVAL IS NULL AND DT.GTDEFECTDETTABID
   }
 }
 
+export async function getGradeData(req, res) {
+  console.log("getGrdaeData");
 
-
-export async function getGradeData(req,res){
-
-    console.log("getGrdaeData")
-
-    const connection = await getConnection(res);
+  const connection = await getConnection(res);
 
   try {
     const sql = `select * from GTGRADEDET`;
 
-    console.log(sql,"sql for get grade data")
+    console.log(sql, "sql for get grade data");
 
     const result = await connection.execute(sql);
 
@@ -121,34 +106,6 @@ export async function getGradeData(req,res){
     await connection.close();
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 export async function getLotDetails(req, res) {
   const connection = await getConnection(res);
@@ -226,44 +183,34 @@ export async function getDefects(req, res) {
   }
 }
 
-
 export async function updateFolding(req, res) {
-
   const { foldingItems, lotNo } = req.body;
-
 
   const connection = await getConnection(res);
 
-
   try {
-
     for (const piece of foldingItems) {
-
       const { TABAPPROVAL, ID } = piece;
 
-      console.log("connection: ", connection)
+      console.log("connection: ", connection);
       await connection.execute(
         `UPDATE Gtdefectdettab
          SET TABAPPROVAL = :status
          WHERE GTDEFECTDETTABID = :id`,
         {
           status: TABAPPROVAL ? "YES" : "",
-          id: ID
-        }
+          id: ID,
+        },
       );
-    console.log("piece", piece);
-
+      console.log("piece", piece);
     }
 
     await connection.commit();
 
-
     return res.status(200).json({
       message: `Folding entry updated successfully for ${foldingItems?.length} items`,
     });
-
   } catch (error) {
-
     await connection.rollback();
 
     console.error("Update Defect Entry Error:", error);
@@ -272,6 +219,37 @@ export async function updateFolding(req, res) {
       message: "Server error",
       error: error.message,
     });
+  }
+}
 
+export async function getDefectsById(req, res) {
+  const connection = await getConnection(res);
+  const { subGridId } = req.params;
+
+  // console.log(foldingId, "lotId getPieces");
+
+  try {
+    const sql = `select B.DEFECTNAME,A.DEFECTPOINS1,A.MTRAT,A.NOOGTIME,A.TOTPOINS1 from Gtpcsdefdet A
+left join gtpiecedefmast B ON  B.GTPIECEDEFMASTID = A.DEFECTNAME1
+WHERE A.GTDEFECTDETTABID = ${subGridId} `;
+
+    const result = await connection.execute(sql);
+
+    // console.log(result?.rows, "result.rows")
+
+    const resp = result.rows.map((row) => {
+      let obj = {};
+      result.metaData.forEach(({ name }, idx) => {
+        obj[name] = row[idx];
+      });
+      return obj;
+    });
+
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
   }
 }

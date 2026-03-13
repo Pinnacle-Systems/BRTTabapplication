@@ -458,20 +458,23 @@ const DefectEntry = () => {
   }));
 
   const buildDataToSubmit = () => {
-    const Lot = data.lotDetails.map((piece, index) => {
+    const Lot = data.lotDetails.map((piece) => {
       const pieceTotalPoints = piece.defects.reduce(
         (sum, d) => sum + Number(d.totalPoints || 0),
         0,
       );
-      const entry = {
+      // Only send subPieceNo for split pieces (e.g. "1A", "1B")
+      // Parent piece (subPieceNo === pieceNo as string) sends null
+      const isSplitPiece = piece.subPieceNo !== String(piece.pieceNo);
+      return {
         lotId: parseInt(lotId),
         allocationId: parseInt(allocationId),
         pieceId: parseInt(pieceId),
         pieceNo: parseInt(pieceNo),
-        subPieceNo: piece.subPieceNo, // ← add (for all pieces including index 0)
+        subPieceNo: isSplitPiece ? piece.subPieceNo : null,
         startMeter: piece.startMeter,
         endMeter: piece.endMeter,
-        actualMeters: piece.actualMeters, // ← add
+        actualMeters: piece.actualMeters,
         meters: Number(meters),
         tableId,
         tableNo,
@@ -482,11 +485,10 @@ const DefectEntry = () => {
         totalPointsSum: pieceTotalPoints,
         defects: piece.defects,
       };
-      return entry;
     });
     return {
       lotId: parseInt(lotId),
-      deleteWorkStatus: isCompleted, // ← directly from checkbox
+      deleteWorkStatus: isCompleted,
       Lot,
     };
   };

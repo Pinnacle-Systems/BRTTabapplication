@@ -5,7 +5,7 @@ import {
   getFoldingPending,
   getFoldingPendingById,
   getGradeData,
-  updateFolding,
+  updateFolding,getDefectsById
 } from "../../services/BRTTabService/foldingPending.services.js";
 
 router.get("/", getFoldingPending);
@@ -13,6 +13,7 @@ router.get("/", getFoldingPending);
 router.get("/getGrade", getGradeData);
 
 router.get("/:lotNo", getFoldingPendingById);
+router.get("/:subGridId/getDefects", getDefectsById);
 
 router.put("/", updateFolding);
 

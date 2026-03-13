@@ -14,8 +14,120 @@ import {
   useUpdatepieceFoldingEntryMutation,
 } from "../../redux/services/PieceFoldingEntry";
 import { useGetRolesQuery, useGetUsersQuery } from "../../redux/userservice";
+import { useLanguage } from "../../Context/LanguageContext";
+
+const translations = {
+  en: {
+    title: "Piece Folding Entry",
+    back: "Back",
+    save: "Save",
+    lotDetails: "Lot Details",
+    lotNo: "Lot No",
+    selectLot: "Select Lot",
+    pieceNo: "Piece No",
+    loomNo: "Loom No",
+    folderName: "Folder Name",
+    selectUser: "Select User",
+    tableNo: "Table No",
+    receiptMeters: "Receipt Meters",
+    meters: "Meters",
+    defectPoints: "Defect Points",
+    checkedMeters: "Checked Meters",
+    grade: "GRADE",
+    points: "Points",
+    foldPct: "Fold %",
+    weight: "Weight",
+    gradeCalc: "Grade Calculation:",
+    noGrade: "No Grade",
+    belowTwenty: "⚠ Checked meters below 20 — minimum C GRADE applied",
+    loading: "Loading...",
+    errorLoading: "Error loading lots",
+    selectLotMsg: "Select Lot",
+    selectPieceMsg: "Select Piece",
+    enterLoomNo: "Entry Loom No",
+    chooseFolderName: "Choose Folder Name",
+    enterCheckedMeters: "Entry checked Meters",
+    enterWeight: "Entry Weight",
+    addedSuccess: "Added Successfully",
+    submissionError: "Submission error",
+    somethingWentWrong: "Something went wrong!",
+  },
+  ta: {
+    title: "துண்டு மடிப்பு பதிவு",
+    back: "பின்செல்",
+    save: "சேமி",
+    lotDetails: "லாட் விவரங்கள்",
+    lotNo: "லாட் எண்",
+    selectLot: "லாட் தேர்ந்தெடு",
+    pieceNo: "துண்டு எண்",
+    loomNo: "நெசவு எண்",
+    folderName: "மடிப்பாளர் பெயர்",
+    selectUser: "பயனரை தேர்ந்தெடு",
+    tableNo: "மேஜை எண்",
+    receiptMeters: "ரசீது மீட்டர்கள்",
+    meters: "மீட்டர்கள்",
+    defectPoints: "குறைபாடு புள்ளிகள்",
+    checkedMeters: "சரிபார்க்கப்பட்ட மீட்டர்கள்",
+    grade: "தரம்",
+    points: "புள்ளிகள்",
+    foldPct: "மடிப்பு %",
+    weight: "எடை",
+    gradeCalc: "தர கணக்கீடு:",
+    noGrade: "தரம் இல்லை",
+    belowTwenty:
+      "⚠ சரிபார்க்கப்பட்ட மீட்டர்கள் 20க்கும் குறைவு — குறைந்தபட்சம் C தரம்",
+    loading: "ஏற்றுகிறது...",
+    errorLoading: "லாட்டை ஏற்றுவதில் பிழை",
+    selectLotMsg: "லாட்டை தேர்ந்தெடுக்கவும்",
+    selectPieceMsg: "துண்டை தேர்ந்தெடுக்கவும்",
+    enterLoomNo: "நெசவு எண்ணை உள்ளிடவும்",
+    chooseFolderName: "மடிப்பாளர் பெயரை தேர்ந்தெடுக்கவும்",
+    enterCheckedMeters: "சரிபார்க்கப்பட்ட மீட்டர்களை உள்ளிடவும்",
+    enterWeight: "எடையை உள்ளிடவும்",
+    addedSuccess: "வெற்றிகரமாக சேர்க்கப்பட்டது",
+    submissionError: "சமர்ப்பிப்பு பிழை",
+    somethingWentWrong: "ஏதோ தவறு நடந்தது!",
+  },
+  hi: {
+    title: "पीस फोल्डिंग प्रविष्टि",
+    back: "वापस",
+    save: "सहेजें",
+    lotDetails: "लॉट विवरण",
+    lotNo: "लॉट नं.",
+    selectLot: "लॉट चुनें",
+    pieceNo: "पीस नं.",
+    loomNo: "लूम नं.",
+    folderName: "फोल्डर का नाम",
+    selectUser: "उपयोगकर्ता चुनें",
+    tableNo: "टेबल नं.",
+    receiptMeters: "रसीद मीटर",
+    meters: "मीटर",
+    defectPoints: "दोष अंक",
+    checkedMeters: "जांचे गए मीटर",
+    grade: "ग्रेड",
+    points: "अंक",
+    foldPct: "फोल्ड %",
+    weight: "वजन",
+    gradeCalc: "ग्रेड गणना:",
+    noGrade: "कोई ग्रेड नहीं",
+    belowTwenty: "⚠ जांचे गए मीटर 20 से कम — न्यूनतम C ग्रेड लागू",
+    loading: "लोड हो रहा है...",
+    errorLoading: "लॉट लोड करने में त्रुटि",
+    selectLotMsg: "लॉट चुनें",
+    selectPieceMsg: "पीस चुनें",
+    enterLoomNo: "लूम नं. दर्ज करें",
+    chooseFolderName: "फोल्डर का नाम चुनें",
+    enterCheckedMeters: "जांचे गए मीटर दर्ज करें",
+    enterWeight: "वजन दर्ज करें",
+    addedSuccess: "सफलतापूर्वक जोड़ा गया",
+    submissionError: "सबमिट त्रुटि",
+    somethingWentWrong: "कुछ गलत हो गया!",
+  },
+};
 
 const PieceFoldingForm = ({ onClose }) => {
+  const { lang } = useLanguage();
+  const t = translations[lang] ?? translations["en"];
   const lotIdRef = useRef(null);
 
   const [selectedLotNo, setSelectedLotNo] = useState("");
@@ -264,7 +376,7 @@ const PieceFoldingForm = ({ onClose }) => {
     try {
       let returnData = await callback(data).unwrap();
       Swal.fire({
-        title: "Added Successfully",
+        title: t.addedSuccess,
         icon: "success",
         draggable: true,
         timer: 2000,
@@ -279,90 +391,31 @@ const PieceFoldingForm = ({ onClose }) => {
     } catch (error) {
       Swal.fire({
         icon: "error",
-        title: "Submission error",
-        text: "Something went wrong!",
+        title: t.submissionError,
+        text: t.somethingWentWrong,
         timer: 2000,
       });
     }
   };
   const validateSaveData = () => {
-    if (!selectedLotNo) {
-      Swal.fire({
-        icon: "warning",
-
-        title: "Select Lot",
-
-        timer: 2000,
-
-        showConfirmButton: true,
-      });
-
-      return false;
-    }
-    if (!selectedPiece) {
-      Swal.fire({
-        icon: "warning",
-
-        title: "Select Piece",
-
-        timer: 2000,
-
-        showConfirmButton: true,
-      });
-
-      return false;
-    }
-    if (!loomNo) {
-      Swal.fire({
-        icon: "warning",
-
-        title: "Entry Loom No",
-
-        timer: 2000,
-
-        showConfirmButton: true,
-      });
-
-      return false;
-    }
-    if (!checkerId) {
-      Swal.fire({
-        icon: "warning",
-
-        title: "Choose Folder Name",
-
-        timer: 2000,
-
-        showConfirmButton: true,
-      });
-
-      return false;
-    }
-    if (!checkedMeters) {
-      Swal.fire({
-        icon: "warning",
-
-        title: "Entry checked Meters",
-
-        timer: 2000,
-
-        showConfirmButton: true,
-      });
-
-      return false;
-    }
-    if (!weight) {
-      Swal.fire({
-        icon: "warning",
-
-        title: "Entry Weight",
-
-        timer: 2000,
-
-        showConfirmButton: true,
-      });
-
-      return false;
+    const checks = [
+      { condition: !selectedLotNo, msg: t.selectLotMsg },
+      { condition: !selectedPiece, msg: t.selectPieceMsg },
+      { condition: !loomNo, msg: t.enterLoomNo },
+      { condition: !checkerId, msg: t.chooseFolderName },
+      { condition: !checkedMeters, msg: t.enterCheckedMeters },
+      { condition: !weight, msg: t.enterWeight },
+    ];
+    for (const { condition, msg } of checks) {
+      if (condition) {
+        Swal.fire({
+          icon: "warning",
+          title: msg,
+          timer: 2000,
+          showConfirmButton: true,
+        });
+        return false;
+      }
     }
     return true;
   };
@@ -371,35 +424,30 @@ const PieceFoldingForm = ({ onClose }) => {
 
     handleSubmitCustom(updateData, data);
   };
-
   if (isLoading) {
-    return <div className="p-6 text-center">Loading...</div>;
+    return <div className="p-6 text-center">{t.loading}</div>;
   }
-
   if (error) {
-    return (
-      <div className="p-6 text-center text-red-500">Error loading lots</div>
-    );
+    return <div className="p-6 text-center text-red-500">{t.errorLoading}</div>;
   }
 
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
-        <h1 className="text-xl ml-2 font-bold text-center">
-          Piece Folding Entry
-        </h1>
+        <h1 className="text-xl ml-2 font-bold text-center">{t.title}</h1>
+
         <div>
           <button
             onClick={onClose}
             className="bg-red-600 mr-2 text-white  py-1 rounded-lg hover:bg-red-700 transition px-2"
           >
-            Back
+            {t.back}
           </button>
           <button
             onClick={saveData}
-            className="bg-blue-600 mr-2 text-white  py-1 rounded-lg hover:bg-blue-700 transition px-2"
+            className="bg-blue-600 mr-2 text-white py-1 rounded-lg hover:bg-blue-700 transition px-2"
           >
-            Save
+            {t.save}
           </button>
         </div>
       </div>
@@ -407,10 +455,10 @@ const PieceFoldingForm = ({ onClose }) => {
         <form className=" p-2">
           <div>
             <div>
-              <h2 className="text-lg  font-semibold mb-2 ">Lot Details</h2>
-              <div className="grid grid-cols-4 lg:grid-cols-10 gap-4 text-sm">
-                <div className="col-span-2 lg:col-span-2 z-999">
-                  <label className="block font-medium mb-1">Lot No</label>
+              <h2 className="text-lg font-semibold mb-2">{t.lotDetails}</h2>
+              <div className="grid grid-cols-5 lg:grid-cols-10 gap-4 text-sm">
+                <div className="col-span-3 lg:col-span-2 z-999">
+                  <label className="block font-medium mb-1">{t.lotNo}</label>
                   <Select
                     options={flodingOptions}
                     value={
@@ -421,14 +469,14 @@ const PieceFoldingForm = ({ onClose }) => {
                     onChange={(selectedOption) => {
                       setSelectedLotNo(selectedOption?.value || "");
                     }}
-                    placeholder="Select Lot"
+                    placeholder={t.selectLot}
                     isClearable={false} // ✅ disable cross icon
                     styles={customSelectStyles}
                     isSearchable={true}
                   />
                 </div>
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Piece No</label>
+                  <label className="block font-medium mb-1">{t.pieceNo}</label>
                   <Select
                     options={pieceOptions}
                     value={
@@ -449,7 +497,7 @@ const PieceFoldingForm = ({ onClose }) => {
                 </div>
 
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Loom No</label>
+                  <label className="block font-medium mb-1">{t.loomNo}</label>
                   <input
                     value={loomNo}
                     onChange={(e) => setLoomNo(e.target.value)}
@@ -458,10 +506,9 @@ const PieceFoldingForm = ({ onClose }) => {
                   />
                 </div>
 
-                <div className="flex flex-col flex-1  col-span-2 max-w-[18rem]">
+                <div className="flex flex-col flex-1  col-span-2 lg:col-span-3">
                   <label className="text-sm font-medium mb-1">
-                    {" "}
-                    Folder Name
+                    {t.folderName}
                   </label>
 
                   {isAdmin || isSuppervisor ? (
@@ -476,7 +523,7 @@ const PieceFoldingForm = ({ onClose }) => {
                         onChange={(selectedOption) => {
                           setCheckerId(selectedOption?.value || "");
                         }}
-                        placeholder="Select User"
+                        placeholder={t.selectUser}
                         isClearable={false} // ✅ disable cross icon
                         styles={customSelectStyles}
                         className="text-left"
@@ -495,7 +542,7 @@ const PieceFoldingForm = ({ onClose }) => {
                   )}
                 </div>
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Table No</label>
+                  <label className="block font-medium mb-1">{t.tableNo}</label>
                   <input
                     value={tableNo}
                     // readOnly={readonly}
@@ -503,10 +550,11 @@ const PieceFoldingForm = ({ onClose }) => {
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>
-                <div className="col-span-1 lg:col-span-1">
+                <div className="col-span-2 lg:col-span-2 max-w-[9rem]">
                   <label className="block font-medium mb-1">
-                    Receipt Meters
+                    {t.receiptMeters}
                   </label>
+
                   <input
                     value={Number(receiptMeters)?.toFixed(2)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
@@ -514,7 +562,7 @@ const PieceFoldingForm = ({ onClose }) => {
                   />
                 </div>
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Meters</label>
+                  <label className="block font-medium mb-1">{t.meters}</label>
                   <input
                     value={Number(meters)?.toFixed(2)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
@@ -522,9 +570,9 @@ const PieceFoldingForm = ({ onClose }) => {
                   />
                 </div>
 
-                <div className="col-span-1 lg:col-span-1">
+                <div className="col-span-2 lg:col-span-2 ">
                   <label className="block font-medium mb-1">
-                    Defect Points
+                    {t.defectPoints}
                   </label>
 
                   <input
@@ -534,9 +582,9 @@ const PieceFoldingForm = ({ onClose }) => {
                   />
                 </div>
 
-                <div className="col-span-1 lg:col-span-1">
+                <div className="col-span-2 lg:col-span-2">
                   <label className="block font-medium mb-1">
-                    Checked Meters
+                    {t.checkedMeters}
                   </label>
 
                   <input
@@ -550,8 +598,8 @@ const PieceFoldingForm = ({ onClose }) => {
                   />
                 </div>
 
-                <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">GRADE</label>
+                <div className="col-span-2 lg:col-span-1">
+                  <label className="block font-medium mb-1">{t.grade}</label>
 
                   <input
                     value={gradeName || ""} // ← fallback to empty string
@@ -570,7 +618,7 @@ const PieceFoldingForm = ({ onClose }) => {
                 </div>
 
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Points</label>
+                  <label className="block font-medium mb-1">{t.points}</label>
 
                   <input
                     type="number"
@@ -580,7 +628,7 @@ const PieceFoldingForm = ({ onClose }) => {
                   />
                 </div>
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Fold %</label>
+                  <label className="block font-medium mb-1">{t.foldPct}</label>
 
                   <input
                     type="number"
@@ -590,7 +638,7 @@ const PieceFoldingForm = ({ onClose }) => {
                   />
                 </div>
                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">Weight</label>
+                  <label className="block font-medium mb-1">{t.weight}</label>
 
                   <input
                     type="number"
@@ -608,8 +656,9 @@ const PieceFoldingForm = ({ onClose }) => {
                 <div className="col-span-4 lg:col-span-10 mt-4">
                   <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-2">
                     <span className="font-medium text-gray-700">
-                      Grade Calculation:
+                      {t.gradeCalc}
                     </span>
+
                     <span>
                       ({defectPoints} ÷ {checkedMetersNum}) × 100
                     </span>
@@ -627,11 +676,11 @@ const PieceFoldingForm = ({ onClose }) => {
                             : "text-red-600"
                       }`}
                     >
-                      {result?.GRADENAME || "No Grade"}
+                      {result?.GRADENAME || t.noGrade}
                     </span>
                     {checkedMetersNum < 20 && (
                       <span className="ml-2 text-xs text-red-500 font-medium">
-                        ⚠ Checked meters below 20 — minimum C GRADE applied
+                        {t.belowTwenty}
                       </span>
                     )}
                   </div>

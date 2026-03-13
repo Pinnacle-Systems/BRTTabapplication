@@ -96,6 +96,18 @@ const foldingPendingApi = createApi({
       },
       invalidatesTags: ["foldingPending"],
     }),
+    getDefects: builder.query({
+      query: ({ subGridId }) => {
+        return {
+          url: `${FOLDINGPENINDAPI}/${subGridId}/getDefects`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["foldingPending"],
+    }),
     deleteFoldingPending: builder.mutation({
       query: (id) => ({
         url: `${FOLDINGPENINDAPI}/${id}`,
@@ -111,10 +123,10 @@ export const {
   useGetFoldingPendingByIdQuery,
   useAddFoldingPendingMutation,
   useUpdateFoldingPendingMutation,
+  useGetDefectsQuery,
   useDeleteFoldingPendingMutation,
 
   useGetGradeMasterQuery,
-
 } = foldingPendingApi;
 
 export default foldingPendingApi;

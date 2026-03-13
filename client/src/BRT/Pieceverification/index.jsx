@@ -2,14 +2,92 @@
 import { useState, useRef, useCallback } from "react";
 import {
   useGetLotsQuery,
-  useGetFoldQuery,useUpdatePieceVerificationMutation
+  useGetFoldQuery,
+  useUpdatePieceVerificationMutation,
 } from "../../redux/services/pieceVerification";
 import { useEffect } from "react";
 import Swal from "sweetalert2";
 import Select from "react-select";
+import { useLanguage } from "../../Context/LanguageContext";
 
+// ─── Translations ─────────────────────────────────────────────────────────────
+const translations = {
+  en: {
+    title: "Piece Verification",
+    save: "Save",
+    lotDetails: "Lot Details",
+    lotName: "Lot name",
+    selectLot: "Select Lot",
+    // Table headers
+    sno: "S.No",
+    pcsNo: "Pcs No",
+    loomNo: "Loom No",
+    folderName: "Folder Name",
+    tableNo: "Table No",
+    meters: "Meters",
+    checkedMtrs: "Checked Mtrs",
+    defectPoints: "Defect Points",
+    grade: "Grade",
+    weight: "Weight",
+    approve: "Approve",
+    noData: "No Data Found",
+    // Swal
+    approveAtLeastOne: "Add at least Approve One Folding Items",
+    addedSuccess: "Added Successfully",
+    submissionError: "Submission error",
+    somethingWentWrong: "Something went wrong!",
+  },
+  ta: {
+    title: "துண்டு சரிபார்ப்பு",
+    save: "சேமி",
+    lotDetails: "லாட் விவரங்கள்",
+    lotName: "லாட் பெயர்",
+    selectLot: "லாட் தேர்ந்தெடு",
+    sno: "எண்",
+    pcsNo: "துண்டு எண்",
+    loomNo: "நெசவு எண்",
+    folderName: "மடிப்பாளர் பெயர்",
+    tableNo: "மேஜை எண்",
+    meters: "மீட்டர்கள்",
+    checkedMtrs: "சரிபார்க்கப்பட்ட மீட்டர்",
+    defectPoints: "குறைபாடு புள்ளிகள்",
+    grade: "தரம்",
+    weight: "எடை",
+    approve: "அனுமதி",
+    noData: "தரவு இல்லை",
+    approveAtLeastOne: "குறைந்தது ஒரு துண்டை அனுமதிக்கவும்",
+    addedSuccess: "வெற்றிகரமாக சேர்க்கப்பட்டது",
+    submissionError: "சமர்ப்பிப்பு பிழை",
+    somethingWentWrong: "ஏதோ தவறு நடந்தது!",
+  },
+  hi: {
+    title: "पीस सत्यापन",
+    save: "सहेजें",
+    lotDetails: "लॉट विवरण",
+    lotName: "लॉट नाम",
+    selectLot: "लॉट चुनें",
+    sno: "क्र.सं.",
+    pcsNo: "पीस नं.",
+    loomNo: "लूम नं.",
+    folderName: "फोल्डर का नाम",
+    tableNo: "टेबल नं.",
+    meters: "मीटर",
+    checkedMtrs: "जांचे गए मीटर",
+    defectPoints: "दोष अंक",
+    grade: "ग्रेड",
+    weight: "वजन",
+    approve: "अनुमोदन",
+    noData: "कोई डेटा नहीं मिला",
+    approveAtLeastOne: "कम से कम एक पीस को अनुमोदित करें",
+    addedSuccess: "सफलतापूर्वक जोड़ा गया",
+    submissionError: "सबमिट त्रुटि",
+    somethingWentWrong: "कुछ गलत हो गया!",
+  },
+};
 
 const PieceVerification = () => {
+  const { lang } = useLanguage();
+  const t = translations[lang] ?? translations["en"];
   const customSelectStyles = {
     control: (base, state) => ({
       ...base,
@@ -113,7 +191,7 @@ const PieceVerification = () => {
     { lotNo },
     { skip: !lotNo },
   );
-console.log(foldDetailsData,"foldDetailsData");
+  console.log(foldDetailsData, "foldDetailsData");
   const [updateData] = useUpdatePieceVerificationMutation();
 
   const syncFormWithDb = useCallback((data) => {
@@ -129,7 +207,7 @@ console.log(foldDetailsData,"foldDetailsData");
       syncFormWithDb(foldDetailsData.data);
     }
   }, [foldDetailsData, syncFormWithDb]);
-console.log(foldingItems,"foldingItems");
+  console.log(foldingItems, "foldingItems");
 
   const data = {
     foldingItems: foldingItems?.filter((i) => i.ID),
@@ -140,7 +218,7 @@ console.log(foldingItems,"foldingItems");
     try {
       let returnData = await callback(data).unwrap();
       Swal.fire({
-        title: "Added Successfully",
+        title: t.addedSuccess,
         icon: "success",
         draggable: true,
         timer: 2000,
@@ -149,8 +227,8 @@ console.log(foldingItems,"foldingItems");
     } catch (error) {
       Swal.fire({
         icon: "error",
-        title: "Submission error",
-        text: "Something went wrong!",
+        title: t.submissionError,
+        text: t.somethingWentWrong,
         timer: 2000,
       });
     }
@@ -160,7 +238,7 @@ console.log(foldingItems,"foldingItems");
     if (foldingItems?.filter((i) => i.NOTES)?.length === 0) {
       Swal.fire({
         icon: "warning",
-        title: "Add at least Approve One Folding Items",
+        title: t.approveAtLeastOne,
       });
 
       return;
@@ -185,9 +263,8 @@ console.log(foldingItems,"foldingItems");
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
-        <h1 className="text-xl ml-2 font-bold text-center">
-          Piece Verification
-        </h1>
+        <h1 className="text-xl ml-2 font-bold text-center">{t.title}</h1>
+
         <div>
           {/* <button
             // onClick={onClose}
@@ -199,7 +276,7 @@ console.log(foldingItems,"foldingItems");
             onClick={saveData}
             className="bg-blue-600 mr-2 text-white  py-1 rounded-lg hover:bg-blue-700 transition px-2"
           >
-            Save
+            {t.save}
           </button>
         </div>
       </div>
@@ -208,11 +285,11 @@ console.log(foldingItems,"foldingItems");
           {/* Lot Details */}
           <div>
             <div>
-              <h2 className="text-lg  font-semibold mb-2 ">Lot Details</h2>
+              <h2 className="text-lg font-semibold mb-2">{t.lotDetails}</h2>
               <div className="grid grid-cols-4 lg:grid-cols-10 gap-4 text-sm">
                 {/* Cloth Name */}
                 <div className="col-span-2 lg:col-span-2 z-40">
-                  <label className="block font-medium mb-1">Lot name</label>
+                  <label className="block font-medium mb-1">{t.lotName}</label>
                   <Select
                     options={lotOptions}
                     value={
@@ -222,7 +299,7 @@ console.log(foldingItems,"foldingItems");
                     onChange={(selectedOption) => {
                       setLotNo(selectedOption?.value || "");
                     }}
-                    placeholder="Select Lot"
+                    placeholder={t.selectLot}
                     isClearable={false} // ✅ disable cross icon
                     styles={customSelectStyles}
                     isSearchable={true}
@@ -233,50 +310,48 @@ console.log(foldingItems,"foldingItems");
           </div>
         </form>
         <div className="flex gap-4 mt-2">
-          <div className=" md:w-[100vw] lg:w-[100vw] rounded-lg overflow-y-auto mt-2 p-2">
+          <div className=" w-full rounded-lg overflow-y-auto mt-2 p-2">
             <div className="max-h-[45vh] overflow-y-auto overflow-x-auto">
               <table className="min-w-[900px] w-full text-sm border table-fixed">
                 <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
                   <tr>
-                    <th className="px-1 py-2 border w-6 text-center">S.No</th>
-                    <th className="px-1 py-2 border w-12 text-center">
-                      Pcs No
+                    <th className="px-1 py-2 border w-10 text-center">
+                      {t.sno}
                     </th>
                     <th className="px-1 py-2 border w-16 text-center">
-                      Loom No
-                    </th>
-                    <th className="px-1 py-2 border w-32 text-center">
-                      Folder Name
-                    </th>
-                    <th className="px-1 py-2 border w-16 text-center">
-                      Table No
-                    </th>
-                    <th className="px-1 py-2 border w-12 text-center">
-                     Meters
+                      {t.pcsNo}
                     </th>
                     <th className="px-1 py-2 border w-20 text-center">
-                       Checked Mtrs
+                      {t.loomNo}
                     </th>
-                    <th className="px-1 py-2 border w-24 text-center">
-                       Defect Points
+                    <th className="px-1 py-2 border w-32 text-center">
+                      {t.folderName}
                     </th>
                     <th className="px-1 py-2 border w-16 text-center">
-                      Grade
+                      {t.tableNo}
                     </th>
-                    <th className="px-1 py-2 border w-12 text-center">
-                      Weight
+                    <th className="px-1 py-2 border w-20 text-center">
+                      {t.meters}
                     </th>
-                    <th className="px-1 py-2 border w-12 text-center">
-                      Approve
+                    <th className="px-1 py-2 border w-32 text-center">
+                      {t.checkedMtrs}
+                    </th>
+                    <th className="px-1 py-2 border w-24 text-center">
+                      {t.defectPoints}
+                    </th>
+                    <th className="px-1 py-2 border w-20 text-center">
+                      {t.grade}
+                    </th>
+                    <th className="px-1 py-2 border w-16 text-center">
+                      {t.weight}
+                    </th>
+                    <th className="px-1 py-2 border w-16 text-center">
+                      {t.approve}
                     </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {console.log(
-                    foldDetailsData?.data > 0,
-                    "foldDetailsData?.data > 0",
-                  )}
                   {foldingItems?.length > 0 ? (
                     foldingItems.map((item, index) => (
                       <tr key={index} className="text-sm hover:bg-gray-50">
@@ -313,7 +388,7 @@ console.log(foldingItems,"foldingItems");
                         <td className="py-1 pr-1 border focus:ring-2 focus:border-2 text-right">
                           {item?.WEIGHTTT?.toFixed(3)}
                         </td>
-                     
+
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-center ">
                           {item?.PCSNO ? (
                             <input
@@ -339,7 +414,7 @@ console.log(foldingItems,"foldingItems");
                         colSpan="9"
                         className="text-center  py-4 border text-gray-500 font-medium"
                       >
-                        No Data Found
+                        {t.noData}
                       </td>
                     </tr>
                   )}

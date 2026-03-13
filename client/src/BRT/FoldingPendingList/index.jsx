@@ -1,28 +1,123 @@
 /* eslint-disable no-unused-vars */
 import { useState, useRef, useCallback } from "react";
-import {
-  useGetLotPieceReceiptQuery,
-  useUpdatePieceReceiptMutation,
-  useGetPieceReceiptByIdQuery,
-} from "../../redux/services/PieceReceipt";
+
 import { useEffect } from "react";
-import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import Select from "react-select";
-import { useGetFoldingPendingByIdQuery, useGetFoldingPendingQuery, useUpdateFoldingPendingMutation } from "../../redux/services/FoldingPendingList";
+import {
+  useGetFoldingPendingByIdQuery,
+  useGetFoldingPendingQuery,
+  useUpdateFoldingPendingMutation,
+  useGetDefectsQuery,
+} from "../../redux/services/FoldingPendingList";
+import { useLanguage } from "../../Context/LanguageContext";
+import { MdOpenInNew, MdClose } from "react-icons/md";
 
-const FoldingPendingList = ({
-  // onClose,
-  // selectedLotId,
-  // setSelectedLotId,
-  // selectedClothId,
-  // setSelectedClothId,
-  // setSelectedGridId,
-  // selectedGridId,
-}) => {
+// ─── Translations ─────────────────────────────────────────────────────────────
+const translations = {
+  en: {
+    title: "Folding Pending List",
+    save: "Save",
+    lotDetails: "Lot Details",
+    lotName: "Lot name",
+    selectLot: "Select Lot",
+    sno: "S.No",
+    basePcsNo: "Base Pcs No",
+    splitPcsNo: "Split Pcs No",
+    checker: "Checker",
+    tableNo: "Table",
+    receiptMtrs: "Receipt Mtrs",
+    startMtr: "Start Mtr",
+    endMtr: "End Mtr",
+    meters: "Meters",
+    defectPoints: "Defect Points",
+    approve: "Approve",
+    noData: "No Data Found",
+    approveAtLeastOne: "Add at least Approve One Folding Items",
+    addedSuccess: "Added Successfully",
+    submissionError: "Submission error",
+    somethingWentWrong: "Something went wrong!",
+    open: "Open",
+    modalTitle: "Defect Details",
+    close: "Close",
+  },
+  ta: {
+    modalTitle: "குறைபாடு விவரங்கள்",
 
+    title: "மடிப்பு நிலுவை பட்டியல்",
+    save: "சேமி",
+    lotDetails: "லாட் விவரங்கள்",
+    lotName: "லாட் பெயர்",
+    selectLot: "லாட் தேர்ந்தெடு",
+    sno: "எண்",
+    basePcsNo: "அடிப்படை துண்டு ",
+    splitPcsNo: "பிரிந்த துண்டு ",
+    checker: "சரிபார்ப்பாளர்",
+    tableNo: "மேஜை",
+    receiptMtrs: "ரசீது மீட்டர்",
+    startMtr: "தொடக்க மீட்டர்",
+    endMtr: "இறுதி மீட்டர்",
+    meters: "மீட்டர்கள்",
+    defectPoints: "குறைபாடு புள்ளிகள்",
+    approve: "அனுமதி",
+    noData: "தரவு இல்லை",
+    approveAtLeastOne: "குறைந்தது ஒரு மடிப்பு பொருளை அனுமதிக்கவும்",
+    addedSuccess: "வெற்றிகரமாக சேர்க்கப்பட்டது",
+    submissionError: "சமர்ப்பிப்பு பிழை",
+    somethingWentWrong: "ஏதோ தவறு நடந்தது!",
+    open: "திற",
+    close: "மூடு",
+  },
+  hi: {
+    modalTitle: "दोष विवरण",
 
-const customSelectStyles = {
+    title: "फोल्डिंग पेंडिंग सूची",
+    save: "सहेजें",
+    lotDetails: "लॉट विवरण",
+    lotName: "लॉट नाम",
+    selectLot: "लॉट चुनें",
+    sno: "क्र.सं.",
+    basePcsNo: "बेस पीस नं.",
+    splitPcsNo: "विभाजित पीस नं.",
+    checker: "जांचकर्ता",
+    tableNo: "टेबल नं.",
+    receiptMtrs: "रसीद मीटर",
+    startMtr: "शुरुआत मीटर",
+    endMtr: "अंत मीटर",
+    meters: "मीटर",
+    defectPoints: "दोष अंक",
+    approve: "अनुमोदन",
+    noData: "कोई डेटा नहीं मिला",
+    approveAtLeastOne: "कम से कम एक फोल्डिंग आइटम को अनुमोदित करें",
+    addedSuccess: "सफलतापूर्वक जोड़ा गया",
+    submissionError: "सबमिट त्रुटि",
+    somethingWentWrong: "कुछ गलत हो गया!",
+    open: "खोलें",
+    close: "बंद करें",
+  },
+};
+const FoldingPendingList = () => {
+  const { lang } = useLanguage();
+  const t = translations[lang] ?? translations["en"];
+  // ── Modal state ──────────────────────────────────────────────
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [subGridId, setSubGridId] = useState("");
+  const [defectArray, setDefectArray] = useState([]);
+
+  const openModal = (item) => {
+    setSelectedItem(item);
+    setSubGridId(item.SUBGRIDID); // ✅ important
+    setIsModalOpen(true);
+  };
+  const closeModal = () => {
+    setSelectedItem(null);
+    setSubGridId("");
+
+    setIsModalOpen(false);
+  };
+
+  const customSelectStyles = {
     control: (base, state) => ({
       ...base,
       minHeight: "13px",
@@ -39,7 +134,7 @@ const customSelectStyles = {
       "&:hover": {
         borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
       },
-      zIndex:"999"
+      zIndex: "999",
     }),
     valueContainer: (base, state) => ({
       ...base,
@@ -94,9 +189,8 @@ const customSelectStyles = {
     }),
   };
 
-
   const [foldingItems, setFoldingItems] = useState([]);
-  const [lotNo, setLotNo] = useState('')
+  const [lotNo, setLotNo] = useState("");
 
   useEffect(() => {
     if (foldingItems?.length >= 20) return;
@@ -113,37 +207,26 @@ const customSelectStyles = {
           noOfBags: "0",
           discountType: "",
           weightPerBag: "0.00",
-          poItemsId: ""
+          poItemsId: "",
         };
       });
       return [...prev, ...newArray];
     });
   }, [foldingItems, setFoldingItems]);
 
-
   const { data: foldingPendingData } = useGetFoldingPendingQuery();
-
-
 
   const {
     data: singleData,
     isLoading: isSingleLoading,
     isFetching: isSingleFetching,
-  } = useGetFoldingPendingByIdQuery({ lotNo }, { skip: !lotNo },
-  );
+  } = useGetFoldingPendingByIdQuery({ lotNo }, { skip: !lotNo });
 
   const [updateData] = useUpdateFoldingPendingMutation();
 
-
-  const syncFormWithDb = useCallback(
-    (data) => {
-
-      setFoldingItems(data);
-
-
-    },
-    [],
-  );
+  const syncFormWithDb = useCallback((data) => {
+    setFoldingItems(data);
+  }, []);
 
   console.log(foldingItems, "foldingItems");
 
@@ -156,42 +239,41 @@ const customSelectStyles = {
   }, [singleData, syncFormWithDb]);
 
   const data = {
-    foldingItems: foldingItems?.filter(i => i.ID),
-    lotNo
+    foldingItems: foldingItems?.filter((i) => i.ID),
+    lotNo,
   };
 
-
+  const { data: defectItems } = useGetDefectsQuery(
+    { subGridId },
+    { skip: !subGridId },
+  );
+  console.log(defectItems, "defectItems");
 
   const handleSubmitCustom = async (callback, data) => {
     try {
       let returnData = await callback(data).unwrap();
       Swal.fire({
-        title: "Added Successfully",
+        title: t.addedSuccess,
         icon: "success",
         draggable: true,
         timer: 2000,
         showConfirmButton: false,
       });
-
     } catch (error) {
       Swal.fire({
         icon: "error",
-        title: "Submission error",
-        text: "Something went wrong!",
+        title: t.submissionError,
+        text: t.somethingWentWrong,
         timer: 2000,
       });
     }
   };
 
-
   const saveData = () => {
-
-    if (foldingItems?.filter(i => i.TABAPPROVAL)?.length === 0) {
+    if (foldingItems?.filter((i) => i.TABAPPROVAL)?.length === 0) {
       Swal.fire({
-
         icon: "warning",
-        title: "Add at least Approve One Folding Items",
-
+        title: t.approveAtLeastOne,
       });
 
       return;
@@ -199,37 +281,36 @@ const customSelectStyles = {
 
     handleSubmitCustom(updateData, data);
   };
+  useEffect(() => {
+    if (defectItems) {
+      console.log("Defect API Data:", defectItems);
+    }
+  }, [defectItems]);
 
-
-
-
-
+  useEffect(() => {
+    if (defectItems?.data) {
+      setDefectArray(defectItems.data);
+    }
+  }, [defectItems]);
 
   const flodingOptions = foldingPendingData?.data?.map((cloth) => ({
     label: cloth?.DOCID,
     value: cloth?.RECEIPTNO,
   }));
 
-
-
   const handleInputChange = (value, index, field) => {
-    console.log(value, "value", index, "index", field, "field")
+    console.log(value, "value", index, "index", field, "field");
     const newBlend = structuredClone(foldingItems);
 
     newBlend[index][field] = value ? "YES" : "";
     setFoldingItems(newBlend);
   };
 
-
-
-
-
-
-
   return (
     <div className="h-[75vh] pt-0">
       <div className="flex bg-white justify-between py-1 rounded-lg">
-        <h1 className="text-xl ml-2 font-bold text-center">Folding Pending List</h1>
+        <h1 className="text-xl ml-2 font-bold text-center">{t.title}</h1>
+
         <div>
           {/* <button
             // onClick={onClose}
@@ -241,7 +322,7 @@ const customSelectStyles = {
             onClick={saveData}
             className="bg-blue-600 mr-2 text-white  py-1 rounded-lg hover:bg-blue-700 transition px-2"
           >
-            Save
+            {t.save}
           </button>
         </div>
       </div>
@@ -250,13 +331,11 @@ const customSelectStyles = {
           {/* Lot Details */}
           <div>
             <div>
-              <h2 className="text-lg  font-semibold mb-2 ">Lot Details</h2>
+              <h2 className="text-lg font-semibold mb-2">{t.lotDetails}</h2>
               <div className="grid grid-cols-4 lg:grid-cols-10 gap-4 text-sm">
-
-
                 {/* Cloth Name */}
                 <div className="col-span-2 lg:col-span-2 z-40">
-                  <label className="block font-medium mb-1">Lot name</label>
+                  <label className="block font-medium mb-1">{t.lotName}</label>
                   <Select
                     options={flodingOptions}
                     value={
@@ -267,44 +346,64 @@ const customSelectStyles = {
                     onChange={(selectedOption) => {
                       setLotNo(selectedOption?.value || "");
                     }}
-                    placeholder="Select Lot"
+                    placeholder={t.selectLot}
                     isClearable={false} // ✅ disable cross icon
                     styles={customSelectStyles}
                     isSearchable={true}
                   />
                 </div>
-
-
-
-
               </div>
             </div>
           </div>
-
-
         </form>
         <div className="flex gap-4 mt-2">
-          <div className=" md:w-[120vw] lg:w-[100vw] rounded-lg overflow-y-auto mt-2 p-2">
+          <div className=" w-full rounded-lg overflow-y-auto mt-2 p-2">
             <div className="max-h-[45vh] overflow-y-auto overflow-x-auto">
-              <table className="min-w-[900px] w-full text-sm border table-fixed">
+              <table className="min-w-[900px]  w-full text-sm border table-fixed ">
                 <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
                   <tr>
-                    <th className="px-1 py-2 border w-6 text-center">S.No</th>
-                    <th className="px-1 py-2 border w-16 text-center">Base Pcs No</th>
-                    <th className="px-1 py-2 border w-16 text-center">Split Pcs No</th>
-                    <th className="px-1 py-2 border w-32 text-center">Checker</th>
-                    <th className="px-1 py-2 border w-12 text-center">Table No</th>
-                    <th className="px-1 py-2 border w-20 text-center">Receipt Mtrs</th>
-                    <th className="px-1 py-2 border w-16 text-center">Start Mtr</th>
-                    <th className="px-1 py-2 border w-12 text-center">End Mtr</th>
-                    <th className="px-1 py-2 border w-12 text-center">Meters</th>
-                    <th className="px-1 py-2 border w-24 text-center">Defect Points</th>
-                    <th className="px-1 py-2 border w-12 text-center">Approve</th>
+                    <th className="px-1 py-2 border w-12 text-center">
+                      {t.sno}
+                    </th>
+                    <th className=" py-2 border w-40 text-center">
+                      {t.basePcsNo}
+                    </th>
+                    <th className=" py-2 border w-36 text-center">
+                      {t.splitPcsNo}
+                    </th>
+                    <th className=" py-2 border w-40 text-center">
+                      {t.checker}
+                    </th>
+                    <th className=" py-2 border w-20 text-center">
+                      {t.tableNo}
+                    </th>
+                    <th className=" py-2 border w-24 text-center">
+                      {t.receiptMtrs}
+                    </th>
 
+                    <th className=" py-2 border w-36 text-center">
+                      {t.startMtr}
+                    </th>
+                    <th className=" py-2 border w-36 text-center">
+                      {t.endMtr}
+                    </th>
+                    <th className=" py-2 border w-20 text-center">
+                      {t.meters}
+                    </th>
+                    <th className=" py-2 border w-44 text-center">
+                      {t.defectPoints}
+                    </th>
+
+                    <th className="px-1 py-2 border w-20 text-center">
+                      {t.approve}
+                    </th>
+                    <th className="px-1 py-2 border w-16 text-center">
+                      {t.open}
+                    </th>
                   </tr>
                 </thead>
 
-                <tbody>{console.log(singleData?.data > 0, "singleData?.data > 0")}
+                <tbody>
                   {foldingItems?.length > 0 ? (
                     foldingItems.map((item, index) => (
                       <tr key={index} className="text-sm hover:bg-gray-50">
@@ -341,16 +440,38 @@ const customSelectStyles = {
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
                           {item?.TOTPOINTSTAB}
                         </td>
-                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-center ">
-                          {item?.RECEIPTNO ?
 
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-center ">
+                          {item?.RECEIPTNO ? (
                             <input
                               type="checkbox"
-                              onChange={(e) => handleInputChange(e.target.checked, index, "TABAPPROVAL")}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  e.target.checked,
+                                  index,
+                                  "TABAPPROVAL",
+                                )
+                              }
                               checked={item.TABAPPROVAL}
                             />
-
-                            : ""}
+                          ) : (
+                            ""
+                          )}
+                        </td>
+                        {/* ── Open icon ── */}
+                        <td className="py-1 px-2 border text-center">
+                          {item?.RECEIPTNO ? (
+                            <button
+                              type="button"
+                              onClick={() => openModal(item)}
+                              className="text-blue-600 hover:text-blue-800 transition-colors"
+                              title={t.open}
+                            >
+                              <MdOpenInNew size={18} />
+                            </button>
+                          ) : (
+                            ""
+                          )}
                         </td>
                       </tr>
                     ))
@@ -360,18 +481,87 @@ const customSelectStyles = {
                         colSpan="9"
                         className="text-center  py-4 border text-gray-500 font-medium"
                       >
-                        No Data Found
+                        {t.noData}
                       </td>
                     </tr>
                   )}
                 </tbody>
-
               </table>
             </div>
           </div>
-
         </div>
       </div>
+      {/* ── Detail Modal ──────────────────────────────────────────── */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center px-4"
+          onClick={closeModal}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl w-full max-w-lg p-5 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+              <h3 className="text-base font-semibold text-gray-800">
+                {t.modalTitle}
+              </h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-700 transition"
+              >
+                <MdClose size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            {defectArray?.length > 0 && (
+              <div className="mt-6">
+          
+                <table className="w-full text-sm border">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="border px-2 py-1">S.No</th>
+                      <th className="border px-2 py-1">Defect Name</th>
+                      <th className="border px-2 py-1">Points</th>
+                      <th className="border px-2 py-1">Times</th>
+                      <th className="border px-2 py-1">Total</th>
+                      <th className="border px-2 py-1">Meter At</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {defectArray.map((defect, index) => (
+                      <tr key={index} className="text-center">
+                        <td className="border px-2 py-1">{index + 1}</td>
+                        <td className="border px-2 py-1 text-left">
+                          {defect.DEFECTNAME}
+                        </td>
+                        <td className="border px-2 py-1 text-right">
+                          {defect.DEFECTPOINS1}
+                        </td>
+                        <td className="border px-2 py-1 text-right">{defect.NOOGTIME}</td>
+                        <td className="border px-2 py-1 text-right">{defect.TOTPOINS1}</td>
+                        <td className="border px-2 py-1 text-right">{defect.MTRAT}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={closeModal}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium px-4 py-1.5 rounded-lg transition"
+              >
+                {t.close}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -63,10 +63,8 @@ import {
   ListItemIcon,
   ListItemText,
   Slide,
-  Fade,
   useScrollTrigger,
   Paper,
-  Stack,
   Button,
 } from "@mui/material";
 import { useGetUsersQuery, useGetRolesQuery } from "./redux/userservice";
@@ -433,22 +431,8 @@ const NavbarHeader = ({ onLogout }) => {
   console.log(userData, "userData");
   console.log(currentUser, "currentUser");
 
-  // const userRoles = useMemo(() => {
-  //   return currentUser
-  //     ? userData.data
-  //         ?.filter((user) => user.USERNAME === storedUserId && user.role)
-  //         ?.map((user) => user.role)
-  //     : [];
-  // }, [currentUser, userData, storedUserId]);
   const isAdmin = Number(storedRoleId) === adminId;
-  // Check if user is admin or has specific permissions
-  // const isAdmin = useMemo(() => {
-  //   return (
-  //     currentUser?.USERNAME === "Admin" ||
-  //     currentUser?.ROLENAME === "Admin" ||
-  //     currentUser?.isAdmin
-  //   );
-  // }, [currentUser]);
+  
   console.log(isAdmin, "isAdmin");
 
   const handleUserMenuOpen = (event) => {
