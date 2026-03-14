@@ -13,7 +13,8 @@ import {
   tableLotApi,
   defectEntryApi,
   foldingPendingApi,
-  pieceVerificationApi
+  pieceVerificationApi,
+  packingSlipApi
 } from "../redux";
 
 import { setupListeners } from "@reduxjs/toolkit/query";
@@ -37,6 +38,7 @@ export const store = configureStore({
     [foldingPendingApi.reducerPath]: foldingPendingApi.reducer,
     [pieceFoldingEntrygApi.reducerPath]: pieceFoldingEntrygApi.reducer,
     [pieceVerificationApi.reducerPath]:pieceVerificationApi.reducer,
+    [packingSlipApi.reducerPath]:packingSlipApi.reducer,
 
   }
 
@@ -55,6 +57,7 @@ export const store = configureStore({
       foldingPendingApi.middleware,
       pieceFoldingEntrygApi.middleware,
       pieceVerificationApi.middleware,
+      packingSlipApi.middleware
     ]),
 });
 setupListeners(store.dispatch);

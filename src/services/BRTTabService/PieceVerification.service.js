@@ -94,42 +94,34 @@ WHERE A.DOCID = :docId AND  NVL(A.NOTES,'NO') <> 'YES' `,
   }
 }
 export async function updatePieceVerification(req, res) {
-
   const { foldingItems, lotNo } = req.body;
-
 
   const connection = await getConnection(res);
 
-
   try {
-
     for (const piece of foldingItems) {
-
       const { NOTES, ID } = piece;
 
-      console.log("connection: ", connection)
+      console.log("connection: ", connection);
       await connection.execute(
         `UPDATE PCS_APPROVAL_DETAILS
-         SET NOTES = :status
+         SET NOTES = :status , FOLDINGAPPROVED = :foldingApproved
          WHERE ID = :id`,
         {
           status: NOTES ? "YES" : "",
-          id: ID
-        }
+          foldingApproved: NOTES ? "WAITING FOR APPROVAL" : "",
+          id: ID,
+        },
       );
-    console.log("piece", piece);
-
+      console.log("piece", piece);
     }
 
     await connection.commit();
 
-
     return res.status(200).json({
       message: `Folding entry updated successfully for ${foldingItems?.length} items`,
     });
-
   } catch (error) {
-
     await connection.rollback();
 
     console.error("Update Defect Entry Error:", error);
@@ -138,6 +130,5 @@ export async function updatePieceVerification(req, res) {
       message: "Server error",
       error: error.message,
     });
-
   }
 }

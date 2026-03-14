@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { MdDelete } from "react-icons/md";
 
+import { useGetBarCodeDataQuery } from "../../redux/services/PackingSlip.js";
 import { useLanguage } from "../../Context/LanguageContext";
 
 // ─── Translations ─────────────────────────────────────────────────────────────
@@ -116,8 +118,16 @@ const PackingSlip = () => {
   const [baleGroup, setBaleGroup] = useState("AL");
   const [baleNo1, setBaleNo1] = useState("");
   const [baleNo3, setBaleNo3] = useState("");
+  const [barCode, setBarCode] = useState("");
+  const [barCodeInput, setBarCodeInput] = useState(""); // typed value
+
+  const [pieceRows, setPieceRows] = useState([]); // table rows
+
   const [totalPcs, setTotalPcs] = useState("");
   const [totalMeters, setTotalMeters] = useState("");
+
+  console.log(packingType, "packingType");
+  console.log(baleGroup, "baleGroup");
 
   const baleGroups = [
     { id: "AL", label: "AL", color: "bg-[#004a99]" },
@@ -127,10 +137,31 @@ const PackingSlip = () => {
     { id: "SUL", label: "SUL", color: "bg-[#e3853d]" },
   ];
 
+  const { data: barCodeData } = useGetBarCodeDataQuery(
+    { barCode },
+    { skip: !barCode },
+  );
+  useEffect(() => {
+    if (!barCodeData?.data?.length) return;
+    setPieceRows((prev) => {
+      const existingIds = new Set(prev.map((r) => r.GRIDID));
+      const newRows = barCodeData.data.filter(
+        (r) => !existingIds.has(r.GRIDID),
+      );
+      return [...prev, ...newRows];
+    });
+    setBarCode(""); // reset so next scan triggers fresh query
+    setBarCodeInput(""); // clear input
+  }, [barCodeData]);
   const handleBaleGroupSelect = (group) => {
     setBaleGroup(group);
   };
-
+  const handleAddPcs = () => {
+    if (barCodeInput.trim()) setBarCode(barCodeInput.trim());
+  };
+  const handleDeleteRow = (gridId) => {
+    setPieceRows((prev) => prev.filter((r) => r.GRIDID !== gridId));
+  };
   return (
     <div className="h-full md:h-[75vh] pt-0">
       {/* Header */}
@@ -197,7 +228,6 @@ const PackingSlip = () => {
           </div>
         </div>
 
-
         <div className="grid grid-cols-1 lg:grid-cols-2">
           {/* Bale Details Section */}
           <div className="mb-3 col-span-1 border border-gray-200 rounded-lg p-3">
@@ -249,77 +279,135 @@ const PackingSlip = () => {
                   <input
                     type="text"
                     className="border rounded-lg text-right px-2 py-1.5  focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={barCode}
+                    onChange={(e) => setBarCode(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddPcs()}
                   />
                 </div>
-                <button className="bg-green-600 px-6 text-white rounded-lg py-2 whitespace-nowrap hover:bg-green-700 transition font-semibold text-xs w-full sm:w-auto">
+                <button
+                  onClick={handleAddPcs}
+                  className="bg-green-600 px-6 text-white rounded-lg py-2 whitespace-nowrap hover:bg-green-700 transition font-semibold text-xs w-full sm:w-auto"
+                >
                   {t.clickAddPcs}
                 </button>
               </div>
             </div>
           </div>
-
-
         </div>
 
-
         {/* Piece Details Section */}
-        <div className="mt-3 border border-gray-200 rounded-lg p-3 ">
+        <div className="mt-3 w-full border border-gray-200 rounded-lg p-3 ">
           <h2 className="text-lg font-semibold mb-3 border-b pb-1">
             {t.pieceDetails}
           </h2>
 
-          <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div className="rounded-lg border w-full border-gray-200 shadow-sm ">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse table-auto min-w-[1000px]">
+              <table className="w-full text-sm border-collapse table-fixed">
                 <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10 border-b">
                   <tr>
-                    <th className="px-3 py-3 border-r text-center w-[50px]">
+                    <th className="px-1 py-3 border-r text-center w-8">
                       {t.sno}
                     </th>
-                    <th className="px-3 py-3 border-r text-center w-[100px]">
+                    <th className="px-1 py-3 border-r text-center w-48">
                       {t.lotNo}
                     </th>
-                    <th className="px-3 py-3 border-r text-center w-[100px]">
+                    <th className="px-1 py-3 border-r text-center w-[100px]">
                       {t.pcsNo}
                     </th>
-                    <th className="px-3 py-3 border-r text-center w-[100px]">
+                    <th className="px-1 py-3 border-r text-center w-[100px]">
                       {t.loomNo}
                     </th>
-                    <th className="px-3 py-3 border-r text-center w-[80px]">
+                    <th className="px-1 py-3 border-r text-center w-[80px]">
                       {t.type}
                     </th>
-                    <th className="px-3 py-3 border-r text-center w-[100px]">
+                    <th className="px-1 py-3 border-r text-center w-[100px]">
                       {t.meters}
                     </th>
-                    <th className="px-3 py-3 border-r text-center w-[100px]">
+                    <th className="px-1 py-3 border-r text-center w-[100px]">
                       {t.weight}
                     </th>
-                    <th className="px-3 py-3 border-r text-center w-[100px]">
+                    <th className="px-1 py-3 border-r text-center w-[100px]">
                       {t.wgtMtr}
                     </th>
-                    <th className="px-3 py-3 border-r text-center w-[180px]">
+                    <th className="px-1 py-3 border-r text-center w-[180px]">
                       {t.clothName}
                     </th>
-                    <th className="px-3 py-3 border-r text-center w-[80px]">
+                    <th className="px-1 py-3 border-r text-center w-[80px]">
                       {t.foldPct}
                     </th>
-                    <th className="px-3 py-3 border-r text-center w-[180px]">
+                    <th className="px-1 py-3 border-r text-center w-[180px]">
                       {t.weaverName}
                     </th>
-                    <th className="px-3 py-3 text-center w-[80px]">
+                    <th className="px-1 py-3 text-center w-[80px]">
                       {t.action}
                     </th>
                   </tr>
                 </thead>
                 <tbody className="text-xs divide-y divide-gray-200">
-                  <tr className="bg-white hover:bg-gray-50 transition-colors">
-                    <td
-                      colSpan="12"
-                      className="text-center py-8 text-gray-500 font-bold"
-                    >
-                      {t.noData}
-                    </td>
-                  </tr>
+                  {pieceRows.length > 0 ? (
+                    pieceRows.map((row, index) => (
+                      <tr
+                        key={row.GRIDID}
+                        className="bg-white hover:bg-gray-50 transition-colors"
+                      >
+                        <td className=" py-2 border-r text-center">
+                          {index + 1}
+                        </td>
+                        <td className=" py-2 border-r text-left pl-1">
+                          {row.LOTNO}
+                        </td>
+                        <td className=" py-2 border-r text-right pr-1">
+                          {row.PCSNO}
+                        </td>
+                        <td className=" py-2 border-r text-right pr-1">
+                          {row.LOOMNO}
+                        </td>
+                        <td className=" py-2 border-r text-center pr-1">
+                          {row.GRID_BARCODE ? "Grid" : "Non-Grid"}
+                        </td>
+                        <td className=" py-2 border-r text-right pr-1">
+                          {Number(row.METERS).toFixed(2)}
+                        </td>
+                        <td className=" py-2 border-r text-right pr-1">
+                          {Number(row.WEIGHT).toFixed(2)}
+                        </td>
+                        <td className=" py-2 border-r text-right pr-1">
+                          {row.METERS
+                            ? (Number(row.WEIGHT) / Number(row.METERS)).toFixed(
+                                3,
+                              )
+                            : "-"}
+                        </td>
+                        <td className=" py-2 border-r text-left pl-1">
+                          {row.CLOTHID}
+                        </td>
+                        <td className=" py-2 border-r text-right pr-1">
+                          {row.FOLD_PERCENTAGE}%
+                        </td>
+                        <td className=" py-2 border-r text-left pl-1">
+                          {row.WEAVERID}
+                        </td>
+                        <td className=" py-2 text-center">
+                          <button
+                            onClick={() => handleDeleteRow(row.GRIDID)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
+                          >
+                            <MdDelete />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr className="bg-white">
+                      <td
+                        colSpan="12"
+                        className="text-center py-8 text-gray-500 font-bold"
+                      >
+                        {t.noData}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

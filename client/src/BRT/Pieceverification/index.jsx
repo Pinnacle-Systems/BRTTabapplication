@@ -253,10 +253,15 @@ const PieceVerification = () => {
   }));
 
   const handleInputChange = (value, index, field) => {
-    console.log(value, "value", index, "index", field, "field");
     const newBlend = structuredClone(foldingItems);
 
-    newBlend[index][field] = value ? "YES" : "";
+    if (field === "NOTES") {
+      newBlend[index]["NOTES"] = value ? "YES" : "";
+      newBlend[index]["FOLDINGAPPROVED"] = value ? "WAITING FOR APPROVAL" : "";
+    } else {
+      newBlend[index][field] = value ? "YES" : "";
+    }
+
     setFoldingItems(newBlend);
   };
 
@@ -400,7 +405,7 @@ const PieceVerification = () => {
                                   "NOTES",
                                 )
                               }
-                              checked={item.NOTES}
+                              checked={!!item.NOTES}
                             />
                           ) : (
                             ""

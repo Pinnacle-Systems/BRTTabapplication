@@ -298,7 +298,9 @@ const PieceFoldingForm = ({ onClose }) => {
 
   const pieceOptions = pieceData?.data?.map((cloth) => ({
     // label: `${cloth?.BASEPCSNO} ${cloth?.SPLITPCSNO ? "-" : ""} ${cloth?.SPLITPCSNO ? cloth?.SPLITPCSNO : ""}`,
-    label: cloth?.SPLITPCSNO,
+    // label: cloth?.SPLITPCSNO,
+    label: cloth?.SPLITPCSNO ?? cloth?.BASEPCSNO,
+
     value: cloth?.ID,
   }));
 

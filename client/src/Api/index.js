@@ -36,3 +36,4 @@ export const PIECEFOLDINGENTRY = "pieceFoldingEntry";
 export const GRADE = "grade";
 export const PIECEVERIFICATIONAPI = "pieceVerification";
 export const CLOTHDELIVERYAPI = "clothDelivery";
+export const PACKINGSLIP = "packingSlip";
