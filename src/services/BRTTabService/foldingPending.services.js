@@ -190,7 +190,7 @@ export async function updateFolding(req, res) {
 
   try {
     for (const piece of foldingItems) {
-      const { TABAPPROVAL, ID } = piece;
+      const { TABAPPROVAL, SUBGRIDID } = piece;
 
       console.log("connection: ", connection);
       await connection.execute(
@@ -199,7 +199,7 @@ export async function updateFolding(req, res) {
          WHERE GTDEFECTDETTABID = :id`,
         {
           status: TABAPPROVAL ? "YES" : "",
-          id: ID,
+          id: SUBGRIDID,
         },
       );
       console.log("piece", piece);

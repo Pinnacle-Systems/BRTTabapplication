@@ -43,7 +43,7 @@ const PieceReport = () => {
   const { lang } = useLanguage();
   const t = translations[lang] ?? translations["en"];
 
-  const [openForm, setOpenForm] = useState(false);
+  const [openForm, setOpenForm] = useState(true);
   const [editData, setEditData] = useState(null);
   const [selectedLotId, setSelectedLotId] = useState("");
   const [selectedGridId, setSelectedGridId] = useState("");

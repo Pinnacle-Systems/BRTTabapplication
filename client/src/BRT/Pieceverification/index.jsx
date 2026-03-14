@@ -47,7 +47,7 @@ const translations = {
     pcsNo: "துண்டு எண்",
     loomNo: "நெசவு எண்",
     folderName: "மடிப்பாளர் பெயர்",
-    tableNo: "மேஜை எண்",
+    tableNo: "மேஜை",
     meters: "மீட்டர்கள்",
     checkedMtrs: "சரிபார்க்கப்பட்ட மீட்டர்",
     defectPoints: "குறைபாடு புள்ளிகள்",
@@ -315,37 +315,37 @@ const PieceVerification = () => {
               <table className="min-w-[900px] w-full text-sm border table-fixed">
                 <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10">
                   <tr>
-                    <th className="px-1 py-2 border w-10 text-center">
+                    <th className="px-1 py-2 border w-12 text-center">
                       {t.sno}
                     </th>
-                    <th className="px-1 py-2 border w-16 text-center">
+                    <th className="px-1 py-2 border w-32 text-center">
                       {t.pcsNo}
                     </th>
-                    <th className="px-1 py-2 border w-20 text-center">
+                    <th className="px-1 py-2 border w-32 text-center">
                       {t.loomNo}
                     </th>
-                    <th className="px-1 py-2 border w-32 text-center">
+                    <th className="px-1 py-2 border w-40 text-center">
                       {t.folderName}
                     </th>
-                    <th className="px-1 py-2 border w-16 text-center">
+                    <th className="px-1 py-2 border w-20 text-center">
                       {t.tableNo}
                     </th>
                     <th className="px-1 py-2 border w-20 text-center">
                       {t.meters}
                     </th>
-                    <th className="px-1 py-2 border w-32 text-center">
+                    <th className="px-1 py-2 border w-48 text-center">
                       {t.checkedMtrs}
                     </th>
-                    <th className="px-1 py-2 border w-24 text-center">
+                    <th className="px-1 py-2 border w-44 text-center">
                       {t.defectPoints}
                     </th>
-                    <th className="px-1 py-2 border w-20 text-center">
+                    <th className="px-1 py-2 border w-24 text-center">
                       {t.grade}
                     </th>
-                    <th className="px-1 py-2 border w-16 text-center">
+                    <th className="px-1 py-2 border w-20 text-center">
                       {t.weight}
                     </th>
-                    <th className="px-1 py-2 border w-16 text-center">
+                    <th className="px-1 py-2 border w-20 text-center">
                       {t.approve}
                     </th>
                   </tr>

@@ -140,8 +140,93 @@ const LANGUAGES = [
   },
 ];
 
+// ── NavbarHeader Translations ────────────────────────────────────────────────
+const navTranslations = {
+  en: {
+    langSettings: "Language Settings",
+    chooseLanguage: "Choose your preferred language",
+    current: "Current",
+    cancel: "Cancel",
+    apply: "Apply",
+    operations: "Operations",
+    noTabsOpen: "No tabs open",
+    selectSidebar: "Select an option from the sidebar to get started",
+    openPieceReceipt: "Open Piece Receipt",
+    signOut: "Sign Out",
+    createUser: "Create New User",
+    users: "Users",
+    roles: "Roles",
+    // Tab labels
+    pieceReceipt: "Piece Receipt",
+    tableLotAlloc: "Table and Lot Allocation",
+    defectEntry: "Defect Entry",
+    foldingPending: "Folding Pending List",
+    pieceFolding: "Piece Folding Entry",
+    pieceVerification: "Piece Verification",
+    packingSlip: "Packing Slip",
+    clothDelivery: "Cloth Delivery",
+    dispatchVerification: "Dispatch Verification",
+    stockVerification: "Stock Verification",
+    navText: "Banu Radha Textiles",
+  },
+  ta: {
+    langSettings: "மொழி அமைப்புகள்",
+    chooseLanguage: "உங்கள் விருப்பமான மொழியை தேர்ந்தெடுக்கவும்",
+    current: "தற்போதையது",
+    cancel: "ரத்துசெய்",
+    apply: "பயன்படுத்து",
+    operations: "செயல்பாடுகள்",
+    noTabsOpen: "தாவல்கள் இல்லை",
+    selectSidebar: "தொடங்க பக்கப்பட்டியிலிருந்து ஒன்றை தேர்ந்தெடுக்கவும்",
+    openPieceReceipt: "துண்டு ரசீதை திற",
+    signOut: "வெளியேறு",
+    createUser: "புதிய பயனரை உருவாக்கு",
+    users: "பயனர்கள்",
+    roles: "பாத்திரங்கள்",
+    // Tab labels
+    pieceReceipt: "துண்டு ரசீது",
+    tableLotAlloc: "மேஜை மற்றும் லாட் ஒதுக்கீடு",
+    defectEntry: "குறைபாடு பதிவு",
+    foldingPending: "மடிப்பு நிலுவை பட்டியல்",
+    pieceFolding: "துண்டு மடிப்பு பதிவு",
+    pieceVerification: "துண்டு சரிபார்ப்பு",
+    packingSlip: "பேக்கிங் சீட்டு",
+    clothDelivery: "துணி வழங்கல்",
+    dispatchVerification: "அனுப்புதல் சரிபார்ப்பு",
+    stockVerification: "இருப்பு சரிபார்ப்பு",
+    navText: "பானு ராதா டெக்ஸ்டைல்ஸ் ",
+  },
+  hi: {
+    langSettings: "भाषा सेटिंग्स",
+    chooseLanguage: "अपनी पसंदीदा भाषा चुनें",
+    current: "वर्तमान",
+    cancel: "रद्द करें",
+    apply: "लागू करें",
+    operations: "संचालन",
+    noTabsOpen: "कोई टैब खुला नहीं",
+    selectSidebar: "शुरू करने के लिए साइडबार से एक विकल्प चुनें",
+    openPieceReceipt: "पीस रसीद खोलें",
+    signOut: "साइन आउट",
+    createUser: "नया उपयोगकर्ता बनाएं",
+    users: "उपयोगकर्ता",
+    roles: "भूमिकाएं",
+    // Tab labels
+    pieceReceipt: "पीस रसीद",
+    tableLotAlloc: "टेबल और लॉट आवंटन",
+    defectEntry: "दोष प्रविष्टि",
+    foldingPending: "फोल्डिंग पेंडिंग सूची",
+    pieceFolding: "पीस फोल्डिंग प्रविष्टि",
+    pieceVerification: "पीस सत्यापन",
+    packingSlip: "पैकिंग स्लिप",
+    clothDelivery: "कपड़ा डिलीवरी",
+    dispatchVerification: "प्रेषण सत्यापन",
+    stockVerification: "स्टॉक सत्यापन",
+    navText: "बानू राधा टेक्सटाइल्स चन्हे",
+  },
+};
+
 // ── Language Popup (shown when user clicks Language Settings) ────────────────
-const LanguagePopup = ({ currentLang, onSelect, onClose }) => {
+const LanguagePopup = ({ currentLang, onSelect, onClose, nt }) => {
   const [selected, setSelected] = useState(currentLang);
 
   const handleApply = () => {
@@ -192,7 +277,7 @@ const LanguagePopup = ({ currentLang, onSelect, onClose }) => {
                 margin: 0,
               }}
             >
-              Language Settings
+              {nt.langSettings}
             </p>
             <p
               style={{
@@ -201,7 +286,7 @@ const LanguagePopup = ({ currentLang, onSelect, onClose }) => {
                 margin: "4px 0 0",
               }}
             >
-              Choose your preferred language
+              {nt.chooseLanguage}
             </p>
           </div>
           <button
@@ -289,7 +374,7 @@ const LanguagePopup = ({ currentLang, onSelect, onClose }) => {
                       fontWeight: 600,
                     }}
                   >
-                    Current
+                    {nt.current}
                   </span>
                 )}
 
@@ -339,7 +424,7 @@ const LanguagePopup = ({ currentLang, onSelect, onClose }) => {
               cursor: "pointer",
             }}
           >
-            Cancel
+            {nt.cancel}
           </button>
           <button
             onClick={handleApply}
@@ -356,7 +441,7 @@ const LanguagePopup = ({ currentLang, onSelect, onClose }) => {
               cursor: selected === currentLang ? "not-allowed" : "pointer",
             }}
           >
-            Apply
+            {nt.apply}
           </button>
         </div>
       </div>
@@ -385,7 +470,8 @@ const NavbarHeader = ({ onLogout }) => {
   };
 
   const activeLang = LANGUAGES.find((l) => l.code === currentLang);
-  
+  const nt = navTranslations[currentLang] ?? navTranslations["en"];
+
   console.log(roles, "roles");
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -432,7 +518,7 @@ const NavbarHeader = ({ onLogout }) => {
   console.log(currentUser, "currentUser");
 
   const isAdmin = Number(storedRoleId) === adminId;
-  
+
   console.log(isAdmin, "isAdmin");
 
   const handleUserMenuOpen = (event) => {
@@ -444,7 +530,7 @@ const NavbarHeader = ({ onLogout }) => {
   };
 
   const handleCreateUser = () => {
-    dispatch(push({ id: 5, name: "User" }));
+    dispatch(push({ id: 5, name: "User", label: nt.users }));
     handleUserMenuClose();
   };
   console.log(currentUser, "currentUser");
@@ -466,6 +552,7 @@ const NavbarHeader = ({ onLogout }) => {
   const tabData = [
     {
       name: "Piece Receipt",
+      label: nt.pieceReceipt,
       icon: LOT_ICON,
       value: count,
       gradient: "from-cyan-500 to-blue-600",
@@ -473,6 +560,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Table and Lot Allocation",
+      label: nt.tableLotAlloc,
       icon: <FaTableCells />,
       value: new Set(
         loadingResponse?.data?.map(
@@ -484,6 +572,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Defect Entry",
+      label: nt.defectEntry,
       icon: UNLOADING_ICON,
       value: new Set(
         UnLoading?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
@@ -493,6 +582,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Folding Pending List",
+      label: nt.foldingPending,
       icon: <MdOutlinePendingActions />,
       value: new Set(
         approval?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
@@ -502,6 +592,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Piece Folding Entry",
+      label: nt.pieceFolding,
       icon: <GiRolledCloth />,
       value: new Set(
         revert?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
@@ -509,9 +600,9 @@ const NavbarHeader = ({ onLogout }) => {
       gradient: "from-rose-500 to-pink-600",
       key: "PIECEFOLDINGENTRY",
     },
-
     {
       name: "Piece Verification",
+      label: nt.pieceVerification,
       icon: INSPECTION_ICON,
       value: new Set(
         InspectionDet?.data?.map(
@@ -523,6 +614,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Packing Slip",
+      label: nt.packingSlip,
       icon: <RiBillLine />,
       value: new Set(
         InspectionDet?.data?.map(
@@ -534,6 +626,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Cloth Delivery",
+      label: nt.clothDelivery,
       icon: <RiBillLine />,
       value: new Set(
         InspectionDet?.data?.map(
@@ -545,6 +638,7 @@ const NavbarHeader = ({ onLogout }) => {
     },
     {
       name: "Dispatch Verification",
+      label: nt.dispatchVerification,
       icon: <RiBillLine />,
       value: new Set(
         InspectionDet?.data?.map(
@@ -552,10 +646,11 @@ const NavbarHeader = ({ onLogout }) => {
         ),
       ).size,
       gradient: "from-teal-500 to-cyan-600",
-      key: "DISPATCHVERIFICATION",
+      key: "DispatchVerification",
     },
     {
       name: "Stock Verification",
+      label: nt.stockVerification,
       icon: <RiBillLine />,
       value: new Set(
         InspectionDet?.data?.map(
@@ -563,7 +658,7 @@ const NavbarHeader = ({ onLogout }) => {
         ),
       ).size,
       gradient: "from-teal-500 to-cyan-600",
-      key: "STOCKVERIFICATION",
+      key: "StockVerification",
     },
   ];
 
@@ -576,7 +671,8 @@ const NavbarHeader = ({ onLogout }) => {
 
   const handleTabChange = (name) => {
     if (!openTabs.tabs.some((tab) => tab.id === name)) {
-      dispatch(push({ id: name, name }));
+      const tabEntry = tabData.find((t) => t.name === name);
+      dispatch(push({ id: name, name, label: tabEntry?.label ?? name }));
     } else {
       dispatch(push({ id: name }));
     }
@@ -611,6 +707,7 @@ const NavbarHeader = ({ onLogout }) => {
           currentLang={currentLang}
           onSelect={handleLangSelect}
           onClose={() => setShowLangPopup(false)}
+          nt={nt}
         />
       )}
       <div
@@ -667,7 +764,7 @@ const NavbarHeader = ({ onLogout }) => {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  Banu Radha Textiles
+                   {nt.navText}
                 </Typography>
               </Box>
 
@@ -787,15 +884,28 @@ const NavbarHeader = ({ onLogout }) => {
                           <MdLanguage fontSize="20px" color={colors.primary} />
                         </ListItemIcon>
                         <ListItemText
-                          primary="Language Settings"
+                          primary={nt.langSettings}
                           secondary={
                             <span
                               style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
                                 fontSize: "12px",
                                 color: colors.textSecondary,
                               }}
                             >
-                              {activeLang?.flag} {activeLang?.label}
+                              <img
+                                src={activeLang?.flagImg}
+                                alt={activeLang?.shortName}
+                                style={{
+                                  width: "16px",
+                                  height: "11px",
+                                  borderRadius: "2px",
+                                  objectFit: "cover",
+                                }}
+                              />
+                              {activeLang?.label}
                             </span>
                           }
                         />
@@ -821,12 +931,14 @@ const NavbarHeader = ({ onLogout }) => {
                                 color={colors.primary}
                               />
                             </ListItemIcon>
-                            <ListItemText primary="Users" />
+                            <ListItemText primary={nt.createUser} />
                           </MenuItem>
 
                           <MenuItem
                             onClick={() => {
-                              dispatch(push({ id: 9, name: "Role" }));
+                              dispatch(
+                                push({ id: 9, name: "Role", label: nt.roles }),
+                              );
                               handleUserMenuClose();
                             }}
                             sx={{
@@ -843,7 +955,7 @@ const NavbarHeader = ({ onLogout }) => {
                                 color={colors.primary}
                               />
                             </ListItemIcon>
-                            <ListItemText primary="Roles" />
+                            <ListItemText primary={nt.roles} />
                           </MenuItem>
                         </Box>
                       )}
@@ -868,7 +980,7 @@ const NavbarHeader = ({ onLogout }) => {
                             },
                           }}
                         >
-                          Sign Out
+                          {nt.signOut}
                         </Button>
                       </Box>
                     </UserMenuPaper>
@@ -906,7 +1018,9 @@ const NavbarHeader = ({ onLogout }) => {
           >
             <div className="flex h-full  justify-between items-center px-3 mb-2 border-b border-gray-500/20 ">
               <div>
-                <h2 className={`text-xl font-bold ${textColor}`}>Operations</h2>
+                <h2 className={`text-xl font-bold ${textColor}`}>
+                  {nt.operations}
+                </h2>
               </div>
               <button
                 onClick={toggleDarkMode}
@@ -917,49 +1031,55 @@ const NavbarHeader = ({ onLogout }) => {
             </div>
 
             <div className=" space-y-2">
-              {filteredTabData?.map(({ name, icon, value, gradient }) => (
-                <button
-                  key={name}
-                  onClick={() => handleTabChange(name)}
-                  className={`flex items-center p-3 rounded-xl transition-all w-full group ${
-                    openTabs.tabs.some((tab) => tab.id === name && tab.active)
-                      ? `bg-gradient-to-r ${gradient} shadow-lg`
-                      : `${hoverBg} border border-transparent group-hover:border-gray-300/50`
-                  }`}
-                >
-                  <div
-                    className={`p-2 rounded-lg transition-all ${
+              {filteredTabData?.map(
+                ({ name, icon, value, gradient, label }) => (
+                  <button
+                    key={name}
+                    onClick={() => handleTabChange(name)}
+                    className={`flex items-center p-3 rounded-xl transition-all w-full group ${
                       openTabs.tabs.some((tab) => tab.id === name && tab.active)
-                        ? "bg-white/20 text-white"
-                        : `${darkMode ? "bg-gray-700/50" : "bg-gray-100"} ${darkMode ? "text-gray-300" : "text-gray-600"}`
-                    } mr-3`}
+                        ? `bg-gradient-to-r ${gradient} shadow-lg`
+                        : `${hoverBg} border border-transparent group-hover:border-gray-300/50`
+                    }`}
                   >
-                    {icon}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h3
-                      className={`font-medium ${
+                    <div
+                      className={`p-2 rounded-lg transition-all ${
                         openTabs.tabs.some(
                           (tab) => tab.id === name && tab.active,
                         )
-                          ? "text-white"
-                          : textColor
+                          ? "bg-white/20 text-white"
+                          : `${darkMode ? "bg-gray-700/50" : "bg-gray-100"} ${darkMode ? "text-gray-300" : "text-gray-600"}`
+                      } mr-3`}
+                    >
+                      {icon}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3
+                        className={`font-medium ${
+                          openTabs.tabs.some(
+                            (tab) => tab.id === name && tab.active,
+                          )
+                            ? "text-white"
+                            : textColor
+                        }`}
+                      >
+                        {label ?? name}
+                      </h3>
+                    </div>
+                    <span
+                      className={`text-xl font-bold px-2 py-1 rounded-full ${
+                        openTabs.tabs.some(
+                          (tab) => tab.id === name && tab.active,
+                        )
+                          ? "bg-white/20 text-white"
+                          : `${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`
                       }`}
                     >
-                      {name}
-                    </h3>
-                  </div>
-                  <span
-                    className={`text-xl font-bold px-2 py-1 rounded-full ${
-                      openTabs.tabs.some((tab) => tab.id === name && tab.active)
-                        ? "bg-white/20 text-white"
-                        : `${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`
-                    }`}
-                  >
-                    {value}
-                  </span>
-                </button>
-              ))}
+                      {value}
+                    </span>
+                  </button>
+                ),
+              )}
             </div>
           </div>
           {showMobileMenu && (
@@ -969,58 +1089,60 @@ const NavbarHeader = ({ onLogout }) => {
                 className={`h-full w-4/5 max-w-sm ${darkMode ? "bg-gray-800/95" : "bg-white/95"} shadow-xl overflow-y-auto animate-slide-in backdrop-blur-xl`}
               >
                 <div className="p-5 border-b border-gray-500/20 bg-gradient-to-r from-cyan-600 to-blue-700 text-white">
-                  <h2 className="text-xl font-bold">Operations</h2>
+                  <h2 className="text-xl font-bold">{nt.operations}</h2>
                 </div>
                 <div className="flex flex-col p-3 space-y-2">
-                  {filteredTabData.map(({ name, icon, value, gradient }) => (
-                    <button
-                      key={name}
-                      onClick={() => handleTabChange(name)}
-                      className={`flex items-center p-4 rounded-xl transition-all ${
-                        openTabs.tabs.some(
-                          (tab) => tab.id === name && tab.active,
-                        )
-                          ? `bg-gradient-to-r ${gradient} shadow-lg`
-                          : `${hoverBg}`
-                      }`}
-                    >
-                      <div
-                        className={`p-2 rounded-lg ${
+                  {filteredTabData.map(
+                    ({ name, icon, value, gradient, label }) => (
+                      <button
+                        key={name}
+                        onClick={() => handleTabChange(name)}
+                        className={`flex items-center p-4 rounded-xl transition-all ${
                           openTabs.tabs.some(
                             (tab) => tab.id === name && tab.active,
                           )
-                            ? "bg-white/20 text-white"
-                            : `${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`
-                        } mr-3`}
+                            ? `bg-gradient-to-r ${gradient} shadow-lg`
+                            : `${hoverBg}`
+                        }`}
                       >
-                        {icon}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <h3
-                          className={`font-medium ${
+                        <div
+                          className={`p-2 rounded-lg ${
                             openTabs.tabs.some(
                               (tab) => tab.id === name && tab.active,
                             )
-                              ? "text-white"
-                              : textColor
+                              ? "bg-white/20 text-white"
+                              : `${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`
+                          } mr-3`}
+                        >
+                          {icon}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <h3
+                            className={`font-medium ${
+                              openTabs.tabs.some(
+                                (tab) => tab.id === name && tab.active,
+                              )
+                                ? "text-white"
+                                : textColor
+                            }`}
+                          >
+                            {label ?? name}
+                          </h3>
+                        </div>
+                        <span
+                          className={`text-xl font-bold px-2 py-1 rounded-full ${
+                            openTabs.tabs.some(
+                              (tab) => tab.id === name && tab.active,
+                            )
+                              ? "bg-white/20 text-white"
+                              : `${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`
                           }`}
                         >
-                          {name}
-                        </h3>
-                      </div>
-                      <span
-                        className={`text-xl font-bold px-2 py-1 rounded-full ${
-                          openTabs.tabs.some(
-                            (tab) => tab.id === name && tab.active,
-                          )
-                            ? "bg-white/20 text-white"
-                            : `${darkMode ? "bg-gray-700/50 text-gray-300" : "bg-gray-100 text-gray-600"}`
-                        }`}
-                      >
-                        {value}
-                      </span>
-                    </button>
-                  ))}
+                          {value}
+                        </span>
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
             </div>
@@ -1047,7 +1169,7 @@ const NavbarHeader = ({ onLogout }) => {
                       onClick={() => dispatch(push({ id: tab.id }))}
                       className="focus:outline-none text-sm whitespace-nowrap flex items-center gap-1"
                     >
-                      {tab.name}
+                      {tab.label ?? tab.name}
                     </button>
                     <button
                       className={`p-1 rounded-full transition-all ${darkMode ? "text-gray-400 hover:bg-gray-700/70 hover:text-white" : "text-gray-500 hover:bg-gray-200"}`}
@@ -1097,16 +1219,16 @@ const NavbarHeader = ({ onLogout }) => {
                       </div>
                     </div>
                     <h3 className={`text-lg font-medium ${textColor} mb-2`}>
-                      No tabs open
+                      {nt.noTabsOpen}
                     </h3>
                     <p className={`${mutedTextColor} mb-6`}>
-                      Select an option from the sidebar to get started
+                      {nt.selectSidebar}
                     </p>
                     <button
                       onClick={() => handleTabChange("Piece Receipt")}
                       className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg transform hover:-translate-y-0.5"
                     >
-                      Open Piece Receipt
+                      {nt.openPieceReceipt}
                     </button>
                   </div>
                 </div>

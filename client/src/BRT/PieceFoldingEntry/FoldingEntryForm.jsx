@@ -437,12 +437,12 @@ const PieceFoldingForm = ({ onClose }) => {
         <h1 className="text-xl ml-2 font-bold text-center">{t.title}</h1>
 
         <div>
-          <button
+          {/* <button
             onClick={onClose}
             className="bg-red-600 mr-2 text-white  py-1 rounded-lg hover:bg-red-700 transition px-2"
           >
             {t.back}
-          </button>
+          </button> */}
           <button
             onClick={saveData}
             className="bg-blue-600 mr-2 text-white py-1 rounded-lg hover:bg-blue-700 transition px-2"

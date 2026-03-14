@@ -544,12 +544,12 @@ const PieceReceipt = ({
         <h1 className="text-xl ml-2 font-bold text-center">{t.title}</h1>
 
         <div className="flex items-center gap-2 mr-2">
-          <button
+          {/* <button
             onClick={onClose}
             className="bg-red-600 text-white py-1 rounded-lg hover:bg-red-700 transition px-2"
           >
             {t.back}
-          </button>
+          </button> */}
           <button
             onClick={saveData}
             className="bg-blue-600 text-white py-1 rounded-lg hover:bg-blue-700 transition px-2"

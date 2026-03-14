@@ -42,7 +42,7 @@ const TableLotAllot = () => {
   const t = translations[lang] ?? translations["en"];
 
   const TABDATE = new Date().toLocaleDateString("en-GB");
-  const [openForm, setOpenForm] = useState(false);
+  const [openForm, setOpenForm] = useState(true);
   const [editData, setEditData] = useState(null);
   const [selectedLotNo, setSelectedLotNo] = useState("");
   const [selectedNonGridId, setSelectedNonGridId] = useState("");
