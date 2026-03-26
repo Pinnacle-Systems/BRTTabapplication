@@ -2,6 +2,7 @@
 /* eslint-disable no-unused-vars */
 import { useState, useRef, useCallback, useMemo } from "react";
 import { io } from "socket.io-client";
+import socket from "../../Utils/socket.js";
 import { useDispatch } from "react-redux";
 import tableLotApi, {
   useGetTablesQuery,
@@ -208,39 +209,56 @@ const TableLotForm = ({
       skip: !storedUserId,
     });
   const dispatch = useDispatch();
-  console.log(workStatus, "workStatus");
+
+  // useEffect(() => {
+  //   socketRef.current = io(process.env.REACT_APP_SERVER_URL);
+
+  //   socketRef.current.on("tableUpdated", (data) => {
+  //     if (!tablesUninitialized) {
+
+  //       // 🔥 Refetch tables automatically
+  //       refetch();
+  //     }
+  //   });
+  //   socketRef.current.on("pieceUpdated", (data) => {
+  //     if (!piecesUninitialized) {
+  //       piecesrefetch();
+  //     }
+  //   });
+  //   socketRef.current.on("workStatusUpdated", () => {
+  //     dispatch(tableLotApi.util.invalidateTags(["WorkStatus"]));
+  //   });
+
+  //   return () => {
+  //     socketRef.current.disconnect();
+  //   };
+  // }, [
+  //   refetch,
+  //   piecesrefetch,
+  //   refetchWorkStatus,
+  //   piecesUninitialized,
+  //   tablesUninitialized,
+  // ]);
   useEffect(() => {
-    socketRef.current = io(process.env.REACT_APP_SERVER_URL);
-
-    socketRef.current.on("tableUpdated", (data) => {
-      if (!tablesUninitialized) {
-        console.log("Tables updated:", data?.tableIds);
-
-        // 🔥 Refetch tables automatically
-        refetch();
-      }
-    });
-    socketRef.current.on("pieceUpdated", (data) => {
-      if (!piecesUninitialized) {
-        console.log("Piece updated:", data?.pieceId);
-        piecesrefetch();
-      }
-    });
-    socketRef.current.on("workStatusUpdated", () => {
+    const handleTableUpdate = () => {
+      if (!tablesUninitialized) refetch();
+    };
+    const handlePieceUpdate = () => {
+      if (!piecesUninitialized) piecesrefetch();
+    };
+    const handleWorkStatusUpdate = () =>
       dispatch(tableLotApi.util.invalidateTags(["WorkStatus"]));
-    });
+
+    socket.on("tableUpdated", handleTableUpdate);
+    socket.on("pieceUpdated", handlePieceUpdate);
+    socket.on("workStatusUpdated", handleWorkStatusUpdate);
 
     return () => {
-      socketRef.current.disconnect();
+      socket.off("tableUpdated", handleTableUpdate);
+      socket.off("pieceUpdated", handlePieceUpdate);
+      socket.off("workStatusUpdated", handleWorkStatusUpdate);
     };
-  }, [
-    refetch,
-    piecesrefetch,
-    refetchWorkStatus,
-    piecesUninitialized,
-    tablesUninitialized,
-  ]);
-
+  }, [refetch, piecesrefetch, dispatch,tablesUninitialized, piecesUninitialized]);
   useEffect(() => {
     if (!isAdmin && !isSuppervisor) {
       setCheckerId(storedUserId);
@@ -264,9 +282,7 @@ const TableLotForm = ({
       skip: !selectedLotNo,
     },
   );
-  console.log(cloths, "cloths");
 
-  console.log(pieces, "pieces");
   useEffect(() => {
     if (workStatus?.hasActiveWork) {
       const work = workStatus.data;
@@ -289,6 +305,9 @@ const TableLotForm = ({
         tableNumbers,
         meters: work.meters,
       });
+      if (work?.checkerId) {
+        setCheckerId(work.checkerId);
+      }
     } else {
       setWorkingDetails(null);
     }
@@ -480,6 +499,10 @@ const TableLotForm = ({
         showConfirmButton: false,
       });
       onNew();
+      // ✅ restore checker immediately
+      if (!isAdmin && !isSuppervisor) {
+        setCheckerId(storedUserId);
+      }
     } catch (err) {
       Swal.fire({
         icon: "Warning",

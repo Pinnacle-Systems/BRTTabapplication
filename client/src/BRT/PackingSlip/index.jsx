@@ -370,7 +370,7 @@ const PackingSlip = () => {
                           {Number(row.METERS).toFixed(2)}
                         </td>
                         <td className=" py-2 border-r text-right pr-1">
-                          {Number(row.WEIGHT).toFixed(2)}
+                          {Number(row.WEIGHT).toFixed(3)}
                         </td>
                         <td className=" py-2 border-r text-right pr-1">
                           {row.METERS

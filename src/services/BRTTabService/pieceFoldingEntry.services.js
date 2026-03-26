@@ -66,8 +66,6 @@ export async function getPieceAgainstLotNo(req, res) {
 
   try {
     const sql = `select 
-    
-
     DT.TABLENOTAB,
     DT.SPLITPCSNO,
     DT.TOTPOINTSTAB,
@@ -81,7 +79,9 @@ export async function getPieceAgainstLotNo(req, res) {
     from Gtpiecesdefectdet PD
 LEFT JOIN Gtdefectdettab DT ON  DT.GTPIECESDEFECTDETID = PD.GTPIECESDEFECTDETID
 LEFT JOIN TABUSER TB ON TB.USERID = DT.CHECKER
-WHERE PD.RECEIPTNO = ${lotNo} AND DT.TABAPPROVAL IS NOT NULL`;
+WHERE PD.RECEIPTNO = ${lotNo} AND DT.TABAPPROVAL IS NOT NULL
+AND (DT.PCSFOLDED IS NULL OR DT.PCSFOLDED != 'YES')
+`;
 
     console.log(sql, "sql fro ah");
 
@@ -121,6 +121,7 @@ export async function updateFoldingEntry(req, res) {
     foldPercentage,
     weight,
     receiptMeters,
+    PCSFOLDED,
   } = req.body;
 
   const { selectedLotNo } = req.params;
@@ -269,7 +270,14 @@ export async function updateFoldingEntry(req, res) {
         },
       );
     }
-
+    // After the pieceCheck and upsert logic, add this update
+    // Find the piece in Gtdefectdettab and mark PCSFOLDED = 'YES'
+    await connection.execute(
+      `UPDATE Gtdefectdettab
+   SET PCSFOLDED = 'YES'
+   WHERE GTDEFECTDETTABID = :pieceNo`,
+      { pieceNo: selectedPiece },
+    );
     await connection.commit();
 
     return res.status(200).json({

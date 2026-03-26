@@ -144,7 +144,8 @@ const PieceFoldingForm = ({ onClose }) => {
   const [actualPoints, setActualPoints] = useState("");
   const [foldPercentage, setFoldPercentage] = useState("");
   const [weight, setWeight] = useState("");
-
+  const [subGridId,setSubGrid] = useState("")
+  let PCSFOLDED = "YES"
   const resetForm = () => {
     setSelectedLotNo("");
     setTableNo("");
@@ -300,8 +301,8 @@ const PieceFoldingForm = ({ onClose }) => {
     // label: `${cloth?.BASEPCSNO} ${cloth?.SPLITPCSNO ? "-" : ""} ${cloth?.SPLITPCSNO ? cloth?.SPLITPCSNO : ""}`,
     // label: cloth?.SPLITPCSNO,
     label: cloth?.SPLITPCSNO ?? cloth?.BASEPCSNO,
-
     value: cloth?.ID,
+
   }));
 
   const { data: roles } = useGetRolesQuery();
@@ -372,7 +373,7 @@ const PieceFoldingForm = ({ onClose }) => {
     actualPoints: Number(actualPoints),
     foldPercentage: Number(foldPercentage),
     weight: Number(weight),
-    receiptMeters: Number(receiptMeters),
+    receiptMeters: Number(receiptMeters),PCSFOLDED
   };
   const handleSubmitCustom = async (callback, data) => {
     try {
