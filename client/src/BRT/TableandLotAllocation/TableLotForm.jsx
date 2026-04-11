@@ -60,9 +60,11 @@ const translations = {
     validCloth: "Please Select Cloth",
     validPiece: "Please Select Piece",
     validTable: "Please Select Table",
+    loomNo:"Loom No",
+    weaverPieceNo:"Weaver Pc No"
   },
   ta: {
-    title: "மேஜை,லாட் துண்டு ஒதுக்கீடு",
+    title: "மேஜை,லாட் பீஸ் ஒதுக்கீடு",
     back: "பின்செல்",
     save: "சேமி",
     tableDetails: "மேஜை விவரங்கள்",
@@ -76,7 +78,7 @@ const translations = {
     selectLot: "லாட் தேர்ந்தெடு",
     clothName: "துணி பெயர்",
     selectCloth: "துணியை தேர்ந்தெடு",
-    pieceNo: "துண்டு எண்",
+    pieceNo: "பீஸ் எண்",
     meters: "மீட்டர்கள்",
     widerTable: "பல மேஜைகள்",
     loading: "ஏற்றுகிறது...",
@@ -84,7 +86,7 @@ const translations = {
     activeWork: "தற்போது செயலில் உள்ள பணி",
     section: "பிரிவு",
     checker: "சரிபார்ப்பாளர்",
-    piece: "துண்டு எண்",
+    piece: "பீஸ் எண்",
     tableNo: "மேஜை எண்",
     goToDefect: "குறைபாடு பதிவுக்கு செல்",
     revertWork: "பணியை திரும்பப் பெறு",
@@ -98,6 +100,8 @@ const translations = {
     validCloth: "துணியை தேர்ந்தெடுக்கவும்",
     validPiece: "துண்டை தேர்ந்தெடுக்கவும்",
     validTable: "மேஜையை தேர்ந்தெடுக்கவும்",
+    loomNo:"லூம் எண்",
+    weaverPieceNo:"வீவர் பீஸ் எண்"
   },
   hi: {
     title: "टेबल और लॉट पीस आवंटन",
@@ -136,6 +140,8 @@ const translations = {
     validCloth: "कृपया कपड़ा चुनें",
     validPiece: "कृपया पीस चुनें",
     validTable: "कृपया टेबल चुनें",
+        loomNo:"लूम नं ",
+    weaverPieceNo:"वीवर पीसी नं"
   },
 };
 
@@ -165,7 +171,7 @@ const TableLotForm = ({
   selectedNonGridId,
   setSelectedNonGridId,
   onNew,
-  TABDATE,
+  TABDATE,loomNo,setLoomNo,weaverPieceNo, setWeaverPieceNo
 }) => {
   const { lang } = useLanguage();
   const t = translations[lang] ?? translations["en"];
@@ -181,6 +187,7 @@ const TableLotForm = ({
   const [allocatedPieceId, setAllocatedPieceId] = useState("");
   const [allocatedTableId, setAllocatedtableId] = useState([]);
   const [widerTable, setWiderTable] = useState("No");
+
   let NOOFPCSSTK = 1;
   let PCSTAKEN = "Yes";
   let NOTES1 = "YES";
@@ -258,7 +265,13 @@ const TableLotForm = ({
       socket.off("pieceUpdated", handlePieceUpdate);
       socket.off("workStatusUpdated", handleWorkStatusUpdate);
     };
-  }, [refetch, piecesrefetch, dispatch,tablesUninitialized, piecesUninitialized]);
+  }, [
+    refetch,
+    piecesrefetch,
+    dispatch,
+    tablesUninitialized,
+    piecesUninitialized,
+  ]);
   useEffect(() => {
     if (!isAdmin && !isSuppervisor) {
       setCheckerId(storedUserId);
@@ -349,7 +362,7 @@ const TableLotForm = ({
     NOOFPCSSTK,
     PCSTAKEN,
     NOTES1,
-    storedUserId: parseInt(storedUserId),
+    storedUserId: parseInt(storedUserId),weaverPieceNo,loomNo
   };
   console.log(
     selectedNonGridId,
@@ -902,6 +915,26 @@ const TableLotForm = ({
                     value={Number(dcMeter || 0)?.toFixed(2)}
                     readOnly
                     className="w-full border rounded-lg px-1 py-[7px] text-right bg-gray-100"
+                  />
+                </div>
+                 <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">{t.weaverPieceNo}</label>
+                  <input
+                    type="text"
+                    value={weaverPieceNo}
+                    onChange={(e) => setWeaverPieceNo(e.target.value)}
+                    
+                    className="w-full border rounded-lg px-1 py-[7px] text-right "
+                  />
+                </div>
+                 <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">{t.loomNo}</label>
+                  <input
+                    type="text"
+                    value={loomNo}
+                    onChange={(e) => setLoomNo(e.target.value)}
+                    
+                    className="w-full border rounded-lg px-1 py-[7px] text-right "
                   />
                 </div>
                 <div className="flex flex-col flex-1 lg:min-w-[8rem] ">

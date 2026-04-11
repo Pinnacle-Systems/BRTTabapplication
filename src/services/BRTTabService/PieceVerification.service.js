@@ -3,9 +3,10 @@ import { io } from "../../../index.js"; // adjust path properly
 import oracledb from "oracledb";
 
 export async function getLotNo(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection(); 
     const sql = `SELECT C.LOTNO,L.DOCID FROM PCS_APPROVAL C
 JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LOTNO`;
     console.log(sql, "sql for getLotNo");
@@ -31,9 +32,10 @@ JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LOTNO`;
 export async function getFoldingDetailsByLot(req, res) {
   const { lotNo } = req.params;
 
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection(); 
     // 1️⃣ Get DOCID from PCS_APPROVAL
     const docResult = await connection.execute(
       `SELECT DOCID FROM PCS_APPROVAL WHERE LOTNO = :lotNo`,
@@ -93,12 +95,16 @@ WHERE A.DOCID = :docId AND  NVL(A.NOTES,'NO') <> 'YES' `,
     });
   }
 }
+
+
+
 export async function updatePieceVerification(req, res) {
   const { foldingItems, lotNo } = req.body;
 
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection(); 
     for (const piece of foldingItems) {
       const { NOTES, ID } = piece;
 

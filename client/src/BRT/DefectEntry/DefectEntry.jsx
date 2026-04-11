@@ -80,6 +80,8 @@ const translations = {
     defect: "defect",
     defects: "defects",
     tablePoints: "Points",
+    loomNo: "Loom No",
+    weaverPieceNo: "Weaver Pc No",
   },
   ta: {
     title: "குறைபாடு பதிவு",
@@ -130,6 +132,8 @@ const translations = {
     defect: "குறைபாடு",
     defects: "குறைபாடுகள்",
     tablePoints: "புள்ளி",
+    loomNo: "லூம் எண்",
+    weaverPieceNo: "வீவர் பீஸ் எண்",
   },
   hi: {
     title: "दोष प्रविष्टि",
@@ -179,6 +183,8 @@ const translations = {
     defect: "दोष",
     defects: "दोष",
     tablePoints: "अंक",
+    loomNo: "लूम नं ",
+    weaverPieceNo: "वीवर पीसी नं",
   },
 };
 

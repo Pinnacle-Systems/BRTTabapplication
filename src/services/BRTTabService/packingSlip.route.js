@@ -1,7 +1,7 @@
 import { getConnection } from "../../constants/db.connection.js";
 
 export async function getBarCodeData(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { barCode } = req.params;
 
   const joinedSql = `
@@ -25,6 +25,7 @@ export async function getBarCodeData(req, res) {
   `;
 
   try {
+    connection = await getConnection();
     // Step 1: Check if barCode exists in parent table GTPIECESCHK
     const parentResult = await connection.execute(
       `SELECT GTPIECESCHKID FROM GTPIECESCHK WHERE BARCODE = :barCode`,
@@ -74,11 +75,12 @@ export async function getBarCodeData(req, res) {
   }
 }
 export async function getLotDetails(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { selectedLotId } = req.params;
   console.log(selectedLotId, "received params");
 
   try {
+    connection = await getConnection();
     const sql = `SELECT A.GTFABRICRECEIPTID,B.GTFABRICRECEIPTDETID,B.LOTNO1,B.CLOTHNAME as clothId,C.CLOTHNAME,B.PCS,B.MTRS
 FROM GTFABRICRECEIPT A
 JOIN GTFABRICRECEIPTDET B ON B.GTFABRICRECEIPTID = A.GTFABRICRECEIPTID
@@ -105,9 +107,10 @@ WHERE A.GTFABRICRECEIPTID='${selectedLotId}'`;
 }
 
 export async function get(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const sql = `
 
        SELECT
@@ -209,9 +212,10 @@ LEFT JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = D.CLOTHNAME
 }
 
 export async function getOne(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const { selectedLotId, selectedGridId } = req.params;
     const sql = `
 
@@ -316,9 +320,10 @@ LEFT JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = D.CLOTHNAME
 }
 
 export async function update(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const { lotItems } = req.body;
     console.log(lotItems, "updatinglotItems");
     let NOTES1 = "TabUser";

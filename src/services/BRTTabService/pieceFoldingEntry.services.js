@@ -3,9 +3,10 @@ import { io } from "../../../index.js"; // adjust path properly
 import oracledb from "oracledb";
 
 export async function getFoldingPending(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const sql = `select FR.DOCID,GT.RECEIPTNO from Gtpiecesdefectdet   GT
 LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO`;
 
@@ -29,12 +30,13 @@ LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO`;
 }
 
 export async function getFoldingPendingById(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { pieceId } = req.params;
 
   // console.log(foldingId, "lotId getPieces");
 
   try {
+    connection = await getConnection();
     const sql = `select * from Gtdefectdettab GT where GT.GTDEFECTDETTABID = ${pieceId} `;
     // console.log(sql, "sql for getPieces");
     const result = await connection.execute(sql);
@@ -59,12 +61,13 @@ export async function getFoldingPendingById(req, res) {
 }
 
 export async function getPieceAgainstLotNo(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { lotNo } = req.params;
 
   console.log(lotNo, "lotId getPieces");
 
   try {
+    connection = await getConnection();
     const sql = `select 
     DT.TABLENOTAB,
     DT.SPLITPCSNO,
@@ -126,9 +129,10 @@ export async function updateFoldingEntry(req, res) {
 
   const { selectedLotNo } = req.params;
 
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     let docId;
 
     // 1️⃣ Check if LOT already exists

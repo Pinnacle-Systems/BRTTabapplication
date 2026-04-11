@@ -15,6 +15,26 @@ import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { socketMain } from './src/sockets/socket.js';
 import { pieceReceipt, tableLot,defectEntry, foldingPendinglist, pieceFoldingEntry, pieceVerification, packingSlip } from './src/routes/BRTTab/index.js';
+
+import { initPool, closePool } from "./src/constants/db.connection.js";
+
+const brtconnectionPool = initPool()
+
+const gracefulAppShutdown = async () => {
+  console.log('Application shutting down...');
+
+  try {
+    console.log("Closing database connections... ");
+    await initPool.end();
+    console.log("Database connections closed succesfully");
+    process.exit(0);
+  }
+  catch(err) {
+    console.error("Error during shutdown... ");
+    process.exit(1);
+  }
+}
+
 const app = express()
 app.use(express.json())
 
@@ -100,3 +120,6 @@ io.on("connection", socketMain);
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
+
+process.on('SIGINT', gracefulAppShutdown);
+process.on('SIGTERM', gracefulAppShutdown);

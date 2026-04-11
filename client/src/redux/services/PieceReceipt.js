@@ -103,6 +103,18 @@ const pieceReceiptApi = createApi({
       }),
       invalidatesTags: ["pieceReceipt"],
     }),
+    getloomWeaverById: builder.query({
+      query: ({ selectedLotId, selectedGridId }) => {
+        return {
+          url: `${PIECERECEIPT}/${selectedLotId}/${selectedGridId}`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["pieceReceipt"],
+    }),
   }),
 });
 

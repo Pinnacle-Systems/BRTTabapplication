@@ -3,9 +3,10 @@ import { io } from "../../../index.js"; // adjust path properly
 import oracledb from "oracledb";
 
 export async function getFoldingPending(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+     connection = await getConnection();
     const sql = `select FR.DOCID,GT.RECEIPTNO from Gtpiecesdefectdet   GT
 LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO`;
 
@@ -29,12 +30,13 @@ LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO`;
 }
 
 export async function getFoldingPendingById(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { lotNo } = req.params;
 
   // console.log(foldingId, "lotId getPieces");
 
   try {
+     connection = await getConnection();
     const sql = `select 
     
 
@@ -81,9 +83,10 @@ WHERE PD.RECEIPTNO = ${lotNo} AND DT.TABAPPROVAL IS NULL AND DT.GTDEFECTDETTABID
 export async function getGradeData(req, res) {
   console.log("getGrdaeData");
 
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+     connection = await getConnection();
     const sql = `select * from GTGRADEDET`;
 
     console.log(sql, "sql for get grade data");
@@ -108,11 +111,12 @@ export async function getGradeData(req, res) {
 }
 
 export async function getLotDetails(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { pieceId } = req.params;
   console.log(pieceId, "received params");
 
   try {
+     connection = await getConnection();
     const sql = `SELECT  C.CheckingSectionID,
         S.SECTIONNAME,
         C.CheckerID,
@@ -159,9 +163,10 @@ export async function getLotDetails(req, res) {
 }
 
 export async function getDefects(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+     connection = await getConnection();
     const sql = `select GTPIECEDEFMASTID,DEFECTNAME,POINTS from gtpiecedefmast`;
     console.log(sql, "sql for getDefects");
     const result = await connection.execute(sql);
@@ -186,9 +191,10 @@ export async function getDefects(req, res) {
 export async function updateFolding(req, res) {
   const { foldingItems, lotNo } = req.body;
 
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+     connection = await getConnection();
     for (const piece of foldingItems) {
       const { TABAPPROVAL, SUBGRIDID } = piece;
 
@@ -223,12 +229,13 @@ export async function updateFolding(req, res) {
 }
 
 export async function getDefectsById(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { subGridId } = req.params;
 
   // console.log(foldingId, "lotId getPieces");
 
   try {
+     connection = await getConnection();
     const sql = `select B.DEFECTNAME,A.DEFECTPOINS1,A.MTRAT,A.NOOGTIME,A.TOTPOINS1 from Gtpcsdefdet A
 left join gtpiecedefmast B ON  B.GTPIECEDEFMASTID = A.DEFECTNAME1
 WHERE A.GTDEFECTDETTABID = ${subGridId} `;

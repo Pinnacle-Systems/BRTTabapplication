@@ -1,10 +1,12 @@
 import { getConnection } from "../../constants/db.connection.js";
 
 export async function getLotNo(req, res) {
-  const connection = await getConnection(res);
+  let connection;
+  // const connection = await getConnection(res);
   //   const { branch } = req.query;
 
   try {
+    connection = await getConnection(); // borrows from pool
     const sql = `select gtfabricreceiptid,docid from gtfabricreceipt`;
     console.log(sql, "sql for Piecereceipt");
     const result = await connection.execute(sql);
@@ -22,15 +24,19 @@ export async function getLotNo(req, res) {
     console.error("Error retrieving data:", err);
     res.status(500).json({ error: "Internal Server Error" });
   } finally {
-    await connection.close();
+    if (connection) {
+      await connection.close(); // returns to pool — does NOT destroy
+    }
   }
 }
+
 export async function getLotDetails(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { selectedLotId } = req.params;
   console.log(selectedLotId, "received params");
 
   try {
+    connection = await getConnection();
     const sql = `SELECT A.GTFABRICRECEIPTID,B.GTFABRICRECEIPTDETID,B.LOTNO1,B.CLOTHNAME as clothId,C.CLOTHNAME,B.PCS,B.MTRS
 FROM GTFABRICRECEIPT A
 JOIN GTFABRICRECEIPTDET B ON B.GTFABRICRECEIPTID = A.GTFABRICRECEIPTID
@@ -57,9 +63,10 @@ WHERE A.GTFABRICRECEIPTID='${selectedLotId}'`;
 }
 
 export async function get(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const sql = `
 
        SELECT
@@ -161,9 +168,10 @@ LEFT JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = D.CLOTHNAME
 }
 
 export async function getOne(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const { selectedLotId, selectedGridId } = req.params;
     const sql = `
 
@@ -268,9 +276,10 @@ LEFT JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = D.CLOTHNAME
 }
 
 export async function update(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const { lotItems } = req.body;
     console.log(lotItems, "updatinglotItems");
     let NOTES1 = "TabUser";
@@ -328,7 +337,7 @@ export async function update(req, res) {
           pcNo: item.pcNo,
           meters: item.meters,
           CHK: item.CHK,
-          notes:NOTES1,
+          notes: NOTES1,
         },
         { autoCommit: false },
       );
@@ -351,5 +360,67 @@ export async function update(req, res) {
     });
   } finally {
     await connection.close();
+  }
+}
+
+export async function getLoomAndWeaver(req, res) {
+  let connection;
+
+  try {
+    connection = await getConnection();
+
+    const { lotId, pcno } = req.query;
+
+    if (!lotId || !pcno) {
+      return res.status(400).json({
+        statusCode: 1,
+        message: "lotId and pcno are required",
+      });
+    }
+
+    const result = await connection.execute(
+      `
+      SELECT 
+        LOOMNO,
+        WEAVERPCSNO
+      FROM GTSCHEDULESUNDET
+      WHERE GTFABRICRECEIPTID = :lotId
+        AND SNO = :pcno
+      `,
+      { lotId, pcno },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT },
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        statusCode: 1,
+        message: "No matching record found",
+      });
+    }
+
+    const row = result.rows[0];
+
+    return res.json({
+      statusCode: 0,
+      data: {
+        loomNo: row.LOOMNO,
+        weaverPieceNo: row.WEAVERPCSNO,
+      },
+    });
+  } catch (err) {
+    console.error("Oracle Error:", err);
+
+    return res.status(500).json({
+      statusCode: 1,
+      message: err.message,
+    });
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error("Connection close error:", err);
+      }
+    }
   }
 }
