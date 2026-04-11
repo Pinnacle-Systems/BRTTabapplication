@@ -3,9 +3,10 @@ import { io } from "../../../index.js"; // adjust path properly
 import oracledb from "oracledb";
 
 export async function getLotNo(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection(); 
     const sql = `SELECT C.LOTNO,L.DOCID FROM PCS_APPROVAL C
 JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LOTNO`;
     console.log(sql, "sql for getLotNo");
@@ -31,9 +32,10 @@ JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LOTNO`;
 export async function getFoldingDetailsByLot(req, res) {
   const { lotNo } = req.params;
 
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection(); 
     // 1️⃣ Get DOCID from PCS_APPROVAL
     const docResult = await connection.execute(
       `SELECT DOCID FROM PCS_APPROVAL WHERE LOTNO = :lotNo`,
@@ -93,43 +95,39 @@ WHERE A.DOCID = :docId AND  NVL(A.NOTES,'NO') <> 'YES' `,
     });
   }
 }
-export async function updatePieceVerification(req, res) {
 
+
+
+export async function updatePieceVerification(req, res) {
   const { foldingItems, lotNo } = req.body;
 
-
-  const connection = await getConnection(res);
-
+  let connection;
 
   try {
-
+    connection = await getConnection(); 
     for (const piece of foldingItems) {
-
       const { NOTES, ID } = piece;
 
-      console.log("connection: ", connection)
+      console.log("connection: ", connection);
       await connection.execute(
         `UPDATE PCS_APPROVAL_DETAILS
-         SET NOTES = :status
+         SET NOTES = :status , FOLDINGAPPROVED = :foldingApproved
          WHERE ID = :id`,
         {
           status: NOTES ? "YES" : "",
-          id: ID
-        }
+          foldingApproved: NOTES ? "WAITING FOR APPROVAL" : "",
+          id: ID,
+        },
       );
-    console.log("piece", piece);
-
+      console.log("piece", piece);
     }
 
     await connection.commit();
 
-
     return res.status(200).json({
       message: `Folding entry updated successfully for ${foldingItems?.length} items`,
     });
-
   } catch (error) {
-
     await connection.rollback();
 
     console.error("Update Defect Entry Error:", error);
@@ -138,6 +136,5 @@ export async function updatePieceVerification(req, res) {
       message: "Server error",
       error: error.message,
     });
-
   }
 }

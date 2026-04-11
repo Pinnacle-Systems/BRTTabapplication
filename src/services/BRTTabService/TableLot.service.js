@@ -3,9 +3,10 @@ import { io } from "../../../index.js"; // adjust path properly
 import oracledb from "oracledb";
 
 export async function getCheckingSection(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const sql = `select GTCHECKINGMASTID,SECTIONNAME from gtcheckingmast`;
     console.log(sql, "sql for getCheckingSection");
     const result = await connection.execute(sql);
@@ -26,10 +27,13 @@ export async function getCheckingSection(req, res) {
     await connection.close();
   }
 }
+
+
 export async function getTables(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const sql1 = `SELECT GTCHKTABLEMASTID, CHECKINGNO,TABLEAVAILBLE FROM GTCHKTABLEMAST WHERE TABLEAVAILBLE IS NULL OR UPPER(TABLEAVAILBLE) <> 'NO'`;
     const sql = `SELECT GTCHKTABLEMASTID, CHECKINGNO, TABLEAVAILBLE FROM GTCHKTABLEMAST`;
     console.log(sql, "sql for getTables");
@@ -51,10 +55,13 @@ export async function getTables(req, res) {
     await connection.close();
   }
 }
+
+
 export async function getLotNo(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const sql1 = `select A.GTLOTCHKPLANID as nonGridId,A.GTLOTCHKPLANDETID as gridId,A.LOTNO from Gtlotchkplandet A`;
     const sql = `select A.LOTNO as LOTNO,B.DOCID as LOTDOCID,A.GTLOTALLOTMENTID as nongiidId,c.DOCID from gtlotallotmentdet A 
 left join GTFABRICRECEIPT B ON A.LOTNO = B.GTFABRICRECEIPTID
@@ -78,14 +85,17 @@ left join GTLOTALLOTMENT c on A.GTLOTALLOTMENTID = c.GTLOTALLOTMENTID`;
     await connection.close();
   }
 }
+
+
 export async function getClothName(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   const { selectedLotNo } = req.params;
 
   console.log(selectedLotNo, "params for getClothName");
 
   try {
+    connection = await getConnection();
     const sql1 = `select A.GTLOTCHKPLANID as nonGridId,A.GTLOTCHKPLANDETID as gridId,A.LOTNO,A.CLOTHNAME as CLOTHID,C.CLOTHNAME from Gtlotchkplandet A
 JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = A.CLOTHNAME
 WHERE A.LOTNO = '${selectedLotNo}'`;
@@ -112,8 +122,11 @@ WHERE A.LOTNO = '${selectedLotNo}'`;
     await connection.close();
   }
 }
+
+
+
 export async function getPieces(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { selectedClothId, selectedLotNo, lotCheckingNoId } = req.params;
 
   console.log(
@@ -124,6 +137,7 @@ export async function getPieces(req, res) {
   );
 
   try {
+    connection = await getConnection();
     //     const sql1 = `select GTLOTCHKPLANID as nonGridId,GTLOTCHKPLANDETID as gridId,GTLOTPCSSUBDETID as subGridId,PCSNO,METER from gtlotpcssubdet
     // WHERE GTLOTCHKPLANDETID ='${selectedGridId}'`;
     const sql = `SELECT BB.PCSNO,BB.METER,BB.GTLOTPCSSUBDETID as subGridId
@@ -155,10 +169,14 @@ AND (BB.NOTES1 IS NULL OR UPPER(BB.NOTES1) <> 'YES')`;
     await connection.close();
   }
 }
+
+
+
 export async function update(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const {
       checkerId,
       selectedTables,
@@ -172,6 +190,8 @@ export async function update(req, res) {
       NOTES1,
       storedUserId,
       selectedLotNo,
+      weaverPieceNo,
+      loomNo,
     } = req.body;
     const { selectedNonGridId, selectedGridId } = req.params;
     console.log(
@@ -186,6 +206,8 @@ export async function update(req, res) {
       selectedSubGridId,
       NOTES1,
       storedUserId,
+      weaverPieceNo,
+      loomNo,
       "body updatinglotAllot",
     );
     console.log(selectedNonGridId, selectedGridId, "params updatinglotAllot");
@@ -413,6 +435,33 @@ export async function update(req, res) {
         { autoCommit: false },
       );
     }
+    const scheduleUpdateResult = await connection.execute(
+      `
+ UPDATE GTSCHEDULESUNDET
+SET LOOMNO = :loomNo,
+    WEAVERPCSNO = :weaverPieceNo
+WHERE GTFABRICRECEIPTID = :selectedLotNo
+  AND SNO = :selectedPiece
+  AND (LOOMNO IS NULL OR WEAVERPCSNO IS NULL)
+  `,
+      {
+        loomNo,
+        weaverPieceNo,
+        selectedLotNo,
+        selectedPiece,
+      },
+      { autoCommit: false },
+    );
+    if (scheduleUpdateResult.rowsAffected === 0) {
+      await connection.rollback();
+
+      return res.status(409).json({
+        statusCode: 1,
+        errorCode: "SCHEDULE_UPDATE_FAILED",
+        message:
+          "Loom / Weaver already updated or invalid lot-piece combination",
+      });
+    }
     await connection.commit();
     io.emit("tableUpdated", {
       tableIds: selectedTables.map((t) => t.GTCHKTABLEMASTID),
@@ -455,10 +504,13 @@ export async function update(req, res) {
     await connection.close();
   }
 }
+
+
 export async function getWorkStatus(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const { storedUserId } = req.params;
 
     const result = await connection.execute(
@@ -513,7 +565,7 @@ export async function getWorkStatus(req, res) {
       docId: rows[0][6],
       pieceNo: rows[0][7],
       pieceId: rows[0][10],
-      meters:rows[0][11],
+      meters: rows[0][11],
       tables: rows.map((r) => ({
         tableId: r[8],
         checkingNo: r[9],
@@ -535,10 +587,13 @@ export async function getWorkStatus(req, res) {
   }
 }
 
+
+
 export async function revertAllocation(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const { allocationId } = req.params;
 
     // 1️⃣ Lock allocation row
@@ -674,10 +729,12 @@ export async function revertAllocation(req, res) {
   }
 }
 
+
 export async function releaseTable(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const { userId, tableId } = req.body;
 
     const result = await connection.execute(

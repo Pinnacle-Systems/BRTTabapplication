@@ -3,9 +3,10 @@ import { io } from "../../../index.js"; // adjust path properly
 import oracledb from "oracledb";
 
 export async function getLotNo(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const sql = `SELECT C.AllocationID,C.LotID,L.DOCID FROM CheckerWorkingDetails C
 JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LotID`;
     console.log(sql, "sql for getLotNo");
@@ -29,12 +30,13 @@ JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LotID`;
 }
 
 export async function getPieces(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { lotId } = req.params;
 
   console.log(lotId, "lotId getPieces");
 
   try {
+    connection = await getConnection();
     const sql = `SELECT C.AllocationID,C.PIECEID,C.PIECENO FROM CheckerWorkingDetails C
 WHERE  C.LOTID = ${lotId}`;
     console.log(sql, "sql for getPieces");
@@ -58,11 +60,12 @@ WHERE  C.LOTID = ${lotId}`;
 }
 
 export async function getLotDetails(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { pieceId } = req.params;
   console.log(pieceId, "received params");
 
   try {
+    connection = await getConnection();
     const sql = `SELECT  C.CheckingSectionID,
         S.SECTIONNAME,
         C.CheckerID,
@@ -115,9 +118,10 @@ export async function getLotDetails(req, res) {
 }
 
 export async function getDefects(req, res) {
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     const sql = `select GTPIECEDEFMASTID,DEFECTNAME,POINTS from gtpiecedefmast`;
     console.log(sql, "sql for getDefects");
     const result = await connection.execute(sql);
@@ -148,9 +152,10 @@ export async function updateDefectEntry(req, res) {
     return res.status(400).json({ message: "Lot array cannot be empty" });
   }
 
-  const connection = await getConnection(res);
+  let connection;
 
   try {
+    connection = await getConnection();
     // ✅ STEP 1 — Fetch GTPIECESDEFECTID and LOTNO once (same for all pieces)
     const step1Result = await connection.execute(
       `SELECT GTPIECESDEFECTID, LOTNO
@@ -424,10 +429,11 @@ export async function updateDefectEntry(req, res) {
 }
 
 export async function getExistingDefectEntry(req, res) {
-  const connection = await getConnection(res);
+  let connection;
   const { lotId, pieceId } = req.params;
 
   try {
+    connection = await getConnection();
     // Fetch the parent tab record(s) for this lot + piece
     const tabResult = await connection.execute(
       `SELECT 

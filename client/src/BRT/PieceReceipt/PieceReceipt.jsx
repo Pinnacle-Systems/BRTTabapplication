@@ -45,6 +45,7 @@ const translations = {
     alertAddPiece: "Add at least one piece",
     alertEnterPieceAndMeter: "Enter Piece No and Meter",
     alertPieceNotZero: "Piece Number cannot be 0",
+    alertMeterNotZero: "Meter cannot be 0",
     alertExceededDCMeter: "Meter exceeding the DC Meter",
     alertTotalExceeded: "Meter exceeding the DC Meter",
     alertPieceExists: "Piece Number Already Exists",
@@ -88,6 +89,7 @@ const translations = {
     alertAddPiece: "குறைந்தது ஒரு துண்டு சேர்க்கவும்",
     alertEnterPieceAndMeter: "துண்டு எண் மற்றும் மீட்டர் உள்ளிடவும்",
     alertPieceNotZero: "துண்டு எண் 0 ஆக இருக்கக் கூடாது",
+    alertMeterNotZero: "மீட்டர் 0 ஆக இருக்கக் கூடாது",
     alertExceededDCMeter: "மீட்டர் DC மீட்டரை மீறுகிறது",
     alertTotalExceeded: "மீட்டர் DC மீட்டரை மீறுகிறது",
     alertPieceExists: "துண்டு எண் ஏற்கனவே உள்ளது",
@@ -131,6 +133,7 @@ const translations = {
     alertAddPiece: "कम से कम एक पीस जोड़ें",
     alertEnterPieceAndMeter: "पीस नं. और मीटर दर्ज करें",
     alertPieceNotZero: "पीस नंबर 0 नहीं हो सकता",
+    alertMeterNotZero: "मीटर 0 नहीं हो सकता",
     alertExceededDCMeter: "मीटर DC मीटर से अधिक है",
     alertTotalExceeded: "मीटर DC मीटर से अधिक है",
     alertPieceExists: "पीस नंबर पहले से मौजूद है",
@@ -378,6 +381,9 @@ const PieceReceipt = ({
 
   const handleAddItem = (e) => {
     e.preventDefault();
+    const pc = Number(pieceNo);
+    const mtr = Number(meter);
+
     if (!pieceNo || !meter) {
       Swal.fire({
         title: t.alertEnterPieceAndMeter,
@@ -387,12 +393,20 @@ const PieceReceipt = ({
       });
       return;
     }
-    if (Number(pieceNo) === 0) {
+    if (isNaN(pc) || pc <= 0) {
       Swal.fire({
         title: t.alertPieceNotZero,
         icon: "warning",
         timer: 2000,
-        showConfirmButton: true,
+      });
+      return;
+    }
+    // ❗ Meter validation (NEW)
+    if (isNaN(mtr) || mtr <= 0) {
+      Swal.fire({
+        title: t.alertMeterNotZero,
+        icon: "warning",
+        timer: 2000,
       });
       return;
     }
@@ -642,7 +656,6 @@ const PieceReceipt = ({
                 <label className="text-sm font-medium mb-1">{t.pieceNo}</label>
                 <input
                   type="number"
-                  ref={pieceNoRef}
                   name="pieceNo"
                   value={pieceNo}
                   max={receiptPcs}
@@ -671,6 +684,7 @@ const PieceReceipt = ({
               <div className="flex flex-col flex-1 max-w-[8rem]">
                 <label className="text-sm font-medium mb-1">{t.meters}</label>
                 <input
+                  ref={pieceNoRef}
                   type="number"
                   name="meter"
                   value={meter}

@@ -1066,7 +1066,7 @@ const NavbarHeader = ({ onLogout }) => {
                         {label ?? name}
                       </h3>
                     </div>
-                    <span
+                    {/* <span
                       className={`text-xl font-bold px-2 py-1 rounded-full ${
                         openTabs.tabs.some(
                           (tab) => tab.id === name && tab.active,
@@ -1076,7 +1076,7 @@ const NavbarHeader = ({ onLogout }) => {
                       }`}
                     >
                       {value}
-                    </span>
+                    </span> */}
                   </button>
                 ),
               )}
@@ -1129,7 +1129,7 @@ const NavbarHeader = ({ onLogout }) => {
                             {label ?? name}
                           </h3>
                         </div>
-                        <span
+                        {/* <span
                           className={`text-xl font-bold px-2 py-1 rounded-full ${
                             openTabs.tabs.some(
                               (tab) => tab.id === name && tab.active,
@@ -1139,7 +1139,7 @@ const NavbarHeader = ({ onLogout }) => {
                           }`}
                         >
                           {value}
-                        </span>
+                        </span> */}
                       </button>
                     ),
                   )}

@@ -55,7 +55,8 @@ const TableLotAllot = () => {
   const [lotCheckingNoId, setLotCheckingNoId] = useState("");
   const storedUserId = Number(localStorage.getItem("userId"));
   const storedRoleId = Number(localStorage.getItem("roleId"));
-
+  const [loomNo, setLoomNo] = useState("");
+  const [weaverPieceNo, setWeaverPieceNo] = useState("");
   const { data, isLoading, error } = useGetPieceReceiptQuery({});
   const { data: userData } = useGetUsersQuery();
   const { data: roles } = useGetRolesQuery();
@@ -89,12 +90,14 @@ const TableLotAllot = () => {
     setSelectedClothId("");
     setSelectedPiece("");
     setLotCheckingNoId("");
+    setWeaverPieceNo("")
+    setLoomNo("")
   };
 
   if (openForm) {
     return (
       <TableLotForm
-        editData={editData}
+        editData={editData} setLoomNo={setLoomNo}  setWeaverPieceNo={setWeaverPieceNo} loomNo={loomNo} weaverPieceNo={weaverPieceNo}
         lotCheckingNoId={lotCheckingNoId}
         setLotCheckingNoId={setLotCheckingNoId}
         selectedNonGridId={selectedNonGridId}

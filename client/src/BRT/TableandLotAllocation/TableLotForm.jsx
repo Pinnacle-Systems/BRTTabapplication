@@ -2,6 +2,7 @@
 /* eslint-disable no-unused-vars */
 import { useState, useRef, useCallback, useMemo } from "react";
 import { io } from "socket.io-client";
+import socket from "../../Utils/socket.js";
 import { useDispatch } from "react-redux";
 import tableLotApi, {
   useGetTablesQuery,
@@ -59,9 +60,11 @@ const translations = {
     validCloth: "Please Select Cloth",
     validPiece: "Please Select Piece",
     validTable: "Please Select Table",
+    loomNo:"Loom No",
+    weaverPieceNo:"Weaver Pc No"
   },
   ta: {
-    title: "மேஜை,லாட் துண்டு ஒதுக்கீடு",
+    title: "மேஜை,லாட் பீஸ் ஒதுக்கீடு",
     back: "பின்செல்",
     save: "சேமி",
     tableDetails: "மேஜை விவரங்கள்",
@@ -75,7 +78,7 @@ const translations = {
     selectLot: "லாட் தேர்ந்தெடு",
     clothName: "துணி பெயர்",
     selectCloth: "துணியை தேர்ந்தெடு",
-    pieceNo: "துண்டு எண்",
+    pieceNo: "பீஸ் எண்",
     meters: "மீட்டர்கள்",
     widerTable: "பல மேஜைகள்",
     loading: "ஏற்றுகிறது...",
@@ -83,7 +86,7 @@ const translations = {
     activeWork: "தற்போது செயலில் உள்ள பணி",
     section: "பிரிவு",
     checker: "சரிபார்ப்பாளர்",
-    piece: "துண்டு எண்",
+    piece: "பீஸ் எண்",
     tableNo: "மேஜை எண்",
     goToDefect: "குறைபாடு பதிவுக்கு செல்",
     revertWork: "பணியை திரும்பப் பெறு",
@@ -97,6 +100,8 @@ const translations = {
     validCloth: "துணியை தேர்ந்தெடுக்கவும்",
     validPiece: "துண்டை தேர்ந்தெடுக்கவும்",
     validTable: "மேஜையை தேர்ந்தெடுக்கவும்",
+    loomNo:"லூம் எண்",
+    weaverPieceNo:"வீவர் பீஸ் எண்"
   },
   hi: {
     title: "टेबल और लॉट पीस आवंटन",
@@ -135,6 +140,8 @@ const translations = {
     validCloth: "कृपया कपड़ा चुनें",
     validPiece: "कृपया पीस चुनें",
     validTable: "कृपया टेबल चुनें",
+        loomNo:"लूम नं ",
+    weaverPieceNo:"वीवर पीसी नं"
   },
 };
 
@@ -164,7 +171,7 @@ const TableLotForm = ({
   selectedNonGridId,
   setSelectedNonGridId,
   onNew,
-  TABDATE,
+  TABDATE,loomNo,setLoomNo,weaverPieceNo, setWeaverPieceNo
 }) => {
   const { lang } = useLanguage();
   const t = translations[lang] ?? translations["en"];
@@ -180,6 +187,7 @@ const TableLotForm = ({
   const [allocatedPieceId, setAllocatedPieceId] = useState("");
   const [allocatedTableId, setAllocatedtableId] = useState([]);
   const [widerTable, setWiderTable] = useState("No");
+
   let NOOFPCSSTK = 1;
   let PCSTAKEN = "Yes";
   let NOTES1 = "YES";
@@ -208,39 +216,62 @@ const TableLotForm = ({
       skip: !storedUserId,
     });
   const dispatch = useDispatch();
-  console.log(workStatus, "workStatus");
+
+  // useEffect(() => {
+  //   socketRef.current = io(process.env.REACT_APP_SERVER_URL);
+
+  //   socketRef.current.on("tableUpdated", (data) => {
+  //     if (!tablesUninitialized) {
+
+  //       // 🔥 Refetch tables automatically
+  //       refetch();
+  //     }
+  //   });
+  //   socketRef.current.on("pieceUpdated", (data) => {
+  //     if (!piecesUninitialized) {
+  //       piecesrefetch();
+  //     }
+  //   });
+  //   socketRef.current.on("workStatusUpdated", () => {
+  //     dispatch(tableLotApi.util.invalidateTags(["WorkStatus"]));
+  //   });
+
+  //   return () => {
+  //     socketRef.current.disconnect();
+  //   };
+  // }, [
+  //   refetch,
+  //   piecesrefetch,
+  //   refetchWorkStatus,
+  //   piecesUninitialized,
+  //   tablesUninitialized,
+  // ]);
   useEffect(() => {
-    socketRef.current = io(process.env.REACT_APP_SERVER_URL);
-
-    socketRef.current.on("tableUpdated", (data) => {
-      if (!tablesUninitialized) {
-        console.log("Tables updated:", data?.tableIds);
-
-        // 🔥 Refetch tables automatically
-        refetch();
-      }
-    });
-    socketRef.current.on("pieceUpdated", (data) => {
-      if (!piecesUninitialized) {
-        console.log("Piece updated:", data?.pieceId);
-        piecesrefetch();
-      }
-    });
-    socketRef.current.on("workStatusUpdated", () => {
+    const handleTableUpdate = () => {
+      if (!tablesUninitialized) refetch();
+    };
+    const handlePieceUpdate = () => {
+      if (!piecesUninitialized) piecesrefetch();
+    };
+    const handleWorkStatusUpdate = () =>
       dispatch(tableLotApi.util.invalidateTags(["WorkStatus"]));
-    });
+
+    socket.on("tableUpdated", handleTableUpdate);
+    socket.on("pieceUpdated", handlePieceUpdate);
+    socket.on("workStatusUpdated", handleWorkStatusUpdate);
 
     return () => {
-      socketRef.current.disconnect();
+      socket.off("tableUpdated", handleTableUpdate);
+      socket.off("pieceUpdated", handlePieceUpdate);
+      socket.off("workStatusUpdated", handleWorkStatusUpdate);
     };
   }, [
     refetch,
     piecesrefetch,
-    refetchWorkStatus,
-    piecesUninitialized,
+    dispatch,
     tablesUninitialized,
+    piecesUninitialized,
   ]);
-
   useEffect(() => {
     if (!isAdmin && !isSuppervisor) {
       setCheckerId(storedUserId);
@@ -264,9 +295,7 @@ const TableLotForm = ({
       skip: !selectedLotNo,
     },
   );
-  console.log(cloths, "cloths");
 
-  console.log(pieces, "pieces");
   useEffect(() => {
     if (workStatus?.hasActiveWork) {
       const work = workStatus.data;
@@ -289,6 +318,9 @@ const TableLotForm = ({
         tableNumbers,
         meters: work.meters,
       });
+      if (work?.checkerId) {
+        setCheckerId(work.checkerId);
+      }
     } else {
       setWorkingDetails(null);
     }
@@ -330,7 +362,7 @@ const TableLotForm = ({
     NOOFPCSSTK,
     PCSTAKEN,
     NOTES1,
-    storedUserId: parseInt(storedUserId),
+    storedUserId: parseInt(storedUserId),weaverPieceNo,loomNo
   };
   console.log(
     selectedNonGridId,
@@ -480,6 +512,10 @@ const TableLotForm = ({
         showConfirmButton: false,
       });
       onNew();
+      // ✅ restore checker immediately
+      if (!isAdmin && !isSuppervisor) {
+        setCheckerId(storedUserId);
+      }
     } catch (err) {
       Swal.fire({
         icon: "Warning",
@@ -879,6 +915,26 @@ const TableLotForm = ({
                     value={Number(dcMeter || 0)?.toFixed(2)}
                     readOnly
                     className="w-full border rounded-lg px-1 py-[7px] text-right bg-gray-100"
+                  />
+                </div>
+                 <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">{t.weaverPieceNo}</label>
+                  <input
+                    type="text"
+                    value={weaverPieceNo}
+                    onChange={(e) => setWeaverPieceNo(e.target.value)}
+                    
+                    className="w-full border rounded-lg px-1 py-[7px] text-right "
+                  />
+                </div>
+                 <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">{t.loomNo}</label>
+                  <input
+                    type="text"
+                    value={loomNo}
+                    onChange={(e) => setLoomNo(e.target.value)}
+                    
+                    className="w-full border rounded-lg px-1 py-[7px] text-right "
                   />
                 </div>
                 <div className="flex flex-col flex-1 lg:min-w-[8rem] ">

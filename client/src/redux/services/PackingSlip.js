@@ -1,14 +1,14 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { PIECERECEIPT } from "../../Api";
+import { PACKINGSLIP } from "../../Api";
 
 const BASE_URL = process.env.REACT_APP_SERVER_URL;
 
-const pieceReceiptApi = createApi({
-  reducerPath: "pieceReceipt",
+const packingSlipApi = createApi({
+  reducerPath: "packingSlip",
   baseQuery: fetchBaseQuery({
     baseUrl: BASE_URL,
   }),
-  tagTypes: ["pieceReceipt"],
+  tagTypes: ["packingSlip"],
   endpoints: (builder) => ({
     getLotPieceReceipt: builder.query({
       query: (arg) => {
@@ -16,29 +16,29 @@ const pieceReceiptApi = createApi({
 
         if (searchParams) {
           return {
-            url: PIECERECEIPT + "/search/" + searchParams,
+            url: PACKINGSLIP + "/search/" + searchParams,
             method: "GET",
             params,
           };
         }
 
         return {
-          url: `${PIECERECEIPT}/getLot`,
+          url: `${PACKINGSLIP}/getLot`,
           method: "GET",
           params,
         };
       },
-      providesTags: ["pieceReceipt"],
+      providesTags: ["packingSlip"],
     }),
     getLotPieceReceiptDetails: builder.query({
       query: (selectedLotId) => ({
-        url: `${PIECERECEIPT}/${selectedLotId}/lotReceiptDetails`,
+        url: `${PACKINGSLIP}/${selectedLotId}/lotReceiptDetails`,
         method: "GET",
         headers: {
           "Content-type": "application/json; charset=UTF-8",
         },
       }),
-      providesTags: ["pieceReceipt"],
+      providesTags: ["packingSlip"],
     }),
 
     getPieceReceipt: builder.query({
@@ -47,73 +47,62 @@ const pieceReceiptApi = createApi({
 
         if (searchParams) {
           return {
-            url: PIECERECEIPT + "/search/" + searchParams,
+            url: PACKINGSLIP + "/search/" + searchParams,
             method: "GET",
             params,
           };
         }
 
         return {
-          url: PIECERECEIPT,
+          url: PACKINGSLIP,
           method: "GET",
           params,
         };
       },
-      providesTags: ["pieceReceipt"],
+      providesTags: ["packingSlip"],
     }),
 
-    getPieceReceiptById: builder.query({
-      query: ({ selectedLotId, selectedGridId }) => {
+    getBarCodeData: builder.query({
+      query: ({ barCode }) => {
         return {
-          url: `${PIECERECEIPT}/${selectedLotId}/${selectedGridId}`,
+          url: `${PACKINGSLIP}/${barCode}/getBarCodeDetails`,
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
         };
       },
-      providesTags: ["pieceReceipt"],
+      providesTags: ["packingSlip"],
     }),
+   
     addPieceReceipt: builder.mutation({
       query: (payload) => ({
-        url: PIECERECEIPT,
+        url: PACKINGSLIP,
         method: "POST",
         body: payload,
         headers: {
           "Content-type": "application/json; charset=UTF-8",
         },
       }),
-      invalidatesTags: ["pieceReceipt"],
+      invalidatesTags: ["packingSlip"],
     }),
     updatePieceReceipt: builder.mutation({
       query: (payload) => {
         const { selectedLotId, selectedGridId, ...body } = payload;
         return {
-          url: `${PIECERECEIPT}/${selectedLotId}/${selectedGridId}`,
+          url: `${PACKINGSLIP}/${selectedLotId}/${selectedGridId}`,
           method: "PUT",
           body,
         };
       },
-      invalidatesTags: ["pieceReceipt"],
+      invalidatesTags: ["packingSlip"],
     }),
     deletePieceReceipt: builder.mutation({
       query: (id) => ({
-        url: `${PIECERECEIPT}/${id}`,
+        url: `${PACKINGSLIP}/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["pieceReceipt"],
-    }),
-    getloomWeaverById: builder.query({
-      query: ({ selectedLotId, selectedGridId }) => {
-        return {
-          url: `${PIECERECEIPT}/${selectedLotId}/${selectedGridId}`,
-          method: "GET",
-          headers: {
-            "Content-type": "application/json; charset=UTF-8",
-          },
-        };
-      },
-      providesTags: ["pieceReceipt"],
+      invalidatesTags: ["packingSlip"],
     }),
   }),
 });
@@ -122,10 +111,10 @@ export const {
   useGetLotPieceReceiptQuery,
   useGetLotPieceReceiptDetailsQuery,
   useGetPieceReceiptQuery,
-  useGetPieceReceiptByIdQuery,
+  useGetBarCodeDataQuery,
   useAddPieceReceiptMutation,
   useUpdatePieceReceiptMutation,
   useDeletePieceReceiptMutation,
-} = pieceReceiptApi;
+} = packingSlipApi;
 
-export default pieceReceiptApi;
+export default packingSlipApi;
