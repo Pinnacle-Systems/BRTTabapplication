@@ -178,18 +178,18 @@ const navTranslations = {
     operations: "செயல்பாடுகள்",
     noTabsOpen: "தாவல்கள் இல்லை",
     selectSidebar: "தொடங்க பக்கப்பட்டியிலிருந்து ஒன்றை தேர்ந்தெடுக்கவும்",
-    openPieceReceipt: "துண்டு ரசீதை திற",
+    openPieceReceipt: "பீஸ் ரசீதை திற",
     signOut: "வெளியேறு",
     createUser: "புதிய பயனரை உருவாக்கு",
     users: "பயனர்கள்",
     roles: "பாத்திரங்கள்",
     // Tab labels
-    pieceReceipt: "துண்டு ரசீது",
+    pieceReceipt: "பீஸ் ரசீது",
     tableLotAlloc: "மேஜை மற்றும் லாட் ஒதுக்கீடு",
     defectEntry: "குறைபாடு பதிவு",
     foldingPending: "மடிப்பு நிலுவை பட்டியல்",
-    pieceFolding: "துண்டு மடிப்பு பதிவு",
-    pieceVerification: "துண்டு சரிபார்ப்பு",
+    pieceFolding: "பீஸ் மடிப்பு பதிவு",
+    pieceVerification: "பீஸ் சரிபார்ப்பு",
     packingSlip: "பேக்கிங் சீட்டு",
     clothDelivery: "துணி வழங்கல்",
     dispatchVerification: "அனுப்புதல் சரிபார்ப்பு",
@@ -764,7 +764,7 @@ const NavbarHeader = ({ onLogout }) => {
                     textOverflow: "ellipsis",
                   }}
                 >
-                   {nt.navText}
+                  {nt.navText}
                 </Typography>
               </Box>
 

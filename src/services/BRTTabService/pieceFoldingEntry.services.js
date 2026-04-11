@@ -68,25 +68,39 @@ export async function getPieceAgainstLotNo(req, res) {
 
   try {
     connection = await getConnection();
-    const sql = `select 
+    const sql = `SELECT 
     DT.TABLENOTAB,
     DT.SPLITPCSNO,
     DT.TOTPOINTSTAB,
     DT.STARTMTR,
     DT.ENDMTR,
     DT.BASEPCSNO,
-    DT.GTDEFECTDETTABID AS id ,
-    DT.TABAPPROVAL ,
+    DT.GTDEFECTDETTABID AS id,
+    DT.TABAPPROVAL,
     PD.RECEIPTNO,
-    TB.USERNAME AS CHECKERNAME
-    from Gtpiecesdefectdet PD
-LEFT JOIN Gtdefectdettab DT ON  DT.GTPIECESDEFECTDETID = PD.GTPIECESDEFECTDETID
-LEFT JOIN TABUSER TB ON TB.USERID = DT.CHECKER
-WHERE PD.RECEIPTNO = ${lotNo} AND DT.TABAPPROVAL IS NOT NULL
-AND (DT.PCSFOLDED IS NULL OR DT.PCSFOLDED != 'YES')
+    TB.USERNAME AS CHECKERNAME,
+
+    GS.LOOMNO,
+    GS.WEAVERPCSNO
+
+FROM Gtpiecesdefectdet PD
+
+LEFT JOIN Gtdefectdettab DT 
+    ON DT.GTPIECESDEFECTDETID = PD.GTPIECESDEFECTDETID
+
+LEFT JOIN TABUSER TB 
+    ON TB.USERID = DT.CHECKER
+
+LEFT JOIN GTSCHEDULESUNDET GS 
+    ON GS.GTFABRICRECEIPTID = PD.RECEIPTNO
+   AND GS.SNO = DT.BASEPCSNO
+
+WHERE PD.RECEIPTNO = ${lotNo}
+  AND DT.TABAPPROVAL IS NOT NULL
+  AND (DT.PCSFOLDED IS NULL OR DT.PCSFOLDED != 'YES')
 `;
 
-    console.log(sql, "sql fro ah");
+    console.log(sql, "sql fro getPieceAgainstLotNo");
 
     const result = await connection.execute(sql);
 
@@ -112,7 +126,6 @@ AND (DT.PCSFOLDED IS NULL OR DT.PCSFOLDED != 'YES')
 export async function updateFoldingEntry(req, res) {
   const {
     tableNo,
-    loomNo,
     checkerId,
     selectedPiece,
     pieceNo,
@@ -181,7 +194,6 @@ export async function updateFoldingEntry(req, res) {
       await connection.execute(
         `UPDATE PCS_APPROVAL_DETAILS
          SET TABLE_NO = :tableNo,
-             LOOM_NO = :loomNo,
              FOLDER_ID = :checkerId,
              PCSNO = :pcsNo,
              MTR = :meters,
@@ -196,7 +208,6 @@ export async function updateFoldingEntry(req, res) {
         {
           id: existingId,
           tableNo,
-          loomNo,
           checkerId,
           pcsNo: pieceNo,
           meters,
@@ -224,7 +235,7 @@ export async function updateFoldingEntry(req, res) {
           ID,
           DOCID,
           TABLE_NO,
-          LOOM_NO,
+         
           FOLDER_ID,
           PCSNO,
           PICID,
@@ -242,7 +253,7 @@ export async function updateFoldingEntry(req, res) {
           :id,
           :docId,
           :tableNo,
-          :loomNo,
+          
           :checkerId,
           :pcsNo,
           :picId,
@@ -259,7 +270,7 @@ export async function updateFoldingEntry(req, res) {
           id: detailId,
           docId,
           tableNo,
-          loomNo,
+
           checkerId,
           pcsNo: pieceNo,
           picId: selectedPiece,

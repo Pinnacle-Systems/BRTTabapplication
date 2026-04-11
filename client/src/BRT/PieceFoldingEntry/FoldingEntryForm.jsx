@@ -26,6 +26,7 @@ const translations = {
     selectLot: "Select Lot",
     pieceNo: "Piece No",
     loomNo: "Loom No",
+    weaverPieceNo: "Weaver Pcs No",
     folderName: "Folder Name",
     selectUser: "Select User",
     tableNo: "Table No",
@@ -53,14 +54,14 @@ const translations = {
     somethingWentWrong: "Something went wrong!",
   },
   ta: {
-    title: "துண்டு மடிப்பு பதிவு",
+    title: "பீஸ் மடிப்பு பதிவு",
     back: "பின்செல்",
     save: "சேமி",
     lotDetails: "லாட் விவரங்கள்",
     lotNo: "லாட் எண்",
     selectLot: "லாட் தேர்ந்தெடு",
-    pieceNo: "துண்டு எண்",
-    loomNo: "நெசவு எண்",
+    pieceNo: "பீஸ் எண்",
+
     folderName: "மடிப்பாளர் பெயர்",
     selectUser: "பயனரை தேர்ந்தெடு",
     tableNo: "மேஜை எண்",
@@ -87,6 +88,8 @@ const translations = {
     addedSuccess: "வெற்றிகரமாக சேர்க்கப்பட்டது",
     submissionError: "சமர்ப்பிப்பு பிழை",
     somethingWentWrong: "ஏதோ தவறு நடந்தது!",
+    loomNo: "லூம் எண்",
+    weaverPieceNo: "வீவர் பீஸ் எண்",
   },
   hi: {
     title: "पीस फोल्डिंग प्रविष्टि",
@@ -96,7 +99,7 @@ const translations = {
     lotNo: "लॉट नं.",
     selectLot: "लॉट चुनें",
     pieceNo: "पीस नं.",
-    loomNo: "लूम नं.",
+
     folderName: "फोल्डर का नाम",
     selectUser: "उपयोगकर्ता चुनें",
     tableNo: "टेबल नं.",
@@ -122,6 +125,8 @@ const translations = {
     addedSuccess: "सफलतापूर्वक जोड़ा गया",
     submissionError: "सबमिट त्रुटि",
     somethingWentWrong: "कुछ गलत हो गया!",
+    loomNo: "लूम नं ",
+    weaverPieceNo: "वीवर पीसी नं",
   },
 };
 
@@ -132,7 +137,7 @@ const PieceFoldingForm = ({ onClose }) => {
 
   const [selectedLotNo, setSelectedLotNo] = useState("");
   const [tableNo, setTableNo] = useState("");
-  const [loomNo, setLoomNo] = useState("");
+  // const [loomNo, setLoomNo] = useState("");
   const [checkerId, setCheckerId] = useState("");
   const [selectedPiece, setSelectedPiece] = useState("");
   const [pieceNo, setPieceNo] = useState("");
@@ -144,8 +149,10 @@ const PieceFoldingForm = ({ onClose }) => {
   const [actualPoints, setActualPoints] = useState("");
   const [foldPercentage, setFoldPercentage] = useState("");
   const [weight, setWeight] = useState("");
-  const [subGridId,setSubGrid] = useState("")
-  let PCSFOLDED = "YES"
+  const [subGridId, setSubGrid] = useState("");
+  const [loomNo, setLoomNo] = useState("");
+  const [weaverPieceNo, setWeaverPieceNo] = useState("");
+  let PCSFOLDED = "YES";
   const resetForm = () => {
     setSelectedLotNo("");
     setTableNo("");
@@ -161,6 +168,7 @@ const PieceFoldingForm = ({ onClose }) => {
     setActualPoints("");
     setFoldPercentage("");
     setWeight("");
+    setWeaverPieceNo("");
   };
 
   const customSelectStyles = {
@@ -254,12 +262,16 @@ const PieceFoldingForm = ({ onClose }) => {
     { selectedPiece },
     { skip: !selectedPiece },
   );
+  console.log(singleData, "singleData");
   const syncFormWithDb = useCallback(
     (data) => {
+      console.log(data, "data");
       setTableNo(data?.TABLENOTAB);
       setMeters(data?.ACTUALMETER);
       setDefectPoints(Number(data?.TOTPOINTSTAB));
       setReceiptMeters(data?.RECEIPTMETER);
+      setLoomNo(data?.LOOMNO);
+      setWeaverPieceNo(data?.WEAVERPCSNO);
     },
     [selectedPiece],
   );
@@ -302,9 +314,10 @@ const PieceFoldingForm = ({ onClose }) => {
     // label: cloth?.SPLITPCSNO,
     label: cloth?.SPLITPCSNO ?? cloth?.BASEPCSNO,
     value: cloth?.ID,
-
+    loomNo: cloth?.LOOMNO,
+    weaverPcsNo: cloth?.WEAVERPCSNO,
   }));
-
+  console.log(pieceOptions, "pieceOptions");
   const { data: roles } = useGetRolesQuery();
   const { data: userData } = useGetUsersQuery();
 
@@ -373,7 +386,8 @@ const PieceFoldingForm = ({ onClose }) => {
     actualPoints: Number(actualPoints),
     foldPercentage: Number(foldPercentage),
     weight: Number(weight),
-    receiptMeters: Number(receiptMeters),PCSFOLDED
+    receiptMeters: Number(receiptMeters),
+    PCSFOLDED,
   };
   const handleSubmitCustom = async (callback, data) => {
     try {
@@ -404,7 +418,7 @@ const PieceFoldingForm = ({ onClose }) => {
     const checks = [
       { condition: !selectedLotNo, msg: t.selectLotMsg },
       { condition: !selectedPiece, msg: t.selectPieceMsg },
-      { condition: !loomNo, msg: t.enterLoomNo },
+
       { condition: !checkerId, msg: t.chooseFolderName },
       { condition: !checkedMeters, msg: t.enterCheckedMeters },
       { condition: !weight, msg: t.enterWeight },
@@ -487,9 +501,11 @@ const PieceFoldingForm = ({ onClose }) => {
                         (option) => option.value === selectedPiece,
                       ) || null
                     }
-                    onChange={(selectedOption) => {
-                      setSelectedPiece(selectedOption?.value);
-                      setPieceNo(selectedOption?.label);
+                    onChange={(sel) => {
+                      setSelectedPiece(sel?.value);
+                      setPieceNo(sel?.label);
+                      setLoomNo(sel?.loomNo || "");
+                      setWeaverPieceNo(sel?.weaverPcsNo || "");
                     }}
                     placeholder=" "
                     isClearable={false} // ✅ disable cross icon
@@ -503,13 +519,23 @@ const PieceFoldingForm = ({ onClose }) => {
                   <label className="block font-medium mb-1">{t.loomNo}</label>
                   <input
                     value={loomNo}
-                    onChange={(e) => setLoomNo(e.target.value)}
-                    // readOnly={readonly}
+                    disabled
+                    // onChange={(e) => setLoomNo(e.target.value)}
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  />
+                </div>
+                <div className="col-span-1 lg:col-span-2">
+                  <label className="block font-medium mb-1">
+                    {t.weaverPieceNo}
+                  </label>
+                  <input
+                    value={weaverPieceNo}
+                    disabled
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>
 
-                <div className="flex flex-col flex-1  col-span-2 lg:col-span-3">
+                <div className="flex flex-col flex-1  col-span-3 lg:col-span-3">
                   <label className="text-sm font-medium mb-1">
                     {t.folderName}
                   </label>
@@ -553,7 +579,7 @@ const PieceFoldingForm = ({ onClose }) => {
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>
-                <div className="col-span-2 lg:col-span-2 max-w-[9rem]">
+                <div className="col-span-2 lg:col-span-2 ">
                   <label className="block font-medium mb-1">
                     {t.receiptMeters}
                   </label>
@@ -654,6 +680,7 @@ const PieceFoldingForm = ({ onClose }) => {
                   />
                 </div>
               </div>
+
               {/* Grade Calculation Summary */}
               {value !== null && checkedMetersNum > 0 && (
                 <div className="col-span-4 lg:col-span-10 mt-4">

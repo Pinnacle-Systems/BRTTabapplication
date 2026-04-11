@@ -244,6 +244,8 @@ export async function updateDefectEntry(req, res) {
         totalPointsSum,
         defects,
         actualMeters,
+        loomNo, // ← add
+        weaverPcsNo,
       } = piece;
 
       // Validate defects for each piece
@@ -282,7 +284,9 @@ export async function updateDefectEntry(req, res) {
           PCSID,
           TOTPOINTSTAB,
           ACTUALMETER,
-          RECEIPTMETER
+          RECEIPTMETER,
+           LOOMNO,        
+    WEAVERPCSNO 
         ) VALUES (
           :primaryKey,
           :piecesDefectId,
@@ -297,7 +301,9 @@ export async function updateDefectEntry(req, res) {
           :pieceId,
           :totalPoints,
           :actualMeters,
-          :meters
+          :meters,
+            :loomNo,       
+    :weaverPcsNo  
         )`,
         {
           primaryKey,
@@ -314,6 +320,8 @@ export async function updateDefectEntry(req, res) {
           totalPoints: totalPointsSum,
           actualMeters: Number(actualMeters),
           meters: Number(meters),
+          loomNo: loomNo || null, // ← add
+          weaverPcsNo: weaverPcsNo || null, // ← add
         },
         { autoCommit: false },
       );

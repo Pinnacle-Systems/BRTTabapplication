@@ -10,6 +10,7 @@ import {
   useUpdateFoldingPendingMutation,
   useGetDefectsQuery,
 } from "../../redux/services/FoldingPendingList";
+
 import { useLanguage } from "../../Context/LanguageContext";
 import { MdOpenInNew, MdClose } from "react-icons/md";
 
@@ -40,6 +41,8 @@ const translations = {
     open: "Open",
     modalTitle: "Defect Details",
     close: "Close",
+    loomNo: "Loom No",
+    weaverPieceNo: "Weaver Pc No",
   },
   ta: {
     modalTitle: "குறைபாடு விவரங்கள்",
@@ -50,8 +53,8 @@ const translations = {
     lotName: "லாட் பெயர்",
     selectLot: "லாட் தேர்ந்தெடு",
     sno: "எண்",
-    basePcsNo: "அடிப்படை துண்டு ",
-    splitPcsNo: "பிரிந்த துண்டு ",
+    basePcsNo: "அடிப்படை பீஸ் ",
+    splitPcsNo: "பிரிந்த பீஸ் ",
     checker: "சரிபார்ப்பாளர்",
     tableNo: "மேஜை",
     receiptMtrs: "ரசீது மீட்டர்",
@@ -67,6 +70,8 @@ const translations = {
     somethingWentWrong: "ஏதோ தவறு நடந்தது!",
     open: "திற",
     close: "மூடு",
+    loomNo: "லூம் எண்",
+    weaverPieceNo: "வீவர் பீஸ் எண்",
   },
   hi: {
     modalTitle: "दोष विवरण",
@@ -94,6 +99,8 @@ const translations = {
     somethingWentWrong: "कुछ गलत हो गया!",
     open: "खोलें",
     close: "बंद करें",
+    loomNo: "लूम नं ",
+    weaverPieceNo: "वीवर पीसी नं",
   },
 };
 const FoldingPendingList = () => {
@@ -371,16 +378,16 @@ const FoldingPendingList = () => {
                     <th className=" py-2 border w-36 text-center">
                       {t.splitPcsNo}
                     </th>
-                    <th className=" py-2 border w-40 text-center">
-                      {t.checker}
-                    </th>
-                    <th className=" py-2 border w-20 text-center">
-                      {t.tableNo}
-                    </th>
+
                     <th className=" py-2 border w-24 text-center">
                       {t.receiptMtrs}
                     </th>
-
+                    <th className=" py-2 border w-40 text-center">
+                      {t.loomNo}
+                    </th>
+                    <th className=" py-2 border w-36 text-center">
+                      {t.weaverPieceNo}
+                    </th>
                     <th className=" py-2 border w-36 text-center">
                       {t.startMtr}
                     </th>
@@ -390,11 +397,16 @@ const FoldingPendingList = () => {
                     <th className=" py-2 border w-20 text-center">
                       {t.meters}
                     </th>
+                    <th className=" py-2 border w-40 text-center">
+                      {t.checker}
+                    </th>
+                    <th className=" py-2 border w-20 text-center">
+                      {t.tableNo}
+                    </th>
                     <th className=" py-2 border w-44 text-center">
                       {t.defectPoints}
                     </th>
 
-                    
                     <th className="px-1 py-2 border w-16 text-center">
                       {t.open}
                     </th>
@@ -420,14 +432,14 @@ const FoldingPendingList = () => {
                           {item?.SPLITPCSNO}
                         </td>
 
-                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-left">
-                          {item?.CHECKERNAME}
-                        </td>
-                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
-                          {item?.TABLENOTAB}
-                        </td>
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
                           {item?.RECEIPTMETER?.toFixed(2)}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
+                          {item?.LOOMNO}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
+                          {item?.WEAVERPCSNO}
                         </td>
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
                           {item?.STARTMTR?.toFixed(2)}
@@ -437,6 +449,12 @@ const FoldingPendingList = () => {
                         </td>
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
                           {item?.ACTUALMETER?.toFixed(2)}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-left">
+                          {item?.CHECKERNAME}
+                        </td>
+                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
+                          {item?.TABLENOTAB}
                         </td>
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-right">
                           {item?.TOTPOINTSTAB}
@@ -457,7 +475,7 @@ const FoldingPendingList = () => {
                             ""
                           )}
                         </td>
-                        
+
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-center ">
                           {item?.RECEIPTNO ? (
                             <input
@@ -469,7 +487,7 @@ const FoldingPendingList = () => {
                                   "TABAPPROVAL",
                                 )
                               }
-                             checked={!!item.TABAPPROVAL}
+                              checked={!!item.TABAPPROVAL}
                             />
                           ) : (
                             ""
@@ -520,7 +538,6 @@ const FoldingPendingList = () => {
             {/* Modal Body */}
             {defectArray?.length > 0 && (
               <div className="mt-6">
-          
                 <table className="w-full text-sm border table-fixed">
                   <thead className="bg-gray-100">
                     <tr>
@@ -543,9 +560,15 @@ const FoldingPendingList = () => {
                         <td className="border px-2 py-1 text-right">
                           {defect.DEFECTPOINS1}
                         </td>
-                        <td className="border px-2 py-1 text-right">{defect.NOOGTIME}</td>
-                        <td className="border px-2 py-1 text-right">{defect.TOTPOINS1}</td>
-                        <td className="border px-2 py-1 text-right">{defect.MTRAT?.toFixed(2)}</td>
+                        <td className="border px-2 py-1 text-right">
+                          {defect.NOOGTIME}
+                        </td>
+                        <td className="border px-2 py-1 text-right">
+                          {defect.TOTPOINS1}
+                        </td>
+                        <td className="border px-2 py-1 text-right">
+                          {defect.MTRAT?.toFixed(2)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

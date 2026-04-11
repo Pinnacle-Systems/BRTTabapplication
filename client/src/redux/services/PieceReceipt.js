@@ -104,9 +104,9 @@ const pieceReceiptApi = createApi({
       invalidatesTags: ["pieceReceipt"],
     }),
     getloomWeaverById: builder.query({
-      query: ({ selectedLotId, selectedGridId }) => {
+      query: ({ lotId, pcno }) => {
         return {
-          url: `${PIECERECEIPT}/${selectedLotId}/${selectedGridId}`,
+          url: `${PIECERECEIPT}/${lotId}/${pcno}/loomWeaver`,
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
@@ -126,6 +126,7 @@ export const {
   useAddPieceReceiptMutation,
   useUpdatePieceReceiptMutation,
   useDeletePieceReceiptMutation,
+  useGetloomWeaverByIdQuery,
 } = pieceReceiptApi;
 
 export default pieceReceiptApi;

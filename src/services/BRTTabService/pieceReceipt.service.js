@@ -1,4 +1,5 @@
 import { getConnection } from "../../constants/db.connection.js";
+import oracledb from "oracledb";
 
 export async function getLotNo(req, res) {
   let connection;
@@ -369,7 +370,7 @@ export async function getLoomAndWeaver(req, res) {
   try {
     connection = await getConnection();
 
-    const { lotId, pcno } = req.query;
+    const { lotId, pcno } = req.params;
 
     if (!lotId || !pcno) {
       return res.status(400).json({
@@ -380,14 +381,15 @@ export async function getLoomAndWeaver(req, res) {
 
     const result = await connection.execute(
       `
-      SELECT 
-        LOOMNO,
-        WEAVERPCSNO
-      FROM GTSCHEDULESUNDET
-      WHERE GTFABRICRECEIPTID = :lotId
-        AND SNO = :pcno
-      `,
-      { lotId, pcno },
+  SELECT LOOMNO, WEAVERPCSNO
+  FROM GTSCHEDULESUNDET
+  WHERE GTFABRICRECEIPTID = :lotId
+    AND SNO = :pcno
+  `,
+      {
+        lotId: { val: lotId },
+        pcno: { val: pcno },
+      },
       { outFormat: oracledb.OUT_FORMAT_OBJECT },
     );
 

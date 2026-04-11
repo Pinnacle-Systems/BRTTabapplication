@@ -38,13 +38,13 @@ const translations = {
     somethingWentWrong: "Something went wrong!",
   },
   ta: {
-    title: "துண்டு சரிபார்ப்பு",
+    title: "பீஸ் சரிபார்ப்பு",
     save: "சேமி",
     lotDetails: "லாட் விவரங்கள்",
     lotName: "லாட் பெயர்",
     selectLot: "லாட் தேர்ந்தெடு",
     sno: "எண்",
-    pcsNo: "துண்டு எண்",
+    pcsNo: "பீஸ் எண்",
     loomNo: "நெசவு எண்",
     folderName: "மடிப்பாளர் பெயர்",
     tableNo: "மேஜை",
@@ -326,9 +326,9 @@ const PieceVerification = () => {
                     <th className="px-1 py-2 border w-32 text-center">
                       {t.pcsNo}
                     </th>
-                    <th className="px-1 py-2 border w-32 text-center">
+                    {/* <th className="px-1 py-2 border w-32 text-center">
                       {t.loomNo}
-                    </th>
+                    </th> */}
                     <th className="px-1 py-2 border w-40 text-center">
                       {t.folderName}
                     </th>
@@ -368,9 +368,9 @@ const PieceVerification = () => {
                           {item?.PCSNO}
                         </td>
 
-                        <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-left">
+                        {/* <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-left">
                           {item?.LOOM_NO}
-                        </td>
+                        </td> */}
 
                         <td className="py-1 px-2 border focus:ring-2 focus:border-2 text-left">
                           {item?.USERNAME}

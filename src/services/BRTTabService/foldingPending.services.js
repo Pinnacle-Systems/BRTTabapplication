@@ -6,7 +6,7 @@ export async function getFoldingPending(req, res) {
   let connection;
 
   try {
-     connection = await getConnection();
+    connection = await getConnection();
     const sql = `select FR.DOCID,GT.RECEIPTNO from Gtpiecesdefectdet   GT
 LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO`;
 
@@ -36,28 +36,39 @@ export async function getFoldingPendingById(req, res) {
   // console.log(foldingId, "lotId getPieces");
 
   try {
-     connection = await getConnection();
-    const sql = `select 
-    
-
+    connection = await getConnection();
+    const sql = `SELECT 
     DT.TABLENOTAB,
     DT.SPLITPCSNO,
     DT.TOTPOINTSTAB,
     DT.STARTMTR,
     DT.ENDMTR,
     DT.BASEPCSNO,
-    DT.GTDEFECTDETTABID AS subGridId ,
-    DT.TABAPPROVAL ,
+    DT.GTDEFECTDETTABID AS subGridId,
+    DT.TABAPPROVAL,
     DT.RECEIPTMETER,
     PD.RECEIPTNO,
     DT.ACTUALMETER,
-    TB.USERNAME AS CHECKERNAME
+    TB.USERNAME AS CHECKERNAME,
 
-    
-    from Gtpiecesdefectdet PD
-LEFT JOIN Gtdefectdettab DT ON  DT.GTPIECESDEFECTDETID = PD.GTPIECESDEFECTDETID
-LEFT JOIN TABUSER TB ON TB.USERID = DT.CHECKER
-WHERE PD.RECEIPTNO = ${lotNo} AND DT.TABAPPROVAL IS NULL AND DT.GTDEFECTDETTABID IS NOT NULL `;
+    GS.LOOMNO,
+    GS.WEAVERPCSNO
+
+FROM Gtpiecesdefectdet PD
+
+LEFT JOIN Gtdefectdettab DT 
+    ON DT.GTPIECESDEFECTDETID = PD.GTPIECESDEFECTDETID
+
+LEFT JOIN TABUSER TB 
+    ON TB.USERID = DT.CHECKER
+
+LEFT JOIN GTSCHEDULESUNDET GS
+    ON GS.GTFABRICRECEIPTID = PD.RECEIPTNO
+   AND GS.SNO = DT.BASEPCSNO
+
+WHERE PD.RECEIPTNO = ${lotNo}
+  AND DT.TABAPPROVAL IS NULL
+  AND DT.GTDEFECTDETTABID IS NOT NULL`;
 
     const result = await connection.execute(sql);
 
@@ -86,7 +97,7 @@ export async function getGradeData(req, res) {
   let connection;
 
   try {
-     connection = await getConnection();
+    connection = await getConnection();
     const sql = `select * from GTGRADEDET`;
 
     console.log(sql, "sql for get grade data");
@@ -116,7 +127,7 @@ export async function getLotDetails(req, res) {
   console.log(pieceId, "received params");
 
   try {
-     connection = await getConnection();
+    connection = await getConnection();
     const sql = `SELECT  C.CheckingSectionID,
         S.SECTIONNAME,
         C.CheckerID,
@@ -166,7 +177,7 @@ export async function getDefects(req, res) {
   let connection;
 
   try {
-     connection = await getConnection();
+    connection = await getConnection();
     const sql = `select GTPIECEDEFMASTID,DEFECTNAME,POINTS from gtpiecedefmast`;
     console.log(sql, "sql for getDefects");
     const result = await connection.execute(sql);
@@ -194,7 +205,7 @@ export async function updateFolding(req, res) {
   let connection;
 
   try {
-     connection = await getConnection();
+    connection = await getConnection();
     for (const piece of foldingItems) {
       const { TABAPPROVAL, SUBGRIDID } = piece;
 
@@ -235,7 +246,7 @@ export async function getDefectsById(req, res) {
   // console.log(foldingId, "lotId getPieces");
 
   try {
-     connection = await getConnection();
+    connection = await getConnection();
     const sql = `select B.DEFECTNAME,A.DEFECTPOINS1,A.MTRAT,A.NOOGTIME,A.TOTPOINS1 from Gtpcsdefdet A
 left join gtpiecedefmast B ON  B.GTPIECEDEFMASTID = A.DEFECTNAME1
 WHERE A.GTDEFECTDETTABID = ${subGridId} `;

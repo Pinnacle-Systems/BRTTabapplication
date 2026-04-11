@@ -11,6 +11,7 @@ import {
   useUpdateDefectEntryMutation,
   useGetDefectDetailsQuery,
 } from "../../redux/services/defectEntry.js";
+import { useGetloomWeaverByIdQuery } from "../../redux/services/PieceReceipt.js";
 import { useGetRolesQuery } from "../../redux/userservice";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -81,7 +82,7 @@ const translations = {
     defects: "defects",
     tablePoints: "Points",
     loomNo: "Loom No",
-    weaverPieceNo: "Weaver Pc No",
+    weaverPieceNo: "Weaver Pcs No",
   },
   ta: {
     title: "குறைபாடு பதிவு",
@@ -89,14 +90,14 @@ const translations = {
     lotDetails: "லாட் விவரங்கள்",
     lotNo: "லாட் எண்",
     selectLot: "லாட் தேர்ந்தெடு",
-    pieceNo: "துண்டு",
+    pieceNo: "பீஸ்",
     selectPiece: "தேர்ந்தெடு",
     meters: "மீட்டர்கள்",
     tableNo: "மேஜை",
     checkerName: "சரிபார்ப்பாளர் பெயர்",
     checkingSectionName: "சரிபார்ப்பு பிரிவு பெயர்",
     completed: "முடிந்தது",
-    piece: "துண்டு",
+    piece: "பீஸ்",
     defectDetails: "குறைபாடு விவரங்கள்",
     meterAt: "மீட்டர்",
     defectName: "குறைபாடு பெயர்",
@@ -110,7 +111,7 @@ const translations = {
     action: "செயல்",
     times: "முறை",
     emptyAdmin: "குறைபாடு பதிவை தொடங்க மேலே லாட் மற்றும் துண்டை தேர்ந்தெடு.",
-    emptyChecker: "துண்டு விவரங்கள் ஏற்றப்படுகின்றன...",
+    emptyChecker: "பீஸ் விவரங்கள் ஏற்றப்படுகின்றன...",
     invalidSplitMeter: "தவறான பிரிவு மீட்டர்",
     cannotDeleteOnlyPiece: "ஒரே ஒரு துண்டை நீக்க முடியாது",
     pleaseSelectMeter: "மீட்டரை தேர்ந்தெடுக்கவும்",
@@ -119,15 +120,15 @@ const translations = {
     sameDefectExists: "இதே குறைபாடு ஏற்கனவே உள்ளது",
     pleaseSelectLot: "லாட்டை தேர்ந்தெடுக்கவும்",
     pleaseSelectPiece: "துண்டை தேர்ந்தெடுக்கவும்",
-    noPieceData: "சேமிக்க துண்டு தரவு இல்லை",
-    pieceHasNoDefects: "துண்டுக்கு குறைபாடு இல்லை",
+    noPieceData: "சேமிக்க பீஸ் தரவு இல்லை",
+    pieceHasNoDefects: "பீஸ்க்கு குறைபாடு இல்லை",
     addDefectForEveryPiece:
-      "சேமிக்கும் முன் ஒவ்வொரு துண்டுக்கும் குறைந்தது ஒரு குறைபாடு சேர்க்கவும்.",
+      "சேமிக்கும் முன் ஒவ்வொரு பீஸ்க்கும் குறைந்தது ஒரு குறைபாடு சேர்க்கவும்.",
     addedSuccess: "வெற்றிகரமாக சேர்க்கப்பட்டது",
     submissionFailed: "சமர்ப்பிப்பு தோல்வி",
     deletePieceConfirmTitle: "துண்டை நீக்கு",
     deletePieceConfirmText:
-      "இது துண்டு மற்றும் அதன் குறைபாடுகளை நீக்கும். மீதமுள்ள துண்டுகள் மறுவரிசைப்படுத்தப்படும்.",
+      "இது பீஸ் மற்றும் அதன் குறைபாடுகளை நீக்கும். மீதமுள்ள பீஸ்கள் மறுவரிசைப்படுத்தப்படும்.",
     yesDelete: "ஆம், நீக்கு",
     defect: "குறைபாடு",
     defects: "குறைபாடுகள்",
@@ -211,7 +212,8 @@ const DefectEntry = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const lotIdRef = useRef(null);
   const isInitialLotMount = useRef(true);
-
+  const [loomNo, setLoomNo] = useState("");
+  const [weaverPieceNo, setWeaverPieceNo] = useState("");
   const storedUserId = Number(localStorage.getItem("userId"));
   const storedRoleId = Number(localStorage.getItem("roleId"));
   const { data: roles } = useGetRolesQuery();
@@ -243,6 +245,13 @@ const DefectEntry = () => {
     { pieceId },
     { skip: !pieceId },
   );
+
+  const { data: loomWeaver } = useGetloomWeaverByIdQuery(
+    { lotId, pcno: pieceNo },
+    { skip: !lotId || !pieceNo },
+  );
+  console.log(loomWeaver, "loomWeaver");
+
   const { data: defectEntry } = useGetDefectsQuery();
 
   const buildPerPieceForm = () => ({
@@ -329,6 +338,13 @@ const DefectEntry = () => {
     setData({ lotDetails });
     setPerPieceForm({});
   }, [existingEntry]);
+
+  useEffect(() => {
+    if (!loomWeaver?.data) return;
+    setLoomNo(loomWeaver.data.loomNo || "");
+    setWeaverPieceNo(loomWeaver.data.weaverPieceNo || "");
+  }, [loomWeaver]);
+
   const lotOptions = useMemo(() => {
     const seen = new Set();
     return lots?.data
@@ -408,6 +424,8 @@ const DefectEntry = () => {
       setData({ lotDetails: [] });
       setPerPieceForm({});
       setIsCompleted(false); // ← reset on lot change
+      setLoomNo("");
+      setWeaverPieceNo("");
     }
   }, [lotId, canEditLot]);
 
@@ -490,6 +508,8 @@ const DefectEntry = () => {
         sectionName,
         totalPointsSum: pieceTotalPoints,
         defects: piece.defects,
+        loomNo: loomNo || null, // ← add
+        weaverPcsNo: weaverPieceNo || null, // ← add
       };
     });
     return {
@@ -690,6 +710,31 @@ const DefectEntry = () => {
         timer: 2000,
         showConfirmButton: false,
       });
+      // ── Reset all fields ──
+      setLotId("");
+      setPieceId("");
+      setPieceNo("");
+      setAllocationId("");
+      setMeters("");
+      setTableNo([]);
+      settableId([]);
+      setCheckerName("");
+      setSectionName("");
+      setCheckerId("");
+      setCheckingSectionId("");
+      setLoomNo("");
+      setWeaverPieceNo("");
+      setIsCompleted(false);
+      setData({ lotDetails: [] });
+      setPerPieceForm({});
+      setExpandedIndex(null);
+
+      // Refocus lot selector for next entry
+      setTimeout(() => {
+        if (lotIdRef.current && canEditLot) {
+          lotIdRef.current.focus();
+        }
+      }, 2100);
     } catch (error) {
       const backendMessage =
         error?.data?.message || error?.data?.error || "Something went wrong!";
@@ -755,15 +800,26 @@ const DefectEntry = () => {
     <>
       <div className="h-[75vh] pt-0">
         {/* ── Header ── */}
-        <div className="flex bg-white justify-between py-1 rounded-lg">
+        <div className="flex bg-white justify-between items-center py-1 rounded-lg">
           <h1 className="text-xl ml-2 font-bold">{t.title}</h1>
-          <button
-            type="button"
-            onClick={saveData}
-            className="bg-blue-600 mr-2 text-white py-1 rounded-lg hover:bg-blue-700 transition px-2"
-          >
-            {t.save}
-          </button>
+          <div className="flex items-center gap-3 mr-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isCompleted}
+                onChange={(e) => setIsCompleted(e.target.checked)}
+                className="w-4 h-4 accent-green-600 cursor-pointer"
+              />
+              {t.completed}
+            </label>
+            <button
+              type="button"
+              onClick={saveData}
+              className="bg-blue-600 text-white py-1 rounded-lg hover:bg-blue-700 transition px-2"
+            >
+              {t.save}
+            </button>
+          </div>
         </div>
 
         <div className="h-[70vh] overflow-y-auto bg-white shadow-lg rounded-xl mt-2 p-2">
@@ -774,17 +830,15 @@ const DefectEntry = () => {
           ══════════════════════════════════════════ */}
           <div className="border border-gray-300 rounded-lg p-3 mb-3">
             <p className="font-bold text-sm mb-2">{t.lotDetails}</p>
-            <div className="grid grid-cols-10 lg:grid-cols-12 gap-4 text-sm">
-              <div className="col-span-4 lg:col-span-2 z-[999]">
+            <div className="grid grid-cols-12 gap-x-6 gap-y-4 text-sm">
+              {/* Lot No */}
+              <div className="col-span-6 sm:col-span-4 lg:col-span-2 z-[999]">
                 <label className="block font-medium mb-1">{t.lotNo}</label>
                 <Select
                   ref={lotIdRef}
                   options={lotOptions}
                   value={lotOptions?.find((o) => o.value === lotId) || null}
-                  onChange={(sel) => {
-                    setLotId(sel?.value || "");
-                    // setAllocationId(sel?.allocationId || "");
-                  }}
+                  onChange={(sel) => setLotId(sel?.value || "")}
                   placeholder={t.selectLot}
                   isClearable={false}
                   styles={customSelectStyles}
@@ -793,7 +847,8 @@ const DefectEntry = () => {
                 />
               </div>
 
-              <div className="col-span-2 lg:col-span-1 z-[998]">
+              {/* Piece No */}
+              <div className="col-span-3 sm:col-span-2 lg:col-span-1 z-[998]">
                 <label className="block font-medium mb-1">{t.pieceNo}</label>
                 <Select
                   options={pieceOptions}
@@ -801,18 +856,18 @@ const DefectEntry = () => {
                   onChange={(sel) => {
                     setPieceId(sel?.value || "");
                     setPieceNo(sel?.label || "");
-                    setAllocationId(sel?.allocationId || ""); // ← auto-set correctly
+                    setAllocationId(sel?.allocationId || "");
                   }}
                   placeholder={t.selectPiece}
                   isClearable={false}
                   styles={customSelectStyles}
                   isSearchable
                   isDisabled={!canEditLot}
-                  className="text-right"
                 />
               </div>
 
-              <div className="col-span-2 lg:col-span-1">
+              {/* Meters */}
+              <div className="col-span-3 sm:col-span-2 lg:col-span-1">
                 <label className="block font-medium mb-1">{t.meters}</label>
                 <input
                   type="number"
@@ -826,7 +881,32 @@ const DefectEntry = () => {
                 />
               </div>
 
-              <div className="col-span-2 lg:col-span-1">
+              {/* Loom No */}
+              <div className="col-span-3 sm:col-span-2 lg:col-span-1">
+                <label className="block font-medium mb-1">{t.loomNo}</label>
+                <input
+                  type="text"
+                  value={loomNo}
+                  readOnly
+                  className="w-full border rounded-lg px-1 py-1.5 text-right bg-gray-50"
+                />
+              </div>
+
+              {/* Weaver Pc No */}
+              <div className="col-span-3 sm:col-span-2 lg:col-span-1">
+                <label className="block font-medium mb-1 whitespace-nowrap">
+                  {t.weaverPieceNo}
+                </label>
+                <input
+                  type="text"
+                  value={weaverPieceNo}
+                  readOnly
+                  className="w-full border rounded-lg px-1 py-1.5 text-right bg-gray-50"
+                />
+              </div>
+
+              {/* Table No */}
+              <div className="col-span-3 sm:col-span-2 lg:col-span-1">
                 <label className="block font-medium mb-1">{t.tableNo}</label>
                 <input
                   type="text"
@@ -836,40 +916,42 @@ const DefectEntry = () => {
                 />
               </div>
 
-              <div className="col-span-4 lg:col-span-3">
-                <label className="block text-sm font-medium mb-1">
+              {/* Checker Name */}
+              <div className="col-span-6 sm:col-span-4 lg:col-span-2">
+                <label className="block font-medium mb-1">
                   {t.checkerName}
                 </label>
                 <input
                   type="text"
                   value={checkerName}
                   readOnly
-                  className="border rounded-lg text-left px-2 py-1.5 w-full uppercase bg-gray-50"
+                  className="w-full border rounded-lg px-2 py-1.5 uppercase bg-gray-50"
                 />
               </div>
 
-              <div className="col-span-4 lg:col-span-3">
-                <label className="block text-sm font-medium mb-1">
+              {/* Checking Section Name */}
+              <div className="col-span-6 sm:col-span-4 lg:col-span-2">
+                <label className="block font-medium mb-1">
                   {t.checkingSectionName}
                 </label>
                 <input
                   type="text"
                   value={sectionName}
                   readOnly
-                  className="border rounded-lg text-left px-2 py-1.5 w-full bg-gray-50"
+                  className="w-full border rounded-lg px-2 py-1.5 bg-gray-50"
                 />
               </div>
-              <div className="col-span-2 lg:col-span-1  pb-1 flex flex-col items-center">
-                <label className="block text-sm font-medium mb-1">
-                  {t.completed}
-                </label>
+
+              {/* Completed */}
+              {/* <div className="col-span-2 sm:col-span-1 lg:col-span-1 flex flex-col items-center pb-1">
+                <label className="block font-medium mb-1">{t.completed}</label>
                 <input
                   type="checkbox"
                   checked={isCompleted}
                   onChange={(e) => setIsCompleted(e.target.checked)}
-                  className="w-4 h-4 flex items-center accent-green-600 cursor-pointer"
+                  className="w-4 h-4 accent-green-600 cursor-pointer mt-1"
                 />
-              </div>
+              </div> */}
             </div>
           </div>
 
