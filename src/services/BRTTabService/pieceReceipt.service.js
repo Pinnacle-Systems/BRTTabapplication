@@ -8,7 +8,19 @@ export async function getLotNo(req, res) {
 
   try {
     connection = await getConnection(); // borrows from pool
-    const sql = `select gtfabricreceiptid,docid from gtfabricreceipt`;
+    // const sql = `select gtfabricreceiptid,docid from gtfabricreceipt`;
+    const sql = `
+  SELECT gr.gtfabricreceiptid, gr.docid
+  FROM GTFABRICRECEIPT gr
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM GTFABRICRECEIPTDET grd
+    JOIN GTSCHEDULESUNDET gsd
+      ON gsd.gtfabricreceiptdetid = grd.gtfabricreceiptdetid
+    WHERE grd.gtfabricreceiptid = gr.gtfabricreceiptid
+      AND gsd.sno = grd.pcs
+  )
+`;
     console.log(sql, "sql for Piecereceipt");
     const result = await connection.execute(sql);
 

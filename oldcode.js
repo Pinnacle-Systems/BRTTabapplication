@@ -1,7 +1,3 @@
-import { getConnection } from "../../constants/db.connection.js";
-import { io } from "../../../index.js"; // adjust path properly
-import oracledb from "oracledb";
-
 export async function getLotNo(req, res) {
   let connection;
 
@@ -59,179 +55,6 @@ WHERE  C.LOTID = ${lotId}`;
   }
 }
 
-// ── Add these 2 new functions to DefectEntry.service.js ──
-
-// export async function getSavedLots(req, res) {
-//   let connection;
-//   try {
-//     connection = await getConnection();
-//     const sql = `
-//       SELECT DISTINCT
-//         P.LOTNO   AS LOTID,
-//         R.DOCID   AS DOCID
-//       FROM Gtpiecesdefect P
-//       JOIN GTFABRICRECEIPT R ON R.GTFABRICRECEIPTID = P.LOTNO
-//       ORDER BY R.DOCID`;
-//     const result = await connection.execute(sql, [], {
-//       outFormat: oracledb.OUT_FORMAT_OBJECT,
-//     });
-//     return res.json({ statusCode: 0, data: result.rows });
-//   } catch (err) {
-//     console.error("Error retrieving saved lots:", err);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   } finally {
-//     await connection.close();
-//   }
-// }
-export async function getSavedLots(req, res) {
-  let connection;
-  try {
-    connection = await getConnection();
-    const sql = `
-      SELECT DISTINCT LOTID, DOCID FROM (
-        -- ← active lots from CheckerWorkingDetails
-        SELECT
-          C.LOTID   AS LOTID,
-          R.DOCID   AS DOCID
-        FROM CheckerWorkingDetails C
-        JOIN GTFABRICRECEIPT R ON R.GTFABRICRECEIPTID = C.LOTID
-
-        UNION
-
-        -- ← completed lots from defect tables
-        SELECT
-          P.LOTNO   AS LOTID,
-          R.DOCID   AS DOCID
-        FROM Gtpiecesdefect P
-        JOIN GTFABRICRECEIPT R ON R.GTFABRICRECEIPTID = P.LOTNO
-      )
-      ORDER BY DOCID`;
-    const result = await connection.execute(sql, [], {
-      outFormat: oracledb.OUT_FORMAT_OBJECT,
-    });
-    return res.json({ statusCode: 0, data: result.rows });
-  } catch (err) {
-    console.error("Error retrieving saved lots:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  } finally {
-    await connection.close();
-  }
-}
-// export async function getSavedPieces(req, res) {
-//   let connection;
-//   const { lotId } = req.params;
-//   try {
-//     connection = await getConnection();
-//     const sql = `
-//       SELECT DISTINCT
-//         T.PCSID          AS PIECEID,
-//         T.BASEPCSNO      AS PIECENO,
-//         T.RECEIPTMETER   AS METER,
-//         T.ALLACATIONID   AS ALLOCATIONID,
-//         T.LOOMNO         AS LOOMNO,
-//         T.WEAVERPCSNO    AS WEAVERPCSNO,
-//         T.TABLENOTAB     AS TABLENO,
-//         U.USERNAME       AS CHECKERNAME,
-//         T.CHECKER        AS CHECKERID
-//       FROM Gtdefectdettab T
-//       JOIN Gtpiecesdefect P ON P.GTPIECESDEFECTID = T.GTPIECESDEFECTID
-//       LEFT JOIN TABUSER U ON U.USERID = T.CHECKER
-//       WHERE P.LOTNO = :lotId
-//       ORDER BY T.BASEPCSNO`;
-//     const result = await connection.execute(
-//       sql,
-//       { lotId: Number(lotId) },
-//       {
-//         outFormat: oracledb.OUT_FORMAT_OBJECT,
-//       },
-//     );
-//     return res.json({ statusCode: 0, data: result.rows });
-//   } catch (err) {
-//     console.error("Error retrieving saved pieces:", err);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   } finally {
-//     await connection.close();
-//   }
-// }
-export async function getSavedPieces(req, res) {
-  let connection;
-  const { lotId } = req.params;
-
-  if (!lotId || isNaN(Number(lotId))) {
-    return res.status(400).json({ error: "Invalid or missing lotId" });
-  }
-
-  try {
-    connection = await getConnection();
-    const sql = `
-      SELECT DISTINCT PIECEID, PIECENO, METER, ALLOCATIONID,
-             LOOMNO, WEAVERPCSNO, TABLENO, CHECKERNAME, CHECKERID,
-             CHECKINGSECTIONID, SECTIONNAME
-      FROM (
-        -- ← active pieces not yet saved to defect tables
-        SELECT
-          C.PIECEID        AS PIECEID,
-          C.PIECENO        AS PIECENO,
-          C.METERS         AS METER,
-          C.ALLOCATIONID   AS ALLOCATIONID,
-          SC.LOOMNO        AS LOOMNO,
-          SC.WEAVERPCSNO   AS WEAVERPCSNO,
-          (
-            SELECT LISTAGG(M.CHECKINGNO, ',')
-            WITHIN GROUP (ORDER BY M.CHECKINGNO)
-            FROM CheckerWorkingTables WT
-            JOIN GTCHKTABLEMAST M
-              ON M.GTCHKTABLEMASTID = WT.GTCHKTABLEMASTID
-            WHERE WT.ALLOCATIONID = C.ALLOCATIONID
-          )                AS TABLENO,
-          U.USERNAME       AS CHECKERNAME,
-          C.CHECKERID      AS CHECKERID,
-          C.CHECKINGSECTIONID AS CHECKINGSECTIONID,
-          S.SECTIONNAME    AS SECTIONNAME
-        FROM CheckerWorkingDetails C
-        LEFT JOIN TABUSER U ON U.USERID = C.CHECKERID
-        LEFT JOIN GTCHECKINGMAST S ON S.GTCHECKINGMASTID = C.CHECKINGSECTIONID
-        LEFT JOIN GTSCHEDULESUNDET SC
-          ON SC.GTFABRICRECEIPTID = C.LOTID
-          AND SC.SNO = C.PIECENO
-        WHERE C.LOTID = :lotId
-
-        UNION
-
-        -- ← completed pieces already saved to defect tables
-        SELECT DISTINCT
-          T.PCSID            AS PIECEID,
-          T.BASEPCSNO        AS PIECENO,
-          T.RECEIPTMETER     AS METER,
-          T.ALLACATIONID     AS ALLOCATIONID,
-          T.LOOMNO           AS LOOMNO,
-          T.WEAVERPCSNO      AS WEAVERPCSNO,
-          T.TABLENOTAB       AS TABLENO,
-          U.USERNAME         AS CHECKERNAME,
-          T.CHECKER          AS CHECKERID,
-          T.CHECKINGSECTION  AS CHECKINGSECTIONID,   -- ← now stored
-          S.SECTIONNAME      AS SECTIONNAME          -- ← join to get name
-        FROM Gtdefectdettab T
-        JOIN Gtpiecesdefect P ON P.GTPIECESDEFECTID = T.GTPIECESDEFECTID
-        LEFT JOIN TABUSER U ON U.USERID = T.CHECKER
-        LEFT JOIN GTCHECKINGMAST S ON S.GTCHECKINGMASTID = T.CHECKINGSECTION
-        WHERE P.LOTNO = :lotId
-      )
-      ORDER BY PIECENO`;
-
-    const result = await connection.execute(
-      sql,
-      { lotId: Number(lotId) },
-      { outFormat: oracledb.OUT_FORMAT_OBJECT },
-    );
-    return res.json({ statusCode: 0, data: result.rows });
-  } catch (err) {
-    console.error("Error retrieving saved pieces:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  } finally {
-    await connection.close();
-  }
-}
 export async function getLotDetails(req, res) {
   let connection;
   const { pieceId } = req.params;
@@ -282,32 +105,6 @@ export async function getLotDetails(req, res) {
       statusCode: 0,
       data: workData,
     });
-  } catch (err) {
-    console.error("Error retrieving data:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  } finally {
-    await connection.close();
-  }
-}
-
-export async function getDefects(req, res) {
-  let connection;
-
-  try {
-    connection = await getConnection();
-    const sql = `select GTPIECEDEFMASTID,DEFECTNAME,POINTS from gtpiecedefmast`;
-    console.log(sql, "sql for getDefects");
-    const result = await connection.execute(sql);
-
-    const resp = result.rows.map((row) => {
-      let obj = {};
-      result.metaData.forEach(({ name }, idx) => {
-        obj[name] = row[idx];
-      });
-      return obj;
-    });
-
-    return res.json({ statusCode: 0, data: resp });
   } catch (err) {
     console.error("Error retrieving data:", err);
     res.status(500).json({ error: "Internal Server Error" });
@@ -459,7 +256,7 @@ export async function updateDefectEntry(req, res) {
           ACTUALMETER,
           RECEIPTMETER,
            LOOMNO,        
-    WEAVERPCSNO,CHECKINGSECTION
+    WEAVERPCSNO 
         ) VALUES (
           :primaryKey,
           :piecesDefectId,
@@ -476,7 +273,7 @@ export async function updateDefectEntry(req, res) {
           :actualMeters,
           :meters,
             :loomNo,       
-    :weaverPcsNo,:checkingSectionId
+    :weaverPcsNo  
         )`,
         {
           primaryKey,
@@ -494,8 +291,7 @@ export async function updateDefectEntry(req, res) {
           actualMeters: Number(actualMeters),
           meters: Number(meters),
           loomNo: loomNo || null, // ← add
-          weaverPcsNo: weaverPcsNo || null,
-          checkingSectionId: Number(checkingSectionId),
+          weaverPcsNo: weaverPcsNo || null, // ← add
         },
         { autoCommit: false },
       );
@@ -610,84 +406,82 @@ export async function updateDefectEntry(req, res) {
   }
 }
 
-export async function getExistingDefectEntry(req, res) {
+export async function getWorkStatus(req, res) {
   let connection;
-  const { lotId, pieceId } = req.params;
 
   try {
     connection = await getConnection();
-    // Fetch the parent tab record(s) for this lot + piece
-    const tabResult = await connection.execute(
-      `SELECT 
-        T.GTDEFECTDETTABID,
-        T.BASEPCSNO,
-        T.SPLITPCSNO,
-        T.STARTMTR,
-        T.ENDMTR,
-        T.TOTPOINTSTAB,
-        T.TABLENOTAB,
-        T.CHECKER,
-        T.ALLACATIONID
-       FROM Gtdefectdettab T
-       JOIN Gtpiecesdefect P ON P.GTPIECESDEFECTID = T.GTPIECESDEFECTID
-       WHERE P.LOTNO = :lotId
-       AND T.PCSID = :pieceId
-       ORDER BY T.STARTMTR ASC`,
-      { lotId, pieceId },
-      { outFormat: oracledb.OUT_FORMAT_OBJECT },
+    const { storedUserId } = req.params;
+
+    const result = await connection.execute(
+      `
+      SELECT
+        C.AllocationID,
+        C.CheckingSectionID,
+        S.SECTIONNAME,
+        C.CheckerID,
+        U.USERNAME,
+        C.LotID,
+        L.DOCID,
+        C.PieceNo,
+        T.GTCHKTABLEMASTID,
+        M.CHECKINGNO,
+        C.PIECEID,
+        C.meters
+      FROM CheckerWorkingDetails C
+      JOIN GTCHECKINGMAST S 
+        ON S.GTCHECKINGMASTID = C.CheckingSectionID
+      JOIN TABUSER U 
+        ON U.USERID = C.CheckerID
+      JOIN GTFABRICRECEIPT L 
+        ON L.GTFABRICRECEIPTID = C.LotID
+      JOIN CheckerWorkingTables T 
+        ON T.AllocationID = C.AllocationID
+      JOIN GTCHKTABLEMAST M 
+        ON M.GTCHKTABLEMASTID = T.GTCHKTABLEMASTID
+      WHERE C.CheckerID = :loggedInUserId
+      `,
+      { loggedInUserId: storedUserId },
     );
 
-    if (tabResult.rows.length === 0) {
-      // No existing data — return empty so frontend knows to start fresh
-      return res.json({ statusCode: 0, data: [] });
-    }
-
-    // For each tab row, fetch its defects from GTPCSDEFDET
-    const pieces = [];
-
-    for (const tab of tabResult.rows) {
-      const defectResult = await connection.execute(
-        `SELECT 
-          D.GTPCSDEFDETID,
-          D.MTRAT,
-          D.DEFECTNAME1,
-          D.NOOGTIME,
-          D.DEFECTPOINS1,
-          D.TOTPOINS1,
-          D.SPLITPCSNO1,
-          D.BASEPCSNO1,
-          M.DEFECTNAME
-         FROM GTPCSDEFDET D
-         LEFT JOIN gtpiecedefmast M ON M.GTPIECEDEFMASTID = D.DEFECTNAME1
-         WHERE D.GTDEFECTDETTABID = :tabId`,
-        { tabId: tab.GTDEFECTDETTABID },
-        { outFormat: oracledb.OUT_FORMAT_OBJECT },
-      );
-
-      pieces.push({
-        gtDefectDetTabId: tab.GTDEFECTDETTABID,
-        pieceNo: tab.BASEPCSNO,
-        subPieceNo: tab.SPLITPCSNO || String(tab.BASEPCSNO),
-        startMeter: tab.STARTMTR,
-        endMeter: tab.ENDMTR,
-        totalPointsSum: tab.TOTPOINTSTAB,
-        defects: defectResult.rows.map((d) => ({
-          meter: d.MTRAT,
-          defectId: d.DEFECTNAME1,
-          defectName: d.DEFECTNAME,
-          points: d.DEFECTPOINS1,
-          times: d.NOOGTIME,
-          totalPoints: d.TOTPOINS1,
-          pieceNo: d.BASEPCSNO1,
-          subPieceNo: d.SPLITPCSNO1,
-        })),
+    if (result.rows.length === 0) {
+      return res.json({
+        statusCode: 0,
+        hasActiveWork: false,
+        data: null,
       });
     }
 
-    return res.json({ statusCode: 0, data: pieces });
+    // 🔹 Format response properly
+    const rows = result.rows;
+
+    const workData = {
+      allocationId: rows[0][0],
+      checkingSectionId: rows[0][1],
+      sectionName: rows[0][2],
+      checkerId: rows[0][3],
+      checkerName: rows[0][4],
+      lotId: rows[0][5],
+      docId: rows[0][6],
+      pieceNo: rows[0][7],
+      pieceId: rows[0][10],
+      meters: rows[0][11],
+      tables: rows.map((r) => ({
+        tableId: r[8],
+        checkingNo: r[9],
+      })),
+    };
+
+    res.json({
+      statusCode: 0,
+      hasActiveWork: true,
+      data: workData,
+    });
   } catch (err) {
-    console.error("Error fetching existing defect entry:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({
+      statusCode: 1,
+      message: err.message,
+    });
   } finally {
     await connection.close();
   }

@@ -6,7 +6,7 @@ export async function getLotNo(req, res) {
   let connection;
 
   try {
-    connection = await getConnection(); 
+    connection = await getConnection();
     const sql = `SELECT C.LOTNO,L.DOCID FROM PCS_APPROVAL C
 JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LOTNO`;
     console.log(sql, "sql for getLotNo");
@@ -35,7 +35,7 @@ export async function getFoldingDetailsByLot(req, res) {
   let connection;
 
   try {
-    connection = await getConnection(); 
+    connection = await getConnection();
     // 1️⃣ Get DOCID from PCS_APPROVAL
     const docResult = await connection.execute(
       `SELECT DOCID FROM PCS_APPROVAL WHERE LOTNO = :lotNo`,
@@ -53,7 +53,7 @@ export async function getFoldingDetailsByLot(req, res) {
     // 2️⃣ Get details from child table
     const detailsResult = await connection.execute(
       `SELECT 
-    A.ID,
+    A.ID,A.PICID,
     A.DOCID,
     A.TABLE_NO,
     A.LOOM_NO,
@@ -69,11 +69,12 @@ export async function getFoldingDetailsByLot(req, res) {
     A.WEIGHTTT,
     A.ACTPOITS,
     A.FOLD_PERCENTAGE,
-    A.NOTES
+    A.NOTES,A.FOLDINGAPPROVED
 FROM PCS_APPROVAL_DETAILS A
 LEFT JOIN TABUSER U 
        ON U.USERID = A.FOLDER_ID
-WHERE A.DOCID = :docId AND  NVL(A.NOTES,'NO') <> 'YES' `,
+WHERE A.DOCID = :docId AND (A.FOLDINGAPPROVED IS NULL 
+     OR A.FOLDINGAPPROVED <> 'APPROVED') `,
       { docId },
     );
 
@@ -96,15 +97,13 @@ WHERE A.DOCID = :docId AND  NVL(A.NOTES,'NO') <> 'YES' `,
   }
 }
 
-
-
 export async function updatePieceVerification(req, res) {
   const { foldingItems, lotNo } = req.body;
 
   let connection;
 
   try {
-    connection = await getConnection(); 
+    connection = await getConnection();
     for (const piece of foldingItems) {
       const { NOTES, ID } = piece;
 
@@ -136,5 +135,67 @@ export async function updatePieceVerification(req, res) {
       message: "Server error",
       error: error.message,
     });
+  }
+}
+
+export async function deleteFoldingItem(req, res) {
+  const { id, docId, pieceId } = req.body;
+
+  let connection;
+
+  try {
+    connection = await getConnection();
+
+    // 1️⃣ Get PICID (if not passed)
+    let picId = pieceId;
+
+    if (!picId) {
+      const result = await connection.execute(
+        `SELECT PICID 
+         FROM PCS_APPROVAL_DETAILS 
+         WHERE ID = :id AND DOCID = :docId`,
+        { id, docId },
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: "Record not found" });
+      }
+
+      picId = result.rows[0][0];
+    }
+
+    // 2️⃣ DELETE from main table
+    await connection.execute(
+      `DELETE FROM PCS_APPROVAL_DETAILS 
+       WHERE ID = :id AND DOCID = :docId`,
+      { id, docId },
+    );
+
+    // 3️⃣ UPDATE other table (reverse effect)
+    await connection.execute(
+      `UPDATE Gtdefectdettab
+       SET PCSFOLDED = ' ' , TABAPPROVAL = ' '
+       WHERE GTDEFECTDETTABID = :pieceId`,
+      { pieceId: picId },
+    );
+
+    // ✅ COMMIT BOTH
+    await connection.commit();
+
+    return res.json({
+      statusCode: 0,
+      message: "Deleted & Updated successfully",
+    });
+  } catch (error) {
+    if (connection) await connection.rollback(); // 🔥 IMPORTANT
+
+    console.error("Delete Error:", error);
+
+    return res.status(500).json({
+      message: "Delete failed",
+      error: error.message,
+    });
+  } finally {
+    if (connection) await connection.close();
   }
 }

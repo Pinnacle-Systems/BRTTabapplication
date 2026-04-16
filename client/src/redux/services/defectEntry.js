@@ -103,6 +103,26 @@ const defectEntryApi = createApi({
       }),
       providesTags: ["defectEntryApi"],
     }),
+    getSavedLots: builder.query({
+      query: () => ({
+        url: `${DEFECTENTRY}/savedLots`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      }),
+      providesTags: ["defectEntryApi"],
+    }),
+    getSavedPieces: builder.query({
+      query: ({ lotId }) => ({
+        url: `${DEFECTENTRY}/savedPieces/${lotId}`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      }),
+      providesTags: ["defectEntryApi"],
+    }),
   }),
 });
 
@@ -113,7 +133,9 @@ export const {
   useGetlotDetailsQuery,
   useUpdateDefectEntryMutation,
   useGetWorkStatusQuery,
-  useGetDefectDetailsQuery
+  useGetDefectDetailsQuery,
+  useGetSavedLotsQuery,
+  useGetSavedPiecesQuery,
 } = defectEntryApi;
 
 export default defectEntryApi;

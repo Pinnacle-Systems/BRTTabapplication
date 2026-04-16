@@ -42,13 +42,14 @@ import {
   MdArrowDropDown,
   MdPersonAdd,
   MdSettings,
-  MdLanguage, // ← NEW
+  MdLanguage,
+  MdMonitor, // ← NEW
 } from "react-icons/md";
 import { FaTableCells } from "react-icons/fa6";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GiRolledCloth } from "react-icons/gi";
 import { RiBillLine } from "react-icons/ri";
-
+import ActiveMonitor from "./UserDetails/ActiveMonitor";
 import {
   Menu,
   MenuItem,
@@ -168,6 +169,7 @@ const navTranslations = {
     dispatchVerification: "Dispatch Verification",
     stockVerification: "Stock Verification",
     navText: "Banu Radha Textiles",
+    activeMonitor: "Active Monitor",
   },
   ta: {
     langSettings: "மொழி அமைப்புகள்",
@@ -195,6 +197,7 @@ const navTranslations = {
     dispatchVerification: "அனுப்புதல் சரிபார்ப்பு",
     stockVerification: "இருப்பு சரிபார்ப்பு",
     navText: "பானு ராதா டெக்ஸ்டைல்ஸ் ",
+    activeMonitor: "செயலில் கண்காணிப்பு",
   },
   hi: {
     langSettings: "भाषा सेटिंग्स",
@@ -222,6 +225,7 @@ const navTranslations = {
     dispatchVerification: "प्रेषण सत्यापन",
     stockVerification: "स्टॉक सत्यापन",
     navText: "बानू राधा टेक्सटाइल्स चन्हे",
+    activeMonitor: "सक्रिय मॉनिटर",
   },
 };
 
@@ -548,6 +552,7 @@ const NavbarHeader = ({ onLogout }) => {
     "Piece Verification": <PieceVerification />,
     User: <OutlinedCard />,
     Role: <RoleManagement />,
+    "Active Monitor": <ActiveMonitor />, // ← add
   };
   const tabData = [
     {
@@ -956,6 +961,35 @@ const NavbarHeader = ({ onLogout }) => {
                               />
                             </ListItemIcon>
                             <ListItemText primary={nt.roles} />
+                          </MenuItem>
+                          {/* ← Active Monitor — added below Roles */}
+                          <MenuItem
+                            onClick={() => {
+                              dispatch(
+                                push({
+                                  id: "Active Monitor",
+                                  name: "Active Monitor",
+                                  label: nt.activeMonitor ?? "Active Monitor",
+                                }),
+                              );
+                              handleUserMenuClose();
+                            }}
+                            sx={{
+                              borderRadius: "8px",
+                              py: 1.5,
+                              "&:hover": { backgroundColor: colors.hover },
+                            }}
+                          >
+                            <ListItemIcon>
+                              <MdMonitor
+                                fontSize="20px"
+                                color={colors.primary}
+                              />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={nt.activeMonitor ?? "Active Monitor"}
+                              secondary="Workers & Tables"
+                            />
                           </MenuItem>
                         </Box>
                       )}

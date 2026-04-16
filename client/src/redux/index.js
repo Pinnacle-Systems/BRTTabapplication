@@ -10,3 +10,4 @@ export { default as defectEntryApi } from "./services/defectEntry";
 export { default as foldingPendingApi } from "./services/FoldingPendingList";
 export { default as pieceVerificationApi } from "./services/pieceVerification";
 export { default as packingSlipApi } from "./services/PackingSlip";
+export { default as userDetailsApi } from "./services/userDetails";

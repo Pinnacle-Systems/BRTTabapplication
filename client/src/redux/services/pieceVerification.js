@@ -30,7 +30,7 @@ const pieceVerificationApi = createApi({
       },
       providesTags: ["pieceVerificationApi"],
     }),
-    
+
     getFold: builder.query({
       query: ({ lotNo }) => ({
         url: `${PIECEVERIFICATIONAPI}/${lotNo}/getFold`,
@@ -84,6 +84,17 @@ const pieceVerificationApi = createApi({
       }),
       providesTags: ["defectEntryApi"],
     }),
+    deleteFoldingItem: builder.mutation({
+      query: (body) => ({
+        url: `${PIECEVERIFICATIONAPI}/deleteFoldingItem`,
+        method: "DELETE",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+        body,
+      }),
+      invalidatesTags: ["pieceVerificationApi"],
+    }),
   }),
 });
 
@@ -94,6 +105,7 @@ export const {
   useUpdatePieceVerificationMutation,
   useGetWorkStatusQuery,
   useGetDefectDetailsQuery,
+  useDeleteFoldingItemMutation,
 } = pieceVerificationApi;
 
 export default pieceVerificationApi;

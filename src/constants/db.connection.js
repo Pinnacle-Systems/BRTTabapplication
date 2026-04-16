@@ -6,7 +6,6 @@ const oracledb = require("oracledb");
 // oracledb.initOracleClient({ libDir: "C:/oracle/instantclient_19_20" });
 // oracledb.initOracleClient({ libDir: "/opt/oracle/instantclient_23_6" });
 oracledb.initOracleClient({ libDir: process.env.ORACLE_LIB_DIR });
-console.log(process.env.ORACLE_LIB_DIR, "envcheck");
 
 const dbConfig = {
   user: "PSSBRT",
@@ -20,7 +19,7 @@ const brtdbConfig = {
   poolMin: 10, // always keep 10 connections ready
   poolMax: 50, // handle 40+ users comfortably with buffer
   poolIncrement: 5, // grow by 5 at a time under load
-  poolTimeout: 120, // close idle connections after 2 minutes
+  poolTimeout: 180, // close idle connections after 2 minutes
   poolPingInterval: 60, // check connections are alive every 60s
   queueTimeout: 10000, // if no connection free in 10s → throw error
   queueMax: 100,

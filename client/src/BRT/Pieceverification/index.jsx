@@ -4,6 +4,7 @@ import {
   useGetLotsQuery,
   useGetFoldQuery,
   useUpdatePieceVerificationMutation,
+  useDeleteFoldingItemMutation,
 } from "../../redux/services/pieceVerification";
 import { useEffect } from "react";
 import Swal from "sweetalert2";
@@ -29,7 +30,9 @@ const translations = {
     defectPoints: "Defect Points",
     grade: "Grade",
     weight: "Weight",
-    approve: "Approve",
+    approve: "First Approval",
+    approve2: "Second  Approval",
+    reject: "Reject",
     noData: "No Data Found",
     // Swal
     approveAtLeastOne: "Add at least Approve One Folding Items",
@@ -193,7 +196,7 @@ const PieceVerification = () => {
   );
   console.log(foldDetailsData, "foldDetailsData");
   const [updateData] = useUpdatePieceVerificationMutation();
-
+  const [deleteItem] = useDeleteFoldingItemMutation();
   const syncFormWithDb = useCallback((data) => {
     setFoldingItems(data);
   }, []);
@@ -350,8 +353,14 @@ const PieceVerification = () => {
                     <th className="px-1 py-2 border w-20 text-center">
                       {t.weight}
                     </th>
-                    <th className="px-1 py-2 border w-20 text-center">
+                    <th className="px-1 py-2 border w-28 text-center">
                       {t.approve}
+                    </th>
+                    <th className="px-1 py-2 border w-44 text-center">
+                      {t.approve2}
+                    </th>
+                    <th className="px-1 py-2 border w-20 text-center">
+                      {t.reject}
                     </th>
                   </tr>
                 </thead>
@@ -409,6 +418,44 @@ const PieceVerification = () => {
                             />
                           ) : (
                             ""
+                          )}
+                        </td>
+                        <td className="py-1 pl-1 border focus:ring-2 focus:border-2 text-left">
+                          {item?.FOLDINGAPPROVED}
+                        </td>
+                        <td className="py-1 px-2 border text-center">
+                          {item?.ID && (
+                            <button
+                              className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                              onClick={async () => {
+                                try {
+                                  await deleteItem({
+                                    id: item.ID,
+                                    docId: item.DOCID,
+                                    pieceId: item.PICID,
+                                  }).unwrap();
+
+                                  Swal.fire({
+                                    icon: "success",
+                                    title: "Rejected Successfully",
+                                    timer: 1500,
+                                    showConfirmButton: false,
+                                  });
+
+                                  // ✅ Remove row from UI instantly
+                                  setFoldingItems((prev) =>
+                                    prev.filter((_, i) => i !== index),
+                                  );
+                                } catch (err) {
+                                  Swal.fire({
+                                    icon: "error",
+                                    title: "Delete failed",
+                                  });
+                                }
+                              }}
+                            >
+                              Reject
+                            </button>
                           )}
                         </td>
                       </tr>

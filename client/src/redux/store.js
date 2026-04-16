@@ -1,7 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
 
-
-
 import {
   UsersApi,
   LabApi,
@@ -14,14 +12,13 @@ import {
   defectEntryApi,
   foldingPendingApi,
   pieceVerificationApi,
-  packingSlipApi
+  packingSlipApi,
+  userDetailsApi,
 } from "../redux";
 
 import { setupListeners } from "@reduxjs/toolkit/query";
 import { openTabs } from "./features";
 import pieceFoldingEntrygApi from "./services/PieceFoldingEntry";
-
-
 
 export const store = configureStore({
   reducer: {
@@ -37,12 +34,11 @@ export const store = configureStore({
     [defectEntryApi.reducerPath]: defectEntryApi.reducer,
     [foldingPendingApi.reducerPath]: foldingPendingApi.reducer,
     [pieceFoldingEntrygApi.reducerPath]: pieceFoldingEntrygApi.reducer,
-    [pieceVerificationApi.reducerPath]:pieceVerificationApi.reducer,
-    [packingSlipApi.reducerPath]:packingSlipApi.reducer,
+    [pieceVerificationApi.reducerPath]: pieceVerificationApi.reducer,
+    [packingSlipApi.reducerPath]: packingSlipApi.reducer,
+    [userDetailsApi.reducerPath]: userDetailsApi.reducer,
+  },
 
-  }
-
-  ,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat([
       UsersApi.middleware,
@@ -57,7 +53,8 @@ export const store = configureStore({
       foldingPendingApi.middleware,
       pieceFoldingEntrygApi.middleware,
       pieceVerificationApi.middleware,
-      packingSlipApi.middleware
+      packingSlipApi.middleware,
+      userDetailsApi.middleware,
     ]),
 });
 setupListeners(store.dispatch);

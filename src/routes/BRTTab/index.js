@@ -5,3 +5,4 @@ export { default as foldingPendinglist } from "./foldingPending.route.js";
 export { default as pieceFoldingEntry } from "./pieceFoldingEntry.route.js";
 export { default as pieceVerification } from "./pieceVerification.js";
 export { default as packingSlip } from "./packingSlip.route.js";
+export { default as userDetails } from "./userDetails.route.js";

@@ -10,8 +10,6 @@ import {
   useGetDefectsQuery,
   useUpdateDefectEntryMutation,
   useGetDefectDetailsQuery,
-  useGetSavedLotsQuery, // ← add
-  useGetSavedPiecesQuery,
 } from "../../redux/services/defectEntry.js";
 import { useGetloomWeaverByIdQuery } from "../../redux/services/PieceReceipt.js";
 import { useGetRolesQuery } from "../../redux/userservice";
@@ -241,21 +239,13 @@ const DefectEntry = () => {
     skip: shouldSkipWorkStatus,
   });
 
-  const { data: lots, refetch: refetchLots } = useGetLotsQuery();
+  const { data: lots } = useGetLotsQuery();
   const { data: pieces } = useGetPiecesQuery({ lotId }, { skip: !lotId });
   const { data: lotDetails } = useGetlotDetailsQuery(
     { pieceId },
     { skip: !pieceId },
   );
-  // ← new: for admin/supervisor view of saved entries
-  const { data: savedLots, refetch: refetchSavedLots } = useGetSavedLotsQuery(
-    undefined,
-    { skip: !canEditLot },
-  );
-  const { data: savedPieces } = useGetSavedPiecesQuery(
-    { lotId },
-    { skip: !lotId || !canEditLot },
-  );
+
   const { data: loomWeaver } = useGetloomWeaverByIdQuery(
     { lotId, pcno: pieceNo },
     { skip: !lotId || !pieceNo },
@@ -355,59 +345,48 @@ const DefectEntry = () => {
     setWeaverPieceNo(loomWeaver.data.weaverPieceNo || "");
   }, [loomWeaver]);
 
-  // ── replace lotOptions ──
   const lotOptions = useMemo(() => {
     const seen = new Set();
-    // admin/supervisor → saved lots from defect tables
-    const source = canEditLot ? savedLots?.data : lots?.data;
-    return (
-      source
-        ?.filter((lot) => {
-          if (seen.has(lot.LOTID)) return false;
-          seen.add(lot.LOTID);
-          return true;
-        })
-        .map((lot) => ({
-          value: lot?.LOTID,
-          label: lot?.DOCID,
-        })) || []
-    );
-  }, [lots?.data, savedLots?.data, canEditLot]);
-  console.log(checkingSectionId, "checkingSectionId");
+    return lots?.data
+      ?.filter((lot) => {
+        if (seen.has(lot.LOTID)) return false;
+        seen.add(lot.LOTID);
+        return true;
+      })
+      .map((lot) => ({
+        value: lot?.LOTID,
+        label: lot?.DOCID,
+      }));
+  }, [lots?.data]);
 
-  // ── replace pieceOptions ──
+  // const pieceOptions = useMemo(() => {
+  //   if (!lotId) return [];
+  //   return [...(pieces?.data || [])]
+  //     .sort((a, b) => a.PIECENO - b.PIECENO)
+  //     .map((piece) => ({
+  //       label: piece?.PIECENO,
+  //       value: piece?.PIECEID,
+  //       allocationId: piece?.ALLOCATIONID, // ← already in response!
+  //     }));
+  // }, [pieces?.data, lotId]);
   const pieceOptions = useMemo(() => {
     if (!lotId) return [];
-
-    // admin/supervisor → saved pieces from defect tables
-    if (canEditLot) {
-      return [...(savedPieces?.data || [])]
-        .sort((a, b) => a.PIECENO - b.PIECENO)
-        .map((piece) => ({
-          label: piece?.PIECENO,
-          value: piece?.PIECEID,
-          allocationId: piece?.ALLOCATIONID,
-          meter: piece?.METER,
-          loomNo: piece?.LOOMNO,
-          weaverPieceNo: piece?.WEAVERPCSNO,
-          tableNo: piece?.TABLENO,
-          checkerName: piece?.CHECKERNAME,
-          sectionName: piece?.SECTIONNAME,
-          checkerId: piece?.CHECKERID,
-          checkingSectionId: piece?.CHECKINGSECTIONID, //
-        }));
-    }
-
-    // checker → active pieces from CheckerWorkingDetails
     return [...(pieces?.data || [])]
       .sort((a, b) => a.PIECENO - b.PIECENO)
       .map((piece) => ({
         label: piece?.PIECENO,
         value: piece?.PIECEID,
         allocationId: piece?.ALLOCATIONID,
+        meter: piece?.METER,
+        loomNo: piece?.LOOMNO,
+        weaverPieceNo: piece?.WEAVERPCSNO,
+        tableNo: piece?.TABLENO,
+        checkerName: piece?.CHECKERNAME,
+        sectionName: piece?.SECTIONNAME,
+        checkerId: piece?.CHECKERID,
+        checkingSectionId: piece?.CHECKINGSECTIONID,
       }));
-  }, [pieces?.data, savedPieces?.data, lotId, canEditLot]);
-
+  }, [pieces?.data, lotId]);
   useEffect(() => {
     if (workStatus?.hasActiveWork && !isAdmin && !isSuppervisor) {
       const work = workStatus?.data;
@@ -547,7 +526,7 @@ const DefectEntry = () => {
         totalPointsSum: pieceTotalPoints,
         defects: piece.defects,
         loomNo: loomNo || null, // ← add
-        weaverPcsNo: weaverPieceNo || null, // ← add,
+        weaverPcsNo: weaverPieceNo || null, // ← add
       };
     });
     return {
@@ -748,12 +727,6 @@ const DefectEntry = () => {
         timer: 2000,
         showConfirmButton: false,
       });
-      // ← refetch correct source after save
-      if (canEditLot) {
-        refetchSavedLots();
-      } else {
-        refetchLots();
-      }
       // ── Reset all fields ──
       setLotId("");
       setPieceId("");
@@ -874,9 +847,9 @@ const DefectEntry = () => {
           ══════════════════════════════════════════ */}
           <div className="border border-gray-300 rounded-lg p-3 mb-3">
             <p className="font-bold text-sm mb-2">{t.lotDetails}</p>
-            <div className="grid grid-cols-12 gap-x-4 gap-y-4 text-sm">
+            <div className="grid grid-cols-12 gap-x-6 gap-y-4 text-sm">
               {/* Lot No */}
-              <div className="col-span-6 sm:col-span-4 lg:col-span-3 z-[999]">
+              <div className="col-span-6 sm:col-span-4 lg:col-span-2 z-[999]">
                 <label className="block font-medium mb-1">{t.lotNo}</label>
                 <Select
                   ref={lotIdRef}
@@ -897,24 +870,25 @@ const DefectEntry = () => {
                 <Select
                   options={pieceOptions}
                   value={pieceOptions?.find((o) => o.value === pieceId) || null}
-                  // ── update piece onChange to auto-fill for admin ──
+                  // onChange={(sel) => {
+                  //   setPieceId(sel?.value || "");
+                  //   setPieceNo(sel?.label || "");
+                  //   setAllocationId(sel?.allocationId || "");
+                  // }}
                   onChange={(sel) => {
                     setPieceId(sel?.value || "");
                     setPieceNo(sel?.label || "");
                     setAllocationId(sel?.allocationId || "");
-                    // ← auto-fill extra fields for admin/supervisor from savedPieces
-                    if (canEditLot) {
-                      setMeters(sel?.meter || "");
-                      setLoomNo(sel?.loomNo || "");
-                      setWeaverPieceNo(sel?.weaverPieceNo || "");
-                      setTableNo(
-                        sel?.tableNo ? sel.tableNo.toString().split(",") : [],
-                      );
-                      setCheckerName(sel?.checkerName || "");
-                      setSectionName(sel?.sectionName || "");
-                      setCheckerId(sel?.checkerId || "");
-                      setCheckingSectionId(sel?.checkingSectionId || ""); // ← now works, removed the empty call
-                    }
+                    setMeters(sel?.meter || "");
+                    setLoomNo(sel?.loomNo || "");
+                    setWeaverPieceNo(sel?.weaverPieceNo || "");
+                    setTableNo(
+                      sel?.tableNo ? sel.tableNo.toString().split(",") : [],
+                    );
+                    setCheckerName(sel?.checkerName || "");
+                    setSectionName(sel?.sectionName || "");
+                    setCheckerId(sel?.checkerId || "");
+                    setCheckingSectionId(sel?.checkingSectionId || "");
                   }}
                   placeholder={t.selectPiece}
                   isClearable={false}

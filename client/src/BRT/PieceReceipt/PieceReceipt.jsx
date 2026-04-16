@@ -174,7 +174,7 @@ const PieceReceipt = ({
     control: (base, state) => ({
       ...base,
       minHeight: "13px",
-      height: "36px",
+      height: "34px",
       padding: "0px 4px",
       fontSize: "14px",
       borderRadius: "8px",
@@ -332,7 +332,18 @@ const PieceReceipt = ({
     label: cloth?.CLOTHNAME,
     value: cloth?.CLOTHID,
   }));
+  useEffect(() => {
+    if (!selectedLotId) return;
 
+    if (lotReceiptDetails?.data?.length > 0) {
+      const firstCloth = lotReceiptDetails.data[0];
+
+      setSelectedClothId(firstCloth?.CLOTHID || "");
+      setSelectedGridId(firstCloth?.GTFABRICRECEIPTDETID || "");
+      setReceiptPcs(firstCloth?.PCS || "");
+      setDcMeter(firstCloth?.MTRS || "");
+    }
+  }, [selectedLotId, lotReceiptDetails]);
   useEffect(() => {
     setSelectedClothId("");
     setReceiptPcs("");
@@ -378,7 +389,13 @@ const PieceReceipt = ({
     }
     setPieceNumber(maxPieceNo + 1);
   }, [lotItems, receiptPcs]);
+  useEffect(() => {
+    if (!selectedClothId) return;
 
+    if (!lotItems || lotItems.length === 0) {
+      setPieceNumber(1);
+    }
+  }, [lotItems, selectedClothId]);
   const handleAddItem = (e) => {
     e.preventDefault();
     const pc = Number(pieceNo);
@@ -610,7 +627,7 @@ const PieceReceipt = ({
                 <select
                   value={selectedClothId}
                   onChange={(e) => setSelectedClothId(e.target.value)}
-                  className="w-full bg-white border rounded-lg px-2 py-[7px]"
+                  className="w-full  border rounded-lg px-2 py-1.5 "
                 >
                   <option value="">{t.selectClothName}</option>
                   {clothOptions?.map((cloth) => (

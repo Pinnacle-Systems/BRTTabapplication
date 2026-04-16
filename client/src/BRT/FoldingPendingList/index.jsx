@@ -487,7 +487,8 @@ const FoldingPendingList = () => {
                                   "TABAPPROVAL",
                                 )
                               }
-                              checked={!!item.TABAPPROVAL}
+                              // checked={!!item.TABAPPROVAL}
+                              checked={item.TABAPPROVAL === "YES"}
                             />
                           ) : (
                             ""

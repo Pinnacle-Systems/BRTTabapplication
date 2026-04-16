@@ -60,8 +60,8 @@ const translations = {
     validCloth: "Please Select Cloth",
     validPiece: "Please Select Piece",
     validTable: "Please Select Table",
-    loomNo:"Loom No",
-    weaverPieceNo:"Weaver Pc No"
+    loomNo: "Loom No",
+    weaverPieceNo: "Weaver Pc No",
   },
   ta: {
     title: "மேஜை,லாட் பீஸ் ஒதுக்கீடு",
@@ -100,8 +100,8 @@ const translations = {
     validCloth: "துணியை தேர்ந்தெடுக்கவும்",
     validPiece: "துண்டை தேர்ந்தெடுக்கவும்",
     validTable: "மேஜையை தேர்ந்தெடுக்கவும்",
-    loomNo:"லூம் எண்",
-    weaverPieceNo:"வீவர் பீஸ் எண்"
+    loomNo: "லூம் எண்",
+    weaverPieceNo: "வீவர் பீஸ் எண்",
   },
   hi: {
     title: "टेबल और लॉट पीस आवंटन",
@@ -140,8 +140,8 @@ const translations = {
     validCloth: "कृपया कपड़ा चुनें",
     validPiece: "कृपया पीस चुनें",
     validTable: "कृपया टेबल चुनें",
-        loomNo:"लूम नं ",
-    weaverPieceNo:"वीवर पीसी नं"
+    loomNo: "लूम नं ",
+    weaverPieceNo: "वीवर पीसी नं",
   },
 };
 
@@ -171,7 +171,11 @@ const TableLotForm = ({
   selectedNonGridId,
   setSelectedNonGridId,
   onNew,
-  TABDATE,loomNo,setLoomNo,weaverPieceNo, setWeaverPieceNo
+  TABDATE,
+  loomNo,
+  setLoomNo,
+  weaverPieceNo,
+  setWeaverPieceNo,
 }) => {
   const { lang } = useLanguage();
   const t = translations[lang] ?? translations["en"];
@@ -362,7 +366,9 @@ const TableLotForm = ({
     NOOFPCSSTK,
     PCSTAKEN,
     NOTES1,
-    storedUserId: parseInt(storedUserId),weaverPieceNo,loomNo
+    storedUserId: parseInt(storedUserId),
+    weaverPieceNo,
+    loomNo,
   };
   console.log(
     selectedNonGridId,
@@ -489,10 +495,10 @@ const TableLotForm = ({
       lotIdRef.current?.openMenu("first");
     }
   }, []);
-
+  const lastAutoFilledLot = useRef(null);
   useEffect(() => {
     // Reset when lot changes
-    setSelectedGridId("");
+    lastAutoFilledLot.current = null; // ← clear on lot change    setSelectedGridId("");
     setSelectedClothId("");
     setSelectedSubGridId("");
     setSelectedPiece("");
@@ -501,6 +507,21 @@ const TableLotForm = ({
     // setCheckerId("");
     // setSelectedTables([]);
   }, [selectedLotNo]);
+  // ── Auto-select first cloth once clothOptions loads after lot selection ──
+  // ── Auto-select first cloth once clothOptions loads after lot selection ──
+  useEffect(() => {
+    if (
+      clothOptions?.length > 0 &&
+      selectedLotNo &&
+      lastAutoFilledLot.current !== selectedLotNo // ← not yet filled for this lot
+    ) {
+      lastAutoFilledLot.current = selectedLotNo; // ← mark this lot as filled
+      const first = clothOptions[0];
+      setSelectedGridId(first.value || "");
+      setSelectedClothId(first.clothId || "");
+      setLotCheckingNoId(first.lotchkId || "");
+    }
+  }, [clothOptions, selectedLotNo]);
 
   const handleRevert = async (allocationId) => {
     try {
@@ -917,23 +938,23 @@ const TableLotForm = ({
                     className="w-full border rounded-lg px-1 py-[7px] text-right bg-gray-100"
                   />
                 </div>
-                 <div className="col-span-1 lg:col-span-1">
-                  <label className="block font-medium mb-1">{t.weaverPieceNo}</label>
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">
+                    {t.weaverPieceNo}
+                  </label>
                   <input
                     type="text"
                     value={weaverPieceNo}
                     onChange={(e) => setWeaverPieceNo(e.target.value)}
-                    
                     className="w-full border rounded-lg px-1 py-[7px] text-right "
                   />
                 </div>
-                 <div className="col-span-1 lg:col-span-1">
+                <div className="col-span-1 lg:col-span-1">
                   <label className="block font-medium mb-1">{t.loomNo}</label>
                   <input
                     type="text"
                     value={loomNo}
                     onChange={(e) => setLoomNo(e.target.value)}
-                    
                     className="w-full border rounded-lg px-1 py-[7px] text-right "
                   />
                 </div>

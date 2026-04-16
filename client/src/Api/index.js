@@ -37,3 +37,4 @@ export const GRADE = "grade";
 export const PIECEVERIFICATIONAPI = "pieceVerification";
 export const CLOTHDELIVERYAPI = "clothDelivery";
 export const PACKINGSLIP = "packingSlip";
+export const USER_DETAILS = "userDetails";
