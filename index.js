@@ -36,14 +36,12 @@ import {
 
 import { initPool, closePool } from "./src/constants/db.connection.js";
 
-const brtconnectionPool = initPool();
-
 const gracefulAppShutdown = async () => {
   console.log("Application shutting down...");
 
   try {
     console.log("Closing database connections... ");
-    await initPool.end();
+    await closePool();
     console.log("Database connections closed succesfully");
     process.exit(0);
   } catch (err) {
@@ -134,9 +132,21 @@ export const io = new Server(httpServer, {
 
 io.on("connection", socketMain);
 
-httpServer.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`);
-});
+const startServer = async () => {
+  try {
+    // ✅ Wait for pool creation
+    await initPool();
+
+    httpServer.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}.`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 process.on("SIGINT", gracefulAppShutdown);
 process.on("SIGTERM", gracefulAppShutdown);

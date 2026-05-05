@@ -47,9 +47,11 @@ const PieceReport = () => {
   const [editData, setEditData] = useState(null);
   const [selectedLotId, setSelectedLotId] = useState("");
   const [selectedGridId, setSelectedGridId] = useState("");
-  const [selectedClothId, setSelectedClothId] = useState("");
 
-  const { data, isLoading, error } = useGetPieceReceiptQuery({});
+  // const { data, isLoading, error } = useGetPieceReceiptQuery({});
+  let data;
+  let isLoading;
+  let error;
   const [deleteReceipt] = useDeletePieceReceiptMutation();
 
   const handleDelete = async (id) => {
@@ -64,8 +66,6 @@ const PieceReport = () => {
         editData={editData}
         selectedLotId={selectedLotId}
         setSelectedLotId={setSelectedLotId}
-        selectedClothId={selectedClothId}
-        setSelectedClothId={setSelectedClothId}
         selectedGridId={selectedGridId}
         setSelectedGridId={setSelectedGridId}
         onClose={() => {
@@ -123,7 +123,9 @@ const PieceReport = () => {
                     className={index % 2 === 0 ? "bg-white" : "bg-gray-100"}
                   >
                     <td className="px-0 border">{index + 1}</td>
-                    <td className="pl-1 py-1.5 border text-left">{row.docId}</td>
+                    <td className="pl-1 py-1.5 border text-left">
+                      {row.docId}
+                    </td>
                     <td className="pl-1 border text-left">{clothName}</td>
                     {/* Action buttons commented out — uncomment if needed:
                     <td className="border">

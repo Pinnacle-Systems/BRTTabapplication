@@ -42,18 +42,16 @@ export async function getLotNo(req, res) {
     }
   }
 }
-
-export async function getLotDetails(req, res) {
+export async function getSetNo(req, res) {
   let connection;
   const { selectedLotId } = req.params;
   console.log(selectedLotId, "received params");
 
   try {
     connection = await getConnection();
-    const sql = `SELECT A.GTFABRICRECEIPTID,B.GTFABRICRECEIPTDETID,B.LOTNO1,B.CLOTHNAME as clothId,C.CLOTHNAME,B.PCS,B.MTRS
+    const sql = `SELECT A.GTFABRICRECEIPTID,B.GTFABRICRECEIPTDETID as GRIDID,B.SETNO
 FROM GTFABRICRECEIPT A
 JOIN GTFABRICRECEIPTDET B ON B.GTFABRICRECEIPTID = A.GTFABRICRECEIPTID
-JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = B.CLOTHNAME 
 WHERE A.GTFABRICRECEIPTID='${selectedLotId}'`;
     console.log(sql, "sql for getLotDetails");
     const result = await connection.execute(sql);
@@ -185,106 +183,90 @@ export async function getOne(req, res) {
 
   try {
     connection = await getConnection();
+
     const { selectedLotId, selectedGridId } = req.params;
+
     const sql = `
-
       SELECT
-
-        R.GTFABRICRECEIPTID,
-        R.DOCID,
-
         D.GTFABRICRECEIPTDETID,
-        D.CLOTHNAME as clothId,
         C.CLOTHNAME,
+        D.PCS,
+        D.MTRS AS TOTAL_MTR,
 
         S.GTSCHEDULESUNDETID,
-        S.SNO,
-        S.MTR
+        S.PCSSNNO
 
       FROM GTFABRICRECEIPT R
 
       LEFT JOIN GTFABRICRECEIPTDET D
         ON R.GTFABRICRECEIPTID = D.GTFABRICRECEIPTID
-LEFT JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = D.CLOTHNAME 
 
-      LEFT JOIN Gtschedulesundet S
+      LEFT JOIN GTCLOTHCREATION C
+        ON C.GTCLOTHCREATIONID = D.CLOTHNAME
+
+      LEFT JOIN GTSCHEDULESUNDET S
         ON D.GTFABRICRECEIPTDETID = S.GTFABRICRECEIPTDETID
 
       WHERE
         R.GTFABRICRECEIPTID = :lotId
-        AND D.GTFABRICRECEIPTDETID = :clothId
+        AND D.GTFABRICRECEIPTDETID = :gridId
 
       ORDER BY
-        D.GTFABRICRECEIPTDETID,
-        S.SNO
-
+        S.PCSSNNO
     `;
 
     const result = await connection.execute(sql, {
       lotId: selectedLotId,
-      clothId: selectedGridId,
+      gridId: selectedGridId,
     });
 
+    // 🔹 Convert rows to objects
     const rows = result.rows.map((row) => {
-      let obj = {};
-
+      const obj = {};
       result.metaData.forEach(({ name }, i) => {
         obj[name] = row[i];
       });
-
       return obj;
     });
 
-    // ✅ Parent-child-grandchild nesting
-    const parentChildMap = {};
+    // 🔹 Build final structure
+    let finalObj = null;
 
-    rows?.forEach((row) => {
+    rows.forEach((row) => {
       if (!row.GTFABRICRECEIPTDETID) return;
 
-      const key = row.GTFABRICRECEIPTID + "_" + row.GTFABRICRECEIPTDETID;
-
-      if (!parentChildMap[key]) {
-        parentChildMap[key] = {
-          selectedLotId: row.GTFABRICRECEIPTID,
-
-          docId: row.DOCID,
-
-          lotItems: [
-            {
-              selectedGridId: row.GTFABRICRECEIPTDETID,
-              selectedClothId: row.CLOTHID,
-              lotItemsSubGrid: [],
-            },
-          ],
+      // Create main object once
+      if (!finalObj) {
+        finalObj = {
+          clothName: row.CLOTHNAME,
+          pcs: row.PCS,
+          meters: row.TOTAL_MTR,
+          lotItemsSubGrid: [],
         };
       }
 
-      // ✅ Add schedules safely
-      if (row.SNO !== null && row.MTR !== null) {
-        parentChildMap[key]?.lotItems[0]?.lotItemsSubGrid?.push({
-          sno: row.SNO,
-          mtr: row.MTR,
+      // Add child rows
+      if (row.GTSCHEDULESUNDETID) {
+        finalObj.lotItemsSubGrid.push({
+          gtscheduleSunDetId: row.GTSCHEDULESUNDETID,
+          pcs: row.PCSSNNO,
         });
       }
     });
 
-    const finalData = Object.values(parentChildMap);
-
     res.json({
       statusCode: 0,
-
-      data: finalData,
+      data: finalObj ? [finalObj] : [],
     });
   } catch (err) {
     console.log(err);
 
     res.json({
       statusCode: 1,
-
       data: [],
     });
   } finally {
-    await connection.close();
+    if (connection) await connection.close();
   }
 }
 

@@ -30,9 +30,9 @@ const pieceReceiptApi = createApi({
       },
       providesTags: ["pieceReceipt"],
     }),
-    getLotPieceReceiptDetails: builder.query({
+    getSetNo: builder.query({
       query: (selectedLotId) => ({
-        url: `${PIECERECEIPT}/${selectedLotId}/lotReceiptDetails`,
+        url: `${PIECERECEIPT}/${selectedLotId}/getSetNo`,
         method: "GET",
         headers: {
           "Content-type": "application/json; charset=UTF-8",
@@ -120,8 +120,8 @@ const pieceReceiptApi = createApi({
 
 export const {
   useGetLotPieceReceiptQuery,
-  useGetLotPieceReceiptDetailsQuery,
   useGetPieceReceiptQuery,
+  useGetSetNoQuery,
   useGetPieceReceiptByIdQuery,
   useAddPieceReceiptMutation,
   useUpdatePieceReceiptMutation,
