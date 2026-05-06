@@ -277,62 +277,23 @@ export async function update(req, res) {
     connection = await getConnection();
     const { lotItems } = req.body;
     console.log(lotItems, "updatinglotItems");
-    let NOTES1 = "TabUser";
 
     for (const item of lotItems) {
       const sql = `
-
-        MERGE INTO GTSCHEDULESUNDET T
-
-        USING dual
-
-        ON (
-          T.GTFABRICRECEIPTID = :lotId
-          AND T.GTFABRICRECEIPTDETID = :clothId
-          AND T.SNO = :pcNo
-        )
-
-        WHEN MATCHED THEN
-          UPDATE SET
-            T.MTR = :meters
-
-        WHEN NOT MATCHED THEN
-          INSERT
-          (
-            GTSCHEDULESUNDETID,
-            GTFABRICRECEIPTID,
-            GTFABRICRECEIPTDETID,
-            SNO,
-            MTR,
-            CHK,
-            NOTES1
-
-          )
-          VALUES
-          (
-            :GTSCHEDULESUNDETID,
-            :lotId,
-            :clothId,
-            :pcNo,
-            :meters,
-            :CHK,
-            :notes
-
-          )
-
+        UPDATE GTSCHEDULESUNDET
+        SET SNO = :pcNo,
+            MTR = :meters,
+            CHK = 1,
+            NOTES1 = 'TabUser'
+        WHERE GTSCHEDULESUNDETID = :subgridId
       `;
 
       await connection.execute(
         sql,
         {
-          GTSCHEDULESUNDETID:
-            Date.now() + 1000 + Math.floor(Math.random() * 1000),
-          lotId: item.selectedLotId,
-          clothId: item.selectedGridId,
           pcNo: item.pcNo,
           meters: item.meters,
-          CHK: item.CHK,
-          notes: NOTES1,
+          subgridId: item.subgridId,
         },
         { autoCommit: false },
       );
