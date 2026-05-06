@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import {
   useGetLotPieceReceiptQuery,
-  useGetLotPieceReceiptDetailsQuery,
+  useGetSetNoQuery,
   useUpdatePieceReceiptMutation,
   useGetPieceReceiptByIdQuery,
 } from "../../redux/services/PieceReceipt";
@@ -20,7 +20,9 @@ const translations = {
     save: "Save",
     lotDetails: "Lot Details",
     lotNo: "Lot No",
+    setNo: "Set No",
     selectLot: "Select Lot",
+    selectSetNo: "Select Set No",
     clothName: "Cloth Name",
     selectClothName: "Select Cloth Name",
     receiptPcs: "Receipt Pcs",
@@ -64,7 +66,9 @@ const translations = {
     save: "சேமி",
     lotDetails: "லாட் விவரங்கள்",
     lotNo: "லாட் எண்",
+    setNo: "செட் எண்",
     selectLot: "லாட் தேர்ந்தெடு",
+    selectSetNo: "செட் எண்",
     clothName: "துணி பெயர்",
     selectClothName: "துணி பெயரை தேர்ந்தெடு",
     receiptPcs: "ரசீது பீஸ்கள்",
@@ -108,7 +112,9 @@ const translations = {
     save: "सहेजें",
     lotDetails: "लॉट विवरण",
     lotNo: "लॉट नं.",
+    setNo: "सेट नं.",
     selectLot: "लॉट चुनें",
+    selectSetNo: "सेट नं. चुनें",
     clothName: "कपड़े का नाम",
     selectClothName: "कपड़े का नाम चुनें",
     receiptPcs: "रसीद पीस",
@@ -152,23 +158,24 @@ const PieceReceipt = ({
   onClose,
   selectedLotId,
   setSelectedLotId,
-  selectedClothId,
-  setSelectedClothId,
+
   setSelectedGridId,
   selectedGridId,
 }) => {
   // ← Get language from global context (set by NavbarHeader)
   const { lang } = useLanguage();
   const t = translations[lang] ?? translations["en"];
-
+  const [clothName, setClothName] = useState("");
   const [receiptPcs, setReceiptPcs] = useState("");
   const [dcMeter, setDcMeter] = useState("");
   const [pieceNo, setPieceNumber] = useState("");
   const [meter, setMeter] = useState("");
   const [lotItems, setLotItems] = useState([]);
+  const [subgridId, setSubgridId] = useState("");
   const lotIdRef = useRef(null);
   const pieceNoRef = useRef(null);
   let CHK = 1;
+  console.log(lotItems, "lotItems");
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -224,19 +231,30 @@ const PieceReceipt = ({
   };
 
   const { data: lots, error, isLoading } = useGetLotPieceReceiptQuery();
-  const { data: lotReceiptDetails } = useGetLotPieceReceiptDetailsQuery(
-    selectedLotId,
-    { skip: !selectedLotId },
-  );
+
+  const { data: setNoData } = useGetSetNoQuery(selectedLotId, {
+    skip: !selectedLotId,
+  });
   const { data: singleData } = useGetPieceReceiptByIdQuery(
     { selectedLotId, selectedGridId },
     { skip: !selectedLotId || !selectedGridId },
   );
+  const setOptions = setNoData?.data?.map((item) => ({
+    value: item?.GRIDID,
+    label: item?.SETNO,
+  }));
+
+  console.log(setNoData, "setNoData");
+
+  console.log(singleData, "singleData");
 
   const [updateData] = useUpdatePieceReceiptMutation();
 
   const syncFormWithDb = useCallback(
     (data) => {
+      setClothName(data?.[0]?.clothName);
+      setReceiptPcs(data?.[0]?.pcs);
+      setDcMeter(data?.[0]?.meters);
       const mapped =
         data?.[0]?.lotItems?.flatMap((item) =>
           item?.lotItemsSubGrid?.map((val) => ({
@@ -252,22 +270,28 @@ const PieceReceipt = ({
 
   useEffect(() => {
     setLotItems([]);
-    if (selectedClothId && singleData?.data) syncFormWithDb(singleData.data);
-  }, [selectedClothId, singleData, syncFormWithDb]);
+    if (selectedGridId && singleData?.data) syncFormWithDb(singleData.data);
+  }, [selectedGridId, singleData, syncFormWithDb]);
 
   const data = {
     selectedLotId: parseInt(selectedLotId),
-    selectedClothId: parseInt(selectedClothId),
     selectedGridId: parseInt(selectedGridId),
     lotItems: lotItems?.map(({ _isDbRow, ...item }) => ({
       pcNo: parseInt(item.pcNo),
+      subgridId: item.subgridId,
       selectedLotId: parseInt(selectedLotId),
       selectedGridId: parseInt(selectedGridId),
-      selectedClothId: parseInt(selectedClothId),
       CHK,
       meters: parseFloat(item.meters),
     })),
   };
+
+  const availablePieces = useMemo(() => {
+    const subGrid = singleData?.data?.[0]?.lotItemsSubGrid || [];
+    return subGrid.filter(
+      (item) => !lotItems.some((li) => Number(li.pcNo) === Number(item.pcs)),
+    );
+  }, [singleData, lotItems]);
 
   const handleSubmitCustom = async (callback, data) => {
     try {
@@ -280,7 +304,6 @@ const PieceReceipt = ({
         showConfirmButton: false,
       });
       setLotItems([]);
-      setSelectedClothId("");
       setSelectedLotId("");
       setSelectedGridId("");
       setPieceNumber("");
@@ -300,7 +323,7 @@ const PieceReceipt = ({
   };
 
   const saveData = () => {
-    if (!selectedLotId || !selectedClothId) {
+    if (!selectedLotId || !selectedGridId) {
       Swal.fire({
         icon: "warning",
         title: t.alertSelectLotCloth,
@@ -328,74 +351,42 @@ const PieceReceipt = ({
     }
   }, []);
 
-  const clothOptions = lotReceiptDetails?.data?.map((cloth) => ({
-    label: cloth?.CLOTHNAME,
-    value: cloth?.CLOTHID,
-  }));
   useEffect(() => {
-    if (!selectedLotId) return;
-
-    if (lotReceiptDetails?.data?.length > 0) {
-      const firstCloth = lotReceiptDetails.data[0];
-
-      setSelectedClothId(firstCloth?.CLOTHID || "");
-      setSelectedGridId(firstCloth?.GTFABRICRECEIPTDETID || "");
-      setReceiptPcs(firstCloth?.PCS || "");
-      setDcMeter(firstCloth?.MTRS || "");
-    }
-  }, [selectedLotId, lotReceiptDetails]);
-  useEffect(() => {
-    setSelectedClothId("");
     setReceiptPcs("");
     setDcMeter("");
     setSelectedGridId("");
+    setClothName("");
     setLotItems([]);
   }, [selectedLotId]);
 
   useEffect(() => {
-    if (!selectedClothId || !lotReceiptDetails?.data) {
+    if (!selectedGridId) {
       setReceiptPcs("");
       setDcMeter("");
       setPieceNumber("");
       setMeter("");
+      setClothName("");
       return;
     }
-    const selectedCloth = lotReceiptDetails?.data?.find(
-      (cloth) => Number(cloth?.CLOTHID) === Number(selectedClothId),
+  }, [selectedGridId]);
+
+  useEffect(() => {
+    // Only auto-select if current pieceNo is empty or no longer available
+    const isCurrentValid = availablePieces.some(
+      (p) => Number(p.pcs) === Number(pieceNo),
     );
-    if (selectedCloth) {
-      setReceiptPcs(selectedCloth?.PCS || "");
-      setDcMeter(selectedCloth?.MTRS || "");
-      setSelectedGridId(selectedCloth?.GTFABRICRECEIPTDETID || "");
-    }
-  }, [selectedClothId, lotReceiptDetails]);
-
-  useEffect(() => {
-    if (lotItems?.length === Number(receiptPcs)) setPieceNumber("");
-  }, [lotItems, receiptPcs]);
-
-  useEffect(() => {
-    if (!receiptPcs) return;
-    if (lotItems.length === 0) {
+    if (availablePieces.length > 0) {
+      if (!pieceNo || !isCurrentValid) {
+        setPieceNumber(availablePieces[0].pcs);
+        setSubgridId(availablePieces[0].gtscheduleSunDetId);
+      }
+    } else if (lotItems.length > 0 || (selectedGridId && singleData)) {
+      // If no pieces left, clear selection
       setPieceNumber("");
-      return;
+      setSubgridId("");
     }
-    const maxPieceNo = Math.max(
-      ...lotItems?.map((item) => Number(item?.pcNo || 0)),
-    );
-    if (maxPieceNo >= Number(receiptPcs)) {
-      setPieceNumber("");
-      return;
-    }
-    setPieceNumber(maxPieceNo + 1);
-  }, [lotItems, receiptPcs]);
-  useEffect(() => {
-    if (!selectedClothId) return;
+  }, [availablePieces, pieceNo, selectedGridId, singleData]);
 
-    if (!lotItems || lotItems.length === 0) {
-      setPieceNumber(1);
-    }
-  }, [lotItems, selectedClothId]);
   const handleAddItem = (e) => {
     e.preventDefault();
     const pc = Number(pieceNo);
@@ -466,13 +457,27 @@ const PieceReceipt = ({
     }
     const newItem = {
       selectedLotId,
-      selectedClothId,
+      selectedGridId,
       pcNo: Number(pieceNo),
+      subgridId: subgridId,
       meters: Number(meter).toFixed(2),
       _isDbRow: false,
     };
+
+    // Calculate next piece immediately to avoid flicker
+    const nextPieces = availablePieces.filter(
+      (p) => Number(p.pcs) !== Number(pieceNo),
+    );
+
     setLotItems((prev) => [...prev, structuredClone(newItem)]);
-    setPieceNumber("");
+
+    if (nextPieces.length > 0) {
+      setPieceNumber(nextPieces[0].pcs);
+      setSubgridId(nextPieces[0].gtscheduleSunDetId);
+    } else {
+      setPieceNumber("");
+      setSubgridId("");
+    }
     setMeter("");
     setTimeout(() => {
       pieceNoRef.current?.focus();
@@ -620,22 +625,36 @@ const PieceReceipt = ({
                   menuPosition="fixed"
                 />
               </div>
+              <div className="col-span-2 lg:col-span-2">
+                <label className="block font-medium mb-1">{t.setNo}</label>
+                <Select
+                  options={setOptions}
+                  value={
+                    setOptions?.find(
+                      (option) => option.value === selectedGridId,
+                    ) || null
+                  }
+                  onChange={(selectedOption) =>
+                    setSelectedGridId(selectedOption?.value || "")
+                  }
+                  placeholder={t.selectSetNo}
+                  isClearable={false}
+                  styles={customSelectStyles}
+                  isSearchable={true}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                />
+              </div>
 
               {/* Cloth Name */}
               <div className="col-span-4 lg:col-span-5">
                 <label className="block font-medium mb-1">{t.clothName}</label>
-                <select
-                  value={selectedClothId}
-                  onChange={(e) => setSelectedClothId(e.target.value)}
-                  className="w-full  border rounded-lg px-2 py-1.5 "
-                >
-                  <option value="">{t.selectClothName}</option>
-                  {clothOptions?.map((cloth) => (
-                    <option key={cloth?.value} value={cloth?.value}>
-                      {cloth?.label}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  type="text"
+                  value={clothName}
+                  readOnly
+                  className="w-full border rounded-lg px-1 py-1.5 text-right bg-gray-100"
+                />
               </div>
 
               {/* Receipt Pcs */}
@@ -671,29 +690,30 @@ const PieceReceipt = ({
               {/* Piece No */}
               <div className="flex flex-col flex-1 max-w-[8rem]">
                 <label className="text-sm font-medium mb-1">{t.pieceNo}</label>
-                <input
-                  type="number"
-                  name="pieceNo"
-                  value={pieceNo}
-                  max={receiptPcs}
-                  min={1}
-                  onChange={(e) => {
-                    const num = Number(e.target.value);
-                    if (num > receiptPcs) {
-                      Swal.fire({
-                        title: t.alertPieceGreaterThanReceipt,
-                        icon: "error",
-                        timer: 2000,
-                        showConfirmButton: true,
-                      });
-                      return;
-                    }
-                    setPieceNumber(e.target.value);
-                  }}
-                  disabled={
-                    !selectedClothId || lotItems.length === Number(receiptPcs)
+                <Select
+                  options={availablePieces.map((item) => ({
+                    value: item.gtscheduleSunDetId,
+                    label: item.pcs,
+                  }))}
+                  value={
+                    pieceNo
+                      ? {
+                          value: subgridId,
+                          label: pieceNo,
+                        }
+                      : null
                   }
-                  className="border rounded-lg text-right px-2 py-1.5 w-full"
+                  onChange={(selectedOption) => {
+                    setPieceNumber(selectedOption?.label || "");
+                    setSubgridId(selectedOption?.value || "");
+                  }}
+                  placeholder="Select"
+                  styles={customSelectStyles}
+                  isDisabled={
+                    !selectedGridId || lotItems.length === Number(receiptPcs)
+                  }
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
                 />
               </div>
 
