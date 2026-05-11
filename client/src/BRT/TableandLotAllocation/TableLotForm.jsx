@@ -176,6 +176,8 @@ const TableLotForm = ({
   setLoomNo,
   weaverPieceNo,
   setWeaverPieceNo,
+  setSelectedClothName,
+  selectedClothName,
 }) => {
   const { lang } = useLanguage();
   const t = translations[lang] ?? translations["en"];
@@ -207,12 +209,12 @@ const TableLotForm = ({
     isUninitialized: piecesUninitialized,
   } = useGetPiecesQuery(
     {
-      selectedClothId,
+      // selectedClothId,
       selectedLotNo,
-      lotCheckingNoId,
+      // lotCheckingNoId,
     },
     {
-      skip: !selectedClothId || !selectedLotNo || !lotCheckingNoId,
+      skip: !selectedLotNo,
     },
   );
   const { data: workStatus, refetch: refetchWorkStatus } =
@@ -413,9 +415,10 @@ const TableLotForm = ({
   const lotOptions = useMemo(
     () =>
       lots?.data?.map((lot) => ({
-        value: lot?.LOTNO,
-        label: lot?.LOTDOCID,
-        nonGridId: lot?.NONGIIDID,
+        value: lot?.LOTID,
+        label: lot?.LOTNO,
+        nonGridId: lot?.NONGRIDID,
+        clothName: lot?.CLOTHNAME,
       })),
     [lots?.data],
   );
@@ -443,7 +446,7 @@ const TableLotForm = ({
   }, [cloths?.data, selectedLotNo]);
 
   const pieceOptions = useMemo(() => {
-    if (!selectedClothId || !selectedLotNo || !lotCheckingNoId) return [];
+    if (!selectedLotNo) return [];
 
     return [...(pieces?.data || [])]
       .sort((a, b) => a.PCSNO - b.PCSNO)
@@ -453,7 +456,8 @@ const TableLotForm = ({
         meter: piece?.METER,
         subGridId: piece?.SUBGRIDID,
       }));
-  }, [pieces?.data, selectedClothId, selectedLotNo, lotCheckingNoId]);
+  }, [pieces?.data, selectedLotNo]);
+  console.log(pieceOptions, "pieceOptions");
 
   // Filter tables for selection
   const availableTables = tables?.data?.filter(
@@ -866,6 +870,7 @@ const TableLotForm = ({
                     onChange={(selectedOption) => {
                       setSelectedLotNo(selectedOption?.value || "");
                       setSelectedNonGridId(selectedOption?.nonGridId || "");
+                      setSelectedClothName(selectedOption?.clothName || "");
                     }}
                     placeholder={t.selectLot}
                     isClearable={false} // ✅ disable cross icon
@@ -882,24 +887,20 @@ const TableLotForm = ({
                     {t.clothName}
                   </label>
 
-                  <Select
-                    options={clothOptions}
-                    value={
-                      clothOptions?.find(
-                        (option) => option.value === selectedGridId,
-                      ) || null
-                    }
-                    onChange={(selectedOption) => {
-                      setSelectedGridId(selectedOption?.value || "");
-                      setSelectedClothId(selectedOption?.clothId || "");
-                      setLotCheckingNoId(selectedOption?.lotchkId || "");
-                    }}
-                    placeholder={t.selectCloth}
-                    isClearable={false} // ✅ disable cross icon
-                    styles={customSelectStyles}
-                    isSearchable={true}
-                    menuPortalTarget={document.body} // ← renders menu outside the clipped container
-                    menuPosition="fixed"
+                  <input
+                    type="text"
+                    value={selectedClothName}
+                    readOnly
+                    className="
+                  border
+                  rounded-lg
+                  text-left pl-1
+                  px-1
+                  py-[7px]
+                  w-full
+                  bg-gray-100
+                  
+                "
                   />
                 </div>
 

@@ -28,7 +28,6 @@ export async function getCheckingSection(req, res) {
   }
 }
 
-
 export async function getTables(req, res) {
   let connection;
 
@@ -56,16 +55,22 @@ export async function getTables(req, res) {
   }
 }
 
-
 export async function getLotNo(req, res) {
   let connection;
 
   try {
     connection = await getConnection();
-    const sql1 = `select A.GTLOTCHKPLANID as nonGridId,A.GTLOTCHKPLANDETID as gridId,A.LOTNO from Gtlotchkplandet A`;
-    const sql = `select A.LOTNO as LOTNO,B.DOCID as LOTDOCID,A.GTLOTALLOTMENTID as nongiidId,c.DOCID from gtlotallotmentdet A 
+    const sql1 = `select A.LOTNO as LOTNO,B.DOCID as LOTDOCID,A.GTLOTALLOTMENTID as nongiidId,c.DOCID from gtlotallotmentdet A 
 left join GTFABRICRECEIPT B ON A.LOTNO = B.GTFABRICRECEIPTID
 left join GTLOTALLOTMENT c on A.GTLOTALLOTMENTID = c.GTLOTALLOTMENTID`;
+
+    const sql = `
+    SELECT A.GTLOTALLOTMENTDETID AS GRIDID,A.GTLOTALLOTMENTID AS NONGRIDID,A.LOTNO AS LOTID,
+    B.DOCID AS LOTNO,C.CLOTHNAME FROM GTLOTALLOTMENTDET A
+    LEFT JOIN GTFABRICRECEIPT B ON A.LOTNO = B.GTFABRICRECEIPTID
+    LEFT JOIN GTCLOTHCREATION C ON A.CLOTHNAME = C.GTCLOTHCREATIONID
+`;
+
     console.log(sql, "sql for getLotNo");
     const result = await connection.execute(sql);
 
@@ -86,7 +91,6 @@ left join GTLOTALLOTMENT c on A.GTLOTALLOTMENTID = c.GTLOTALLOTMENTID`;
   }
 }
 
-
 export async function getClothName(req, res) {
   let connection;
 
@@ -96,12 +100,10 @@ export async function getClothName(req, res) {
 
   try {
     connection = await getConnection();
-    const sql1 = `select A.GTLOTCHKPLANID as nonGridId,A.GTLOTCHKPLANDETID as gridId,A.LOTNO,A.CLOTHNAME as CLOTHID,C.CLOTHNAME from Gtlotchkplandet A
+
+    const sql = `SELECT A.GTLOTALLOTMENTID AS NONGRIDID,A.GTLOTALLOTMENTDETID AS GRIDID,A.LOTNO AS LOTID,A.CLOTHNAME AS CLOTHID,C.CLOTHNAME,D.DOCID AS LOTCHEKCNO FROM GTLOTALLOTMENTDET A
 JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = A.CLOTHNAME
-WHERE A.LOTNO = '${selectedLotNo}'`;
-    const sql = `SELECT A.GTLOTALLOTMENTID AS NONGRIDID,A.GTLOTALLOTMENTDETID AS GRIDID,A.LOTNO AS LOTID,A.CLOTHNAME AS CLOTHID,C.CLOTHNAME,A.LOTCHKNO AS LOTCHKNOID,D.DOCID AS LOTCHEKCNO FROM GTLOTALLOTMENTDET A
-JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = A.CLOTHNAME
-JOIN  GTLOTCHKPLAN  D ON D.GTLOTCHKPLANID = A.LOTCHKNO
+JOIN  gtfabricreceipt  D ON D.GTFABRICRECEIPTID = A.LOTNO
 WHERE A.LOTNO = '${selectedLotNo}'`;
     console.log(sql, "sql for getClothName");
     const result = await connection.execute(sql);
@@ -123,8 +125,6 @@ WHERE A.LOTNO = '${selectedLotNo}'`;
   }
 }
 
-
-
 export async function getPieces(req, res) {
   let connection;
   const { selectedClothId, selectedLotNo, lotCheckingNoId } = req.params;
@@ -140,16 +140,27 @@ export async function getPieces(req, res) {
     connection = await getConnection();
     //     const sql1 = `select GTLOTCHKPLANID as nonGridId,GTLOTCHKPLANDETID as gridId,GTLOTPCSSUBDETID as subGridId,PCSNO,METER from gtlotpcssubdet
     // WHERE GTLOTCHKPLANDETID ='${selectedGridId}'`;
-    const sql = `SELECT BB.PCSNO,BB.METER,BB.GTLOTPCSSUBDETID as subGridId
+    const sql1 = `SELECT BB.PCSNO,BB.METER,BB.GTLOTPCSSUBDETID as subGridId
 FROM GTLOTCHKPLAN A
 JOIN GTLOTCHKPLANDET B ON B.GTLOTCHKPLANID = A.GTLOTCHKPLANID
 JOIN GTLOTPCSSUBDET BB ON BB.GTLOTCHKPLANID = A.GTLOTCHKPLANID
-JOIN GTLOTALLOTMENTDET EE ON EE.LOTCHKNO = A.GTLOTCHKPLANID
+JOIN GTLOTALLOTMENTDET EE ON EE.LOTNO = B.LOTNO
 JOIN GTLOTALLOTMENT E ON E.GTLOTALLOTMENTID = EE.GTLOTALLOTMENTID
 JOIN GTFABRICRECEIPT C ON C.GTFABRICRECEIPTID =EE.LOTNO
 JOIN GTCLOTHCREATION D ON D.GTCLOTHCREATIONID = EE.CLOTHNAME
-WHERE A.GTLOTCHKPLANID ='${lotCheckingNoId}' AND C.GTFABRICRECEIPTID='${selectedLotNo}' AND D.GTCLOTHCREATIONID='${selectedClothId}'
+WHERE C.GTFABRICRECEIPTID='${selectedLotNo}' 
 AND (BB.NOTES1 IS NULL OR UPPER(BB.NOTES1) <> 'YES')`;
+
+    const sql = `SELECT BB.PCSNO,BB.METER,BB.GTLOTPCSSUBDETID AS SUBGRIDID
+FROM GTLOTCHKPLANDET A
+LEFT JOIN GTLOTPCSSUBDET BB
+    ON BB.GTLOTCHKPLANDETID = A.GTLOTCHKPLANDETID
+WHERE A.LOTNO = '${selectedLotNo}'
+  AND (
+        BB.NOTES1 IS NULL
+        OR UPPER(BB.NOTES1) <> 'YES'
+      )`;
+
     console.log(sql, "sql for getPieces");
     const result = await connection.execute(sql);
 
@@ -169,8 +180,6 @@ AND (BB.NOTES1 IS NULL OR UPPER(BB.NOTES1) <> 'YES')`;
     await connection.close();
   }
 }
-
-
 
 export async function update(req, res) {
   let connection;
@@ -505,7 +514,6 @@ WHERE GTFABRICRECEIPTID = :selectedLotNo
   }
 }
 
-
 export async function getWorkStatus(req, res) {
   let connection;
 
@@ -586,8 +594,6 @@ export async function getWorkStatus(req, res) {
     await connection.close();
   }
 }
-
-
 
 export async function revertAllocation(req, res) {
   let connection;
@@ -728,7 +734,6 @@ export async function revertAllocation(req, res) {
     await connection.close();
   }
 }
-
 
 export async function releaseTable(req, res) {
   let connection;

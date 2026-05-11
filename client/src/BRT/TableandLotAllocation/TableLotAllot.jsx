@@ -57,7 +57,11 @@ const TableLotAllot = () => {
   const storedRoleId = Number(localStorage.getItem("roleId"));
   const [loomNo, setLoomNo] = useState("");
   const [weaverPieceNo, setWeaverPieceNo] = useState("");
-  const { data, isLoading, error } = useGetPieceReceiptQuery({});
+  const [selectedClothName, setSelectedClothName] = useState("");
+  // const { data, isLoading, error } = useGetPieceReceiptQuery({});
+  let data;
+  let isLoading;
+  let error;
   const { data: userData } = useGetUsersQuery();
   const { data: roles } = useGetRolesQuery();
   const { data: userlog } = useGetUserslogQuery();
@@ -90,14 +94,19 @@ const TableLotAllot = () => {
     setSelectedClothId("");
     setSelectedPiece("");
     setLotCheckingNoId("");
-    setWeaverPieceNo("")
-    setLoomNo("")
+    setWeaverPieceNo("");
+    setLoomNo("");
+    setSelectedClothName("");
   };
 
   if (openForm) {
     return (
       <TableLotForm
-        editData={editData} setLoomNo={setLoomNo}  setWeaverPieceNo={setWeaverPieceNo} loomNo={loomNo} weaverPieceNo={weaverPieceNo}
+        editData={editData}
+        setLoomNo={setLoomNo}
+        setWeaverPieceNo={setWeaverPieceNo}
+        loomNo={loomNo}
+        weaverPieceNo={weaverPieceNo}
         lotCheckingNoId={lotCheckingNoId}
         setLotCheckingNoId={setLotCheckingNoId}
         selectedNonGridId={selectedNonGridId}
@@ -128,6 +137,8 @@ const TableLotAllot = () => {
         }}
         onNew={onNew}
         TABDATE={TABDATE}
+        setSelectedClothName={setSelectedClothName}
+        selectedClothName={selectedClothName}
       />
     );
   }
@@ -182,7 +193,9 @@ const TableLotAllot = () => {
                     className={index % 2 === 0 ? "bg-white" : "bg-gray-100"}
                   >
                     <td className="px-0 border">{index + 1}</td>
-                    <td className="pl-1 py-1.5 border text-left">{row.docId}</td>
+                    <td className="pl-1 py-1.5 border text-left">
+                      {row.docId}
+                    </td>
                     <td className="pl-1 border text-left">{clothName}</td>
                   </tr>
                 );
