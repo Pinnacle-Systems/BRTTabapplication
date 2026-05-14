@@ -62,6 +62,8 @@ const translations = {
     validTable: "Please Select Table",
     loomNo: "Loom No",
     weaverPieceNo: "Weaver Pc No",
+    validWeaver: "Weaver Pc No",
+    validLoom: "Loom No",
   },
   ta: {
     title: "மேஜை,லாட் பீஸ் ஒதுக்கீடு",
@@ -100,6 +102,8 @@ const translations = {
     validCloth: "துணியை தேர்ந்தெடுக்கவும்",
     validPiece: "துண்டை தேர்ந்தெடுக்கவும்",
     validTable: "மேஜையை தேர்ந்தெடுக்கவும்",
+    validWeaver: "வீவர் பீஸ் தேர்ந்தெடுக்கவும்",
+    validLoom: "லூம் தேர்ந்தெடுக்கவும்",
     loomNo: "லூம் எண்",
     weaverPieceNo: "வீவர் பீஸ் எண்",
   },
@@ -142,6 +146,8 @@ const translations = {
     validTable: "कृपया टेबल चुनें",
     loomNo: "लूम नं ",
     weaverPieceNo: "वीवर पीसी नं",
+    validWeaver: "कृपया वीवर पीसी चुनें",
+    validLoom: "कृपया लूम चुनें",
   },
 };
 
@@ -283,17 +289,10 @@ const TableLotForm = ({
       setCheckerId(storedUserId);
     }
   }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
-  console.log(isAdmin, isSuppervisor, checkerId, "sAdminisSuppervisor");
 
   // ✅ RTK Query
   const { data: lots, error, isLoading } = useGetLotsQuery();
-  console.log(lots, "lots");
   const { data: checking } = useGetCheckingSectionQuery();
-  console.log(checking, "checking");
-  console.log(selectedSubGridId, "selectedSubGridId");
-
-  console.log(tables, "tables");
-  console.log(selectedLotNo, "selectedLotNo");
 
   const { data: cloths, refetch: clothsrefetch } = useGetClothQuery(
     selectedLotNo,
@@ -372,11 +371,6 @@ const TableLotForm = ({
     weaverPieceNo,
     loomNo,
   };
-  console.log(
-    selectedNonGridId,
-    selectedGridId,
-    "selectedNonGridIdselectedGridId",
-  );
 
   const handleSubmitCustom = async (callback, data) => {
     try {
@@ -473,6 +467,8 @@ const TableLotForm = ({
       { condition: !selectedLotNo, message: t.validLotNo },
       { condition: !selectedClothId, message: t.validCloth },
       { condition: !selectedPiece, message: t.validPiece },
+      { condition: !weaverPieceNo, message: t.validWeaver },
+      { condition: !loomNo, message: t.validLoom },
       { condition: selectedTables?.length === 0, message: t.validTable },
     ];
     for (const item of validations) {

@@ -175,7 +175,6 @@ const PieceReceipt = ({
   const lotIdRef = useRef(null);
   const pieceNoRef = useRef(null);
   let CHK = 1;
-  console.log(lotItems, "lotItems");
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -239,10 +238,15 @@ const PieceReceipt = ({
     { selectedLotId, selectedGridId },
     { skip: !selectedLotId || !selectedGridId },
   );
-  const setOptions = setNoData?.data?.map((item) => ({
-    value: item?.GRIDID,
-    label: item?.SETNO,
-  }));
+  const setOptions = useMemo(() => {
+    if (!selectedLotId) return [];
+    return (
+      setNoData?.data?.map((item) => ({
+        value: item?.GRIDID,
+        label: item?.SETNO,
+      })) || []
+    );
+  }, [selectedLotId, setNoData]);
 
   console.log(setNoData, "setNoData");
 
@@ -250,23 +254,26 @@ const PieceReceipt = ({
 
   const [updateData] = useUpdatePieceReceiptMutation();
 
-  const syncFormWithDb = useCallback(
-    (data) => {
-      setClothName(data?.[0]?.clothName);
-      setReceiptPcs(data?.[0]?.pcs);
-      setDcMeter(data?.[0]?.meters);
-      const mapped =
-        data?.[0]?.lotItems?.flatMap((item) =>
-          item?.lotItemsSubGrid?.map((val) => ({
-            pcNo: Number(val?.sno),
-            meters: Number(val?.mtr).toFixed(2),
-            _isDbRow: true,
-          })),
-        ) || [];
-      setLotItems(mapped);
-    },
-    [selectedLotId, selectedGridId],
-  );
+  const syncFormWithDb = useCallback((data) => {
+    const row = data?.[0];
+
+    setClothName(row?.clothName);
+    setReceiptPcs(row?.pcs);
+    setDcMeter(row?.meters);
+
+    // Only rows having mtr value
+    const mapped =
+      row?.lotItemsSubGrid
+        ?.filter((item) => item?.mtr !== null)
+        ?.map((val) => ({
+          pcNo: Number(val?.pcs),
+          meters: Number(val?.mtr || 0).toFixed(2),
+          subgridId: val?.gtscheduleSunDetId,
+          _isDbRow: true,
+        })) || [];
+
+    setLotItems(mapped);
+  }, []);
 
   useEffect(() => {
     setLotItems([]);
@@ -288,9 +295,14 @@ const PieceReceipt = ({
 
   const availablePieces = useMemo(() => {
     const subGrid = singleData?.data?.[0]?.lotItemsSubGrid || [];
-    return subGrid.filter(
-      (item) => !lotItems.some((li) => Number(li.pcNo) === Number(item.pcs)),
-    );
+
+    return subGrid.filter((item) => {
+      // Hide pieces already having mtr from API
+      if (item?.mtr !== null) return false;
+
+      // Hide already added rows
+      return !lotItems.some((li) => Number(li.pcNo) === Number(item.pcs));
+    });
   }, [singleData, lotItems]);
 
   const handleSubmitCustom = async (callback, data) => {
@@ -307,6 +319,8 @@ const PieceReceipt = ({
       setSelectedLotId("");
       setSelectedGridId("");
       setPieceNumber("");
+      setSubgridId("");
+
       setMeter("");
       setTimeout(() => {
         lotIdRef.current?.focus();
@@ -364,6 +378,7 @@ const PieceReceipt = ({
       setReceiptPcs("");
       setDcMeter("");
       setPieceNumber("");
+      setSubgridId("");
       setMeter("");
       setClothName("");
       return;
@@ -371,6 +386,11 @@ const PieceReceipt = ({
   }, [selectedGridId]);
 
   useEffect(() => {
+    if (!selectedGridId) {
+      setPieceNumber("");
+      setSubgridId("");
+      return;
+    }
     // Only auto-select if current pieceNo is empty or no longer available
     const isCurrentValid = availablePieces.some(
       (p) => Number(p.pcs) === Number(pieceNo),
@@ -625,6 +645,7 @@ const PieceReceipt = ({
                   menuPosition="fixed"
                 />
               </div>
+
               <div className="col-span-2 lg:col-span-2">
                 <label className="block font-medium mb-1">{t.setNo}</label>
                 <Select
@@ -647,18 +668,18 @@ const PieceReceipt = ({
               </div>
 
               {/* Cloth Name */}
-              <div className="col-span-4 lg:col-span-5">
+              <div className="col-span-4 lg:col-span-4">
                 <label className="block font-medium mb-1">{t.clothName}</label>
                 <input
                   type="text"
                   value={clothName}
                   readOnly
-                  className="w-full border rounded-lg px-1 py-1.5 text-right bg-gray-100"
+                  className="w-full border rounded-lg px-1 py-1.5 text-left  bg-gray-100"
                 />
               </div>
 
               {/* Receipt Pcs */}
-              <div className="col-span-1 lg:col-span-1 lg:min-w-[8rem]">
+              <div className="col-span-1 lg:col-span-1 ">
                 <label className="block font-medium mb-1">{t.receiptPcs}</label>
                 <input
                   type="number"
@@ -669,7 +690,7 @@ const PieceReceipt = ({
               </div>
 
               {/* Meters in DC */}
-              <div className="col-span-1 lg:col-span-1 lg:ml-3">
+              <div className="col-span-1 lg:col-span-1">
                 <label className="block font-medium mb-1">{t.metersInDC}</label>
                 <input
                   type="number"
@@ -780,7 +801,11 @@ const PieceReceipt = ({
                             onChange={(e) =>
                               handleChange(index, e.target.value, "pcNo")
                             }
-                            className="focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full"
+                            className={`focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full ${
+                              item?._isDbRow
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                            }`}
                           />
                         </td>
                         <td className="py-1 border text-right focus:ring-2 focus:border-2">
@@ -788,6 +813,7 @@ const PieceReceipt = ({
                             type="number"
                             name="meters"
                             value={item?.meters}
+                            disabled={item?._isDbRow}
                             onChange={(e) =>
                               handleChange(index, e.target.value, "meters")
                             }
@@ -798,7 +824,11 @@ const PieceReceipt = ({
                                 "meters",
                               )
                             }
-                            className="focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full"
+                            className={`focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full ${
+                              item?._isDbRow
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                            }`}
                           />
                         </td>
                         <td className="px-2 py-1 border text-center">

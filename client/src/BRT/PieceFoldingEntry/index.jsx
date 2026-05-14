@@ -45,7 +45,10 @@ const PieceReport = () => {
   const [selectedGridId, setSelectedGridId] = useState("");
   const [selectedClothId, setSelectedClothId] = useState("");
 
-  const { data, isLoading, error } = useGetPieceReceiptQuery({});
+  // const { data, isLoading, error } = useGetPieceReceiptQuery({});
+  let data;
+  let isLoading;
+  let error;
   const [deleteReceipt] = useDeletePieceReceiptMutation();
 
   const handleDelete = async (id) => {

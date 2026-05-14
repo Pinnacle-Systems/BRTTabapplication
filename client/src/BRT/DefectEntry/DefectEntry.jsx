@@ -6,6 +6,7 @@ import { useGetWorkStatusQuery } from "../../redux/services/TableandLot";
 import {
   useGetLotsQuery,
   useGetPiecesQuery,
+  useGetSetNOQuery,
   useGetlotDetailsQuery,
   useGetDefectsQuery,
   useUpdateDefectEntryMutation,
@@ -206,6 +207,7 @@ const DefectEntry = () => {
   const [meters, setMeters] = useState("");
   const [tableNo, setTableNo] = useState([]);
   const [expandedIndex, setExpandedIndex] = useState(null);
+  const [setNo, setSetNo] = useState("");
 
   const [perPieceForm, setPerPieceForm] = useState({});
   const [translatedDefects, setTranslatedDefects] = useState([]);
@@ -243,6 +245,17 @@ const DefectEntry = () => {
 
   const { data: lots, refetch: refetchLots } = useGetLotsQuery();
   const { data: pieces } = useGetPiecesQuery({ lotId }, { skip: !lotId });
+  const { data: setNoData } = useGetSetNOQuery(
+    { lotId, pcNo: pieceNo },
+    { skip: !lotId },
+  );
+  console.log(setNoData, "setNoData");
+
+  useEffect(() => {
+    setSetNo(setNoData?.data[0]?.SETNO);
+  }, [setNoData]);
+  console.log(setNo, "setNO");
+
   const { data: lotDetails } = useGetlotDetailsQuery(
     { pieceId },
     { skip: !pieceId },
@@ -312,6 +325,7 @@ const DefectEntry = () => {
             checkingSectionId,
             sectionName,
             defects: existingDefects,
+            originalPieceNo: pieceNo.toString(),
           },
         ],
       };
@@ -323,6 +337,18 @@ const DefectEntry = () => {
     { lotId, pieceId },
     { skip: !lotId || !pieceId },
   );
+  console.log(existingEntry, "existingEntry");
+  const isApproved = useMemo(() => {
+    return existingEntry?.data?.some((p) => p.tabApproval === "YES");
+  }, [existingEntry]);
+
+  const approvedSubPieceNames = useMemo(() => {
+    return existingEntry?.data
+      ?.filter((p) => p.tabApproval === "YES")
+      ?.map((p) => p.subPieceNo)
+      ?.join(", ");
+  }, [existingEntry]);
+
   useEffect(() => {
     if (!existingEntry?.data || existingEntry.data.length === 0) return;
     if (!pieceId || !pieceNo || !meters) return;
@@ -343,6 +369,8 @@ const DefectEntry = () => {
       checkingSectionId,
       sectionName,
       defects: p.defects,
+      originalPieceNo:
+        p.originalPieceNo || p.subPieceNo || p.pieceNo.toString(),
     }));
 
     setData({ lotDetails });
@@ -548,6 +576,8 @@ const DefectEntry = () => {
         defects: piece.defects,
         loomNo: loomNo || null, // ← add
         weaverPcsNo: weaverPieceNo || null, // ← add,
+        setNo,
+        originalPieceNo: piece.originalPieceNo,
       };
     });
     return {
@@ -579,6 +609,7 @@ const DefectEntry = () => {
       const updatedPiece = {
         ...piece,
         subPieceNo: String(piece.subPieceNo),
+        originalPieceNo: String(piece.subPieceNo),
         endMeter: splitMeter,
         actualMeters: splitMeter - piece.startMeter + 1,
         defects: piece.defects.filter((d) => d.meter <= splitMeter),
@@ -587,6 +618,7 @@ const DefectEntry = () => {
       const newPiece = {
         ...piece,
         subPieceNo: `${piece.pieceNo}${nextLetter}`,
+        originalPieceNo: `${piece.pieceNo}${nextLetter}`,
         startMeter: splitMeter + 1,
         endMeter: piece.endMeter,
         actualMeters: piece.endMeter - splitMeter,
@@ -636,9 +668,15 @@ const DefectEntry = () => {
 
       // Renumber — index 0 keeps original subPieceNo, rest get A, B, C...
       const renumbered = afterRemoval.map((p, i) => {
-        if (i === 0) return { ...p, subPieceNo: String(p.pieceNo) };
-        const letter = String.fromCharCode(64 + i); // 1→A, 2→B, 3→C
-        return { ...p, subPieceNo: `${p.pieceNo}${letter}` };
+        const newSub =
+          i === 0
+            ? String(p.pieceNo)
+            : `${p.pieceNo}${String.fromCharCode(64 + i)}`;
+        return {
+          ...p,
+          subPieceNo: newSub,
+          originalPieceNo: newSub,
+        };
       });
 
       return { lotDetails: renumbered };
@@ -845,21 +883,36 @@ const DefectEntry = () => {
       <div className="h-[75vh] pt-0">
         {/* ── Header ── */}
         <div className="flex bg-white justify-between items-center py-1 rounded-lg">
-          <h1 className="text-xl ml-2 font-bold">{t.title}</h1>
+          <div className="flex items-center">
+            <h1 className="text-xl ml-2 font-bold">{t.title}</h1>
+            {isApproved && (
+              <span className="ml-4 px-3 py-1 bg-yellow-100 text-yellow-800 text-xs sm:text-sm font-bold rounded-full border border-yellow-200 uppercase animate-pulse">
+                piece approved for folding: {approvedSubPieceNames}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-3 mr-2">
             <label className="flex items-center gap-1.5 text-sm font-medium cursor-pointer">
               <input
                 type="checkbox"
                 checked={isCompleted}
+                disabled={isApproved}
                 onChange={(e) => setIsCompleted(e.target.checked)}
-                className="w-4 h-4 accent-green-600 cursor-pointer"
+                className={`w-4 h-4 accent-green-600 ${
+                  isApproved ? "cursor-not-allowed" : "cursor-pointer"
+                }`}
               />
               {t.completed}
             </label>
             <button
               type="button"
               onClick={saveData}
-              className="bg-blue-600 text-white py-1 rounded-lg hover:bg-blue-700 transition px-2"
+              disabled={isApproved}
+              className={`py-1 rounded-lg transition px-2 ${
+                isApproved
+                  ? "bg-gray-400 cursor-not-allowed text-white"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
             >
               {t.save}
             </button>
@@ -1084,6 +1137,7 @@ const DefectEntry = () => {
                         {pieceIndex > 0 && (
                           <button
                             type="button"
+                            disabled={isApproved}
                             onClick={(e) => {
                               e.stopPropagation(); // prevent accordion toggle
                               Swal.fire({
@@ -1097,7 +1151,11 @@ const DefectEntry = () => {
                                 if (result.isConfirmed) deletePiece(pieceIndex);
                               });
                             }}
-                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded-lg ml-2 flex items-center gap-1"
+                            className={`${
+                              isApproved
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-red-500 hover:bg-red-600"
+                            } text-white text-xs px-2 py-1 rounded-lg ml-2 flex items-center gap-1`}
                           >
                             <MdDelete size={14} />
                             {t.deletePiece}
@@ -1124,6 +1182,7 @@ const DefectEntry = () => {
                                 (o) => o.value === Number(form.checkedMeter),
                               ) || null
                             }
+                            isDisabled={isApproved}
                             onChange={(sel) =>
                               setForm(pieceIndex, {
                                 checkedMeter: sel ? Number(sel.value) : "",
@@ -1155,6 +1214,7 @@ const DefectEntry = () => {
                                 (o) => o.value === Number(form.defectId),
                               ) || null
                             }
+                            isDisabled={isApproved}
                             onChange={(sel) =>
                               setForm(pieceIndex, {
                                 defectId: sel?.value ?? "",
@@ -1195,7 +1255,7 @@ const DefectEntry = () => {
                           <input
                             type="number"
                             value={form.defectTimes}
-                            disabled={isNoDefectSelected}
+                            disabled={isNoDefectSelected || isApproved}
                             min={0}
                             onChange={(e) => {
                               const times = e.target.value;
@@ -1232,8 +1292,13 @@ const DefectEntry = () => {
                           <div>
                             <button
                               type="button"
+                              disabled={isApproved}
                               onClick={(e) => FillDefectArray(e, pieceIndex)}
-                              className="bg-green-600 text-white py-1.5 rounded-lg hover:bg-green-700 transition px-2"
+                              className={`${
+                                isApproved
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-green-600 hover:bg-green-700"
+                              } text-white py-1.5 rounded-lg transition px-2`}
                             >
                               {t.add}
                             </button>
@@ -1241,13 +1306,18 @@ const DefectEntry = () => {
                           <div className="ml-1">
                             <button
                               type="button"
+                              disabled={isApproved}
                               onClick={() =>
                                 handleSplit(
                                   pieceIndex,
                                   Number(form.checkedMeter),
                                 )
                               }
-                              className="bg-purple-600 text-white py-1.5 rounded-lg hover:bg-purple-700 transition px-2"
+                              className={`${
+                                isApproved
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-purple-600 hover:bg-purple-700"
+                              } text-white py-1.5 rounded-lg transition px-2`}
                             >
                               {t.split}
                             </button>
@@ -1297,10 +1367,15 @@ const DefectEntry = () => {
                                   <td className="px-2 border text-center">
                                     <button
                                       type="button"
+                                      disabled={isApproved}
                                       onClick={() =>
                                         deleteRow(pieceIndex, index)
                                       }
-                                      className="bg-red-500 text-white px-1 py-1 rounded text-sm"
+                                      className={`${
+                                        isApproved
+                                          ? "bg-gray-300 cursor-not-allowed"
+                                          : "bg-red-500"
+                                      } text-white px-1 py-1 rounded text-sm`}
                                     >
                                       <MdDelete />
                                     </button>

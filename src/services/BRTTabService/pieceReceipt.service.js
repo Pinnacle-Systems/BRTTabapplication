@@ -9,17 +9,21 @@ export async function getLotNo(req, res) {
   try {
     connection = await getConnection(); // borrows from pool
     // const sql = `select gtfabricreceiptid,docid from gtfabricreceipt`;
+    //     const sql = `
+    //   SELECT gr.gtfabricreceiptid, gr.docid
+    //   FROM GTFABRICRECEIPT gr
+    //   WHERE NOT EXISTS (
+    //     SELECT 1
+    //     FROM GTFABRICRECEIPTDET grd
+    //     JOIN GTSCHEDULESUNDET gsd
+    //       ON gsd.gtfabricreceiptdetid = grd.gtfabricreceiptdetid
+    //     WHERE grd.gtfabricreceiptid = gr.gtfabricreceiptid
+    //       AND gsd.sno = grd.pcs
+    //   )
+    // `;
     const sql = `
   SELECT gr.gtfabricreceiptid, gr.docid
   FROM GTFABRICRECEIPT gr
-  WHERE NOT EXISTS (
-    SELECT 1
-    FROM GTFABRICRECEIPTDET grd
-    JOIN GTSCHEDULESUNDET gsd
-      ON gsd.gtfabricreceiptdetid = grd.gtfabricreceiptdetid
-    WHERE grd.gtfabricreceiptid = gr.gtfabricreceiptid
-      AND gsd.sno = grd.pcs
-  )
 `;
     console.log(sql, "sql for Piecereceipt");
     const result = await connection.execute(sql);
@@ -49,10 +53,18 @@ export async function getSetNo(req, res) {
 
   try {
     connection = await getConnection();
-    const sql = `SELECT A.GTFABRICRECEIPTID,B.GTFABRICRECEIPTDETID as GRIDID,B.SETNO
-FROM GTFABRICRECEIPT A
-JOIN GTFABRICRECEIPTDET B ON B.GTFABRICRECEIPTID = A.GTFABRICRECEIPTID
-WHERE A.GTFABRICRECEIPTID='${selectedLotId}'`;
+    const sql = `
+      SELECT 
+          A.GTFABRICRECEIPTID,
+          B.GTFABRICRECEIPTDETID AS GRIDID,
+          B.SETNO
+      FROM GTFABRICRECEIPT A
+      JOIN GTFABRICRECEIPTDET B 
+          ON B.GTFABRICRECEIPTID = A.GTFABRICRECEIPTID
+      WHERE A.GTFABRICRECEIPTID = '${selectedLotId}'
+      AND B.SETNO IS NOT NULL
+      
+    `;
     console.log(sql, "sql for getLotDetails");
     const result = await connection.execute(sql);
 
@@ -194,7 +206,8 @@ export async function getOne(req, res) {
         D.MTRS AS TOTAL_MTR,
 
         S.GTSCHEDULESUNDETID,
-        S.PCSSNNO
+        S.PCSSNNO,
+        s.MTR
 
       FROM GTFABRICRECEIPT R
 
@@ -250,6 +263,7 @@ export async function getOne(req, res) {
         finalObj.lotItemsSubGrid.push({
           gtscheduleSunDetId: row.GTSCHEDULESUNDETID,
           pcs: row.PCSSNNO,
+          mtr: row.MTR,
         });
       }
     });

@@ -60,6 +60,16 @@ const defectEntryApi = createApi({
       }),
       providesTags: ["defectEntryApi"],
     }),
+    getSetNO: builder.query({
+      query: ({ lotId, pcNo }) => ({
+        url: `${DEFECTENTRY}/${lotId}/${pcNo}/getSetNO`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      }),
+      providesTags: ["defectEntryApi"],
+    }),
     getlotDetails: builder.query({
       query: ({ pieceId }) => ({
         url: `${DEFECTENTRY}/${pieceId}/getLotDetails`,
@@ -130,6 +140,7 @@ export const {
   useGetLotsQuery,
   useGetDefectsQuery,
   useGetPiecesQuery,
+  useGetSetNOQuery,
   useGetlotDetailsQuery,
   useUpdateDefectEntryMutation,
   useGetWorkStatusQuery,

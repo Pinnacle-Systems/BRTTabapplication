@@ -3,6 +3,7 @@ const router = Router();
 import {
   getLotNo,
   getPieces,
+  getSetNO,
   getLotDetails,
   getDefects,
   updateDefectEntry,
@@ -13,6 +14,7 @@ import {
 
 router.get("/getLotNo", getLotNo);
 router.get("/:lotId/getPiece", getPieces);
+router.get("/:lotId/:pcNo/getSetNO", getSetNO);
 router.get("/:pieceId/getLotDetails", getLotDetails);
 router.get("/getDefects", getDefects);
 router.put("/update/:lotId", updateDefectEntry);

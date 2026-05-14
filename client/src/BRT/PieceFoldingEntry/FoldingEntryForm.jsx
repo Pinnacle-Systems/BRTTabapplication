@@ -33,21 +33,21 @@ const translations = {
     receiptMeters: "Receipt Meters",
     meters: "Meters",
     defectPoints: "Defect Points",
-    checkedMeters: "Checked Meters",
+    checkedMeters: "Folded Meters",
     grade: "GRADE",
     points: "Points",
     foldPct: "Fold %",
     weight: "Weight",
     gradeCalc: "Grade Calculation:",
     noGrade: "No Grade",
-    belowTwenty: "⚠ Checked meters below 20 — minimum C GRADE applied",
+    belowTwenty: "⚠ Folded meters below 20 — minimum C GRADE applied",
     loading: "Loading...",
     errorLoading: "Error loading lots",
     selectLotMsg: "Select Lot",
     selectPieceMsg: "Select Piece",
     enterLoomNo: "Entry Loom No",
     chooseFolderName: "Choose Folder Name",
-    enterCheckedMeters: "Entry checked Meters",
+    enterCheckedMeters: "Entry Folded Meters",
     enterWeight: "Entry Weight",
     addedSuccess: "Added Successfully",
     submissionError: "Submission error",
@@ -68,7 +68,7 @@ const translations = {
     receiptMeters: "ரசீது மீட்டர்கள்",
     meters: "மீட்டர்கள்",
     defectPoints: "குறைபாடு புள்ளிகள்",
-    checkedMeters: "சரிபார்க்கப்பட்ட மீட்டர்கள்",
+    checkedMeters: "மடிப்பு மீட்டர்கள்",
     grade: "தரம்",
     points: "புள்ளிகள்",
     foldPct: "மடிப்பு %",
@@ -83,7 +83,7 @@ const translations = {
     selectPieceMsg: "துண்டை தேர்ந்தெடுக்கவும்",
     enterLoomNo: "நெசவு எண்ணை உள்ளிடவும்",
     chooseFolderName: "மடிப்பாளர் பெயரை தேர்ந்தெடுக்கவும்",
-    enterCheckedMeters: "சரிபார்க்கப்பட்ட மீட்டர்களை உள்ளிடவும்",
+    enterCheckedMeters: "மடிப்பு மீட்டர்களை உள்ளிடவும்",
     enterWeight: "எடையை உள்ளிடவும்",
     addedSuccess: "வெற்றிகரமாக சேர்க்கப்பட்டது",
     submissionError: "சமர்ப்பிப்பு பிழை",
@@ -106,14 +106,14 @@ const translations = {
     receiptMeters: "रसीद मीटर",
     meters: "मीटर",
     defectPoints: "दोष अंक",
-    checkedMeters: "जांचे गए मीटर",
+    checkedMeters: "फोल्ड मीटर",
     grade: "ग्रेड",
     points: "अंक",
     foldPct: "फोल्ड %",
     weight: "वजन",
     gradeCalc: "ग्रेड गणना:",
     noGrade: "कोई ग्रेड नहीं",
-    belowTwenty: "⚠ जांचे गए मीटर 20 से कम — न्यूनतम C ग्रेड लागू",
+    belowTwenty: "⚠ फोल्ड मीटर 20 से कम — न्यूनतम C ग्रेड लागू",
     loading: "लोड हो रहा है...",
     errorLoading: "लॉट लोड करने में त्रुटि",
     selectLotMsg: "लॉट चुनें",
@@ -147,11 +147,12 @@ const PieceFoldingForm = ({ onClose }) => {
   const [checkedMeters, setCheckedMeters] = useState("");
   const [gradeName, setGradeName] = useState("");
   const [actualPoints, setActualPoints] = useState("");
-  const [foldPercentage, setFoldPercentage] = useState("");
+  const [foldPercentage, setFoldPercentage] = useState("100");
   const [weight, setWeight] = useState("");
   const [subGridId, setSubGrid] = useState("");
   const [loomNo, setLoomNo] = useState("");
   const [weaverPieceNo, setWeaverPieceNo] = useState("");
+  const [setNo, setSetNo] = useState("");
   let PCSFOLDED = "YES";
   const resetForm = () => {
     setSelectedLotNo("");
@@ -169,6 +170,7 @@ const PieceFoldingForm = ({ onClose }) => {
     setFoldPercentage("");
     setWeight("");
     setWeaverPieceNo("");
+    setSetNo("");
   };
 
   const customSelectStyles = {
@@ -272,6 +274,7 @@ const PieceFoldingForm = ({ onClose }) => {
       setReceiptMeters(data?.RECEIPTMETER);
       setLoomNo(data?.LOOMNO);
       setWeaverPieceNo(data?.WEAVERPCSNO);
+      setSetNo(data?.SETNO);
     },
     [selectedPiece],
   );
@@ -309,14 +312,22 @@ const PieceFoldingForm = ({ onClose }) => {
     isFetching: isSingleFetching,
   } = useGetpieceEntryByIdQuery({ selectedLotNo }, { skip: !selectedLotNo });
 
-  const pieceOptions = pieceData?.data?.map((cloth) => ({
-    // label: `${cloth?.BASEPCSNO} ${cloth?.SPLITPCSNO ? "-" : ""} ${cloth?.SPLITPCSNO ? cloth?.SPLITPCSNO : ""}`,
-    // label: cloth?.SPLITPCSNO,
-    label: cloth?.SPLITPCSNO ?? cloth?.BASEPCSNO,
-    value: cloth?.ID,
-    loomNo: cloth?.LOOMNO,
-    weaverPcsNo: cloth?.WEAVERPCSNO,
-  }));
+  const pieceOptions = pieceData?.data
+    ?.map((cloth) => ({
+      label: String(cloth?.SPLITPCSNO ?? cloth?.BASEPCSNO),
+      value: cloth?.ID,
+      loomNo: cloth?.LOOMNO,
+      weaverPcsNo: cloth?.WEAVERPCSNO,
+    }))
+    ?.sort((a, b) => {
+      const valA = String(a.label);
+      const valB = String(b.label);
+
+      return valA.localeCompare(valB, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      });
+    });
   console.log(pieceOptions, "pieceOptions");
   const { data: roles } = useGetRolesQuery();
   const { data: userData } = useGetUsersQuery();
@@ -363,19 +374,14 @@ const PieceFoldingForm = ({ onClose }) => {
       setGradeName("");
     }
   }, [result?.GRADENAME]);
-  useEffect(() => {
-    if (checkedMetersNum > 0) {
-      setFoldPercentage((checkedMetersNum / 100).toFixed(2));
-    } else {
-      setFoldPercentage("");
-    }
-  }, [checkedMetersNum]);
+
   const [updateData] = useUpdatepieceFoldingEntryMutation();
 
   const data = {
     selectedLotNo: Number(selectedLotNo),
     tableNo,
     loomNo,
+    weaverPieceNo,
     checkerId: Number(checkerId),
     selectedPiece: Number(selectedPiece),
     pieceNo,
@@ -388,6 +394,7 @@ const PieceFoldingForm = ({ onClose }) => {
     weight: Number(weight),
     receiptMeters: Number(receiptMeters),
     PCSFOLDED,
+    setNo,
   };
   const handleSubmitCustom = async (callback, data) => {
     try {
@@ -662,7 +669,7 @@ const PieceFoldingForm = ({ onClose }) => {
                   <input
                     type="number"
                     value={foldPercentage}
-                    disabled
+                    onChange={(e) => setFoldPercentage(e.target.value)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>

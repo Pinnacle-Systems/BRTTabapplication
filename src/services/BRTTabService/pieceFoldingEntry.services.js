@@ -28,38 +28,6 @@ LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO`;
     await connection.close();
   }
 }
-
-export async function getFoldingPendingById(req, res) {
-  let connection;
-  const { pieceId } = req.params;
-
-  // console.log(foldingId, "lotId getPieces");
-
-  try {
-    connection = await getConnection();
-    const sql = `select * from Gtdefectdettab GT where GT.GTDEFECTDETTABID = ${pieceId} `;
-    // console.log(sql, "sql for getPieces");
-    const result = await connection.execute(sql);
-
-    // console.log(result?.metaData, "result.rows")
-
-    const resp = result.rows.map((row) => {
-      let obj = {};
-      result.metaData.forEach(({ name }, idx) => {
-        obj[name] = row[idx];
-      });
-      return obj;
-    });
-
-    return res.json({ statusCode: 0, data: resp[0] });
-  } catch (err) {
-    console.error("Error retrieving data:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  } finally {
-    await connection.close();
-  }
-}
-
 export async function getPieceAgainstLotNo(req, res) {
   let connection;
   const { lotNo } = req.params;
@@ -122,10 +90,42 @@ WHERE PD.RECEIPTNO = ${lotNo}
     await connection.close();
   }
 }
+export async function getFoldingPendingById(req, res) {
+  let connection;
+  const { pieceId } = req.params;
+
+  // console.log(foldingId, "lotId getPieces");
+
+  try {
+    connection = await getConnection();
+    const sql = `select * from Gtdefectdettab GT where GT.GTDEFECTDETTABID = ${pieceId} `;
+    // console.log(sql, "sql for getPieces");
+    const result = await connection.execute(sql);
+
+    // console.log(result?.metaData, "result.rows")
+
+    const resp = result.rows.map((row) => {
+      let obj = {};
+      result.metaData.forEach(({ name }, idx) => {
+        obj[name] = row[idx];
+      });
+      return obj;
+    });
+
+    return res.json({ statusCode: 0, data: resp[0] });
+  } catch (err) {
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
+  }
+}
 
 export async function updateFoldingEntry(req, res) {
   const {
     tableNo,
+    loomNo,
+    weaverPieceNo,
     checkerId,
     selectedPiece,
     pieceNo,
@@ -138,6 +138,7 @@ export async function updateFoldingEntry(req, res) {
     weight,
     receiptMeters,
     PCSFOLDED,
+    setNo,
   } = req.body;
 
   const { selectedLotNo } = req.params;
@@ -203,7 +204,7 @@ export async function updateFoldingEntry(req, res) {
              GRADEE = :gradeName,
              WEIGHTTT = :weight,
              ACTPOITS = :actualPoints,
-             FOLD_PERCENTAGE = :foldPercentage
+             FOLD_PERCENTAGE = :foldPercentage,SETNO = :setNo,LOOM_NO = :loomNo,WEAVERPCSNO = :weaverPieceNo
          WHERE ID = :id`,
         {
           id: existingId,
@@ -218,6 +219,9 @@ export async function updateFoldingEntry(req, res) {
           weight,
           actualPoints,
           foldPercentage,
+          setNo,
+          loomNo,
+          weaverPieceNo,
         },
       );
     } else {
@@ -246,7 +250,7 @@ export async function updateFoldingEntry(req, res) {
           GRADEE,
           WEIGHTTT,
           ACTPOITS,
-          FOLD_PERCENTAGE
+          FOLD_PERCENTAGE,SETNO,LOOM_NO,WEAVERPCSNO
         )
         VALUES
         (
@@ -264,7 +268,7 @@ export async function updateFoldingEntry(req, res) {
           :gradeName,
           :weight,
           :actualPoints,
-          :foldPercentage
+          :foldPercentage,:setNo,:loomNo,:weaverPieceNo
         )`,
         {
           id: detailId,
@@ -282,6 +286,9 @@ export async function updateFoldingEntry(req, res) {
           weight,
           actualPoints,
           foldPercentage,
+          setNo,
+          loomNo,
+          weaverPieceNo,
         },
       );
     }

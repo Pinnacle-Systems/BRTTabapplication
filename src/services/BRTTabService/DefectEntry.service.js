@@ -59,6 +59,40 @@ WHERE  C.LOTID = ${lotId}`;
   }
 }
 
+export async function getSetNO(req, res) {
+  let connection;
+  const { lotId, pcNo } = req.params;
+
+  console.log(lotId, pcNo, "lotId getPieces");
+
+  try {
+    connection = await getConnection();
+    const sql = `SELECT grd.SETNO
+FROM GTSCHEDULESUNDET gsd
+JOIN GTFABRICRECEIPTDET grd
+    ON grd.GTFABRICRECEIPTDETID = gsd.GTFABRICRECEIPTDETID
+WHERE gsd.GTFABRICRECEIPTID = ${lotId}
+AND gsd.SNO = ${pcNo}`;
+    console.log(sql, "sql for getPieces");
+    const result = await connection.execute(sql);
+
+    const resp = result.rows.map((row) => {
+      let obj = {};
+      result.metaData.forEach(({ name }, idx) => {
+        obj[name] = row[idx];
+      });
+      return obj;
+    });
+
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
+  }
+}
+
 // ── Add these 2 new functions to DefectEntry.service.js ──
 
 // export async function getSavedLots(req, res) {
@@ -419,6 +453,8 @@ export async function updateDefectEntry(req, res) {
         actualMeters,
         loomNo, // ← add
         weaverPcsNo,
+        setNo,
+        originalPieceNo,
       } = piece;
 
       // Validate defects for each piece
@@ -459,7 +495,7 @@ export async function updateDefectEntry(req, res) {
           ACTUALMETER,
           RECEIPTMETER,
            LOOMNO,        
-    WEAVERPCSNO,CHECKINGSECTION
+    WEAVERPCSNO,CHECKINGSECTION,SETNO,OGPCSNO
         ) VALUES (
           :primaryKey,
           :piecesDefectId,
@@ -475,8 +511,8 @@ export async function updateDefectEntry(req, res) {
           :totalPoints,
           :actualMeters,
           :meters,
-            :loomNo,       
-    :weaverPcsNo,:checkingSectionId
+            :loomNo,   
+    :weaverPcsNo,:checkingSectionId,:setNo,:originalPieceNo
         )`,
         {
           primaryKey,
@@ -496,6 +532,8 @@ export async function updateDefectEntry(req, res) {
           loomNo: loomNo || null, // ← add
           weaverPcsNo: weaverPcsNo || null,
           checkingSectionId: Number(checkingSectionId),
+          setNo: setNo,
+          originalPieceNo: originalPieceNo,
         },
         { autoCommit: false },
       );
@@ -627,7 +665,8 @@ export async function getExistingDefectEntry(req, res) {
         T.TOTPOINTSTAB,
         T.TABLENOTAB,
         T.CHECKER,
-        T.ALLACATIONID
+        T.ALLACATIONID,
+        T.TABAPPROVAL
        FROM Gtdefectdettab T
        JOIN Gtpiecesdefect P ON P.GTPIECESDEFECTID = T.GTPIECESDEFECTID
        WHERE P.LOTNO = :lotId
@@ -671,6 +710,7 @@ export async function getExistingDefectEntry(req, res) {
         startMeter: tab.STARTMTR,
         endMeter: tab.ENDMTR,
         totalPointsSum: tab.TOTPOINTSTAB,
+        tabApproval: tab.TABAPPROVAL,
         defects: defectResult.rows.map((d) => ({
           meter: d.MTRAT,
           defectId: d.DEFECTNAME1,
