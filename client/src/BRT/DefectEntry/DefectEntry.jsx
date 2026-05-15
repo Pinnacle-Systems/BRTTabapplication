@@ -249,7 +249,6 @@ const DefectEntry = () => {
     { lotId, pcNo: pieceNo },
     { skip: !lotId },
   );
-  console.log(setNoData, "setNoData");
 
   useEffect(() => {
     setSetNo(setNoData?.data[0]?.SETNO);
@@ -273,7 +272,6 @@ const DefectEntry = () => {
     { lotId, pcno: pieceNo },
     { skip: !lotId || !pieceNo },
   );
-  console.log(loomWeaver, "loomWeaver");
 
   const { data: defectEntry } = useGetDefectsQuery();
 
@@ -337,7 +335,6 @@ const DefectEntry = () => {
     { lotId, pieceId },
     { skip: !lotId || !pieceId },
   );
-  console.log(existingEntry, "existingEntry");
   const isApproved = useMemo(() => {
     return existingEntry?.data?.some((p) => p.tabApproval === "YES");
   }, [existingEntry]);

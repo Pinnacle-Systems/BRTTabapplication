@@ -483,11 +483,11 @@ const NavbarHeader = ({ onLogout }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
   const { data: apiResponse } = useGetPieceReceiptQuery();
-  const { data: loadingResponse } = useGetLoadingDetailQuery();
-  const { data: UnLoading } = useGetUnLoadingDetailQuery();
-  const { data: approval } = useGetApprovalDetailQuery();
-  const { data: revert } = useGetRevertDetailQuery();
-  const { data: InspectionDet } = useGetInspectionDetailQuery();
+  // const { data: loadingResponse } = useGetLoadingDetailQuery();
+  // const { data: UnLoading } = useGetUnLoadingDetailQuery();
+  // const { data: approval } = useGetApprovalDetailQuery();
+  // const { data: revert } = useGetRevertDetailQuery();
+  // const { data: InspectionDet } = useGetInspectionDetailQuery();
   console.log(apiResponse, "apiResponse");
   useEffect(() => {
     const uniquePairs = apiResponse?.data?.length;
@@ -567,11 +567,7 @@ const NavbarHeader = ({ onLogout }) => {
       name: "Table and Lot Allocation",
       label: nt.tableLotAlloc,
       icon: <FaTableCells />,
-      value: new Set(
-        loadingResponse?.data?.map(
-          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
-        ),
-      ).size,
+      value: count,
       gradient: "from-emerald-500 to-green-600",
       key: "TABLEANDLOTALLOCATION",
     },
@@ -579,9 +575,7 @@ const NavbarHeader = ({ onLogout }) => {
       name: "Defect Entry",
       label: nt.defectEntry,
       icon: UNLOADING_ICON,
-      value: new Set(
-        UnLoading?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
-      ).size,
+      value: count,
       gradient: "from-amber-500 to-orange-600",
       key: "DEFECTENTRY",
     },
@@ -589,9 +583,7 @@ const NavbarHeader = ({ onLogout }) => {
       name: "Folding Pending List",
       label: nt.foldingPending,
       icon: <MdOutlinePendingActions />,
-      value: new Set(
-        approval?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
-      ).size,
+      value: count,
       gradient: "from-violet-500 to-purple-600",
       key: "FOLDINGPENDINGLIST",
     },
@@ -599,9 +591,7 @@ const NavbarHeader = ({ onLogout }) => {
       name: "Piece Folding Entry",
       label: nt.pieceFolding,
       icon: <GiRolledCloth />,
-      value: new Set(
-        revert?.data?.map((item) => `${item.BATCHNO}_${item.PROCESSNAME}`),
-      ).size,
+      value: count,
       gradient: "from-rose-500 to-pink-600",
       key: "PIECEFOLDINGENTRY",
     },
@@ -609,11 +599,7 @@ const NavbarHeader = ({ onLogout }) => {
       name: "Piece Verification",
       label: nt.pieceVerification,
       icon: INSPECTION_ICON,
-      value: new Set(
-        InspectionDet?.data?.map(
-          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
-        ),
-      ).size,
+      value: count,
       gradient: "from-teal-500 to-cyan-600",
       key: "PIECEVERIFICATION",
     },
@@ -621,11 +607,7 @@ const NavbarHeader = ({ onLogout }) => {
       name: "Packing Slip",
       label: nt.packingSlip,
       icon: <RiBillLine />,
-      value: new Set(
-        InspectionDet?.data?.map(
-          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
-        ),
-      ).size,
+      value: count,
       gradient: "from-teal-500 to-cyan-600",
       key: "PACKINGSLIP",
     },
@@ -633,11 +615,7 @@ const NavbarHeader = ({ onLogout }) => {
       name: "Cloth Delivery",
       label: nt.clothDelivery,
       icon: <RiBillLine />,
-      value: new Set(
-        InspectionDet?.data?.map(
-          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
-        ),
-      ).size,
+      value: count,
       gradient: "from-teal-500 to-cyan-600",
       key: "CLOTHDELIVERY",
     },
@@ -645,11 +623,7 @@ const NavbarHeader = ({ onLogout }) => {
       name: "Dispatch Verification",
       label: nt.dispatchVerification,
       icon: <RiBillLine />,
-      value: new Set(
-        InspectionDet?.data?.map(
-          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
-        ),
-      ).size,
+      value: count,
       gradient: "from-teal-500 to-cyan-600",
       key: "DispatchVerification",
     },
@@ -657,11 +631,7 @@ const NavbarHeader = ({ onLogout }) => {
       name: "Stock Verification",
       label: nt.stockVerification,
       icon: <RiBillLine />,
-      value: new Set(
-        InspectionDet?.data?.map(
-          (item) => `${item.BATCHNO}_${item.PROCESSNAME}`,
-        ),
-      ).size,
+      value: count,
       gradient: "from-teal-500 to-cyan-600",
       key: "StockVerification",
     },

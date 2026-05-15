@@ -248,10 +248,6 @@ const PieceReceipt = ({
     );
   }, [selectedLotId, setNoData]);
 
-  console.log(setNoData, "setNoData");
-
-  console.log(singleData, "singleData");
-
   const [updateData] = useUpdatePieceReceiptMutation();
 
   const syncFormWithDb = useCallback((data) => {

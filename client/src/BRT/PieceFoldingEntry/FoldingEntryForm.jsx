@@ -147,7 +147,7 @@ const PieceFoldingForm = ({ onClose }) => {
   const [checkedMeters, setCheckedMeters] = useState("");
   const [gradeName, setGradeName] = useState("");
   const [actualPoints, setActualPoints] = useState("");
-  const [foldPercentage, setFoldPercentage] = useState("100");
+  const [foldPercentage, setFoldPercentage] = useState(100);
   const [weight, setWeight] = useState("");
   const [subGridId, setSubGrid] = useState("");
   const [loomNo, setLoomNo] = useState("");
@@ -258,16 +258,12 @@ const PieceFoldingForm = ({ onClose }) => {
     value: cloth?.RECEIPTNO,
   }));
 
-  console.log(foldingPendingData, "foldingPendingData");
-
   const { data: singleData } = useGetpieceFoldingEntryByIdQuery(
     { selectedPiece },
     { skip: !selectedPiece },
   );
-  console.log(singleData, "singleData");
   const syncFormWithDb = useCallback(
     (data) => {
-      console.log(data, "data");
       setTableNo(data?.TABLENOTAB);
       setMeters(data?.ACTUALMETER);
       setDefectPoints(Number(data?.TOTPOINTSTAB));
@@ -304,8 +300,7 @@ const PieceFoldingForm = ({ onClose }) => {
 
     return pointsGrade || null;
   })();
-  console.log(result, "result");
-  console.log(singleData?.data, "singleData");
+
   const {
     data: pieceData,
     isLoading: isSingleLoading,
@@ -328,7 +323,6 @@ const PieceFoldingForm = ({ onClose }) => {
         sensitivity: "base",
       });
     });
-  console.log(pieceOptions, "pieceOptions");
   const { data: roles } = useGetRolesQuery();
   const { data: userData } = useGetUsersQuery();
 
