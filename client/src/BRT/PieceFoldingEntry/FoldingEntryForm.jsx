@@ -40,7 +40,7 @@ const translations = {
     weight: "Weight",
     gradeCalc: "Grade Calculation:",
     noGrade: "No Grade",
-    belowTwenty: "⚠ Folded meters below 20 — minimum C GRADE applied",
+    belowTwenty: "⚠ Folded meters below 30 — minimum C GRADE applied",
     loading: "Loading...",
     errorLoading: "Error loading lots",
     selectLotMsg: "Select Lot",
@@ -76,7 +76,7 @@ const translations = {
     gradeCalc: "தர கணக்கீடு:",
     noGrade: "தரம் இல்லை",
     belowTwenty:
-      "⚠ சரிபார்க்கப்பட்ட மீட்டர்கள் 20க்கும் குறைவு — குறைந்தபட்சம் C தரம்",
+      "⚠ சரிபார்க்கப்பட்ட மீட்டர்கள் 30க்கும் குறைவு — குறைந்தபட்சம் C தரம்",
     loading: "ஏற்றுகிறது...",
     errorLoading: "லாட்டை ஏற்றுவதில் பிழை",
     selectLotMsg: "லாட்டை தேர்ந்தெடுக்கவும்",
@@ -113,7 +113,7 @@ const translations = {
     weight: "वजन",
     gradeCalc: "ग्रेड गणना:",
     noGrade: "कोई ग्रेड नहीं",
-    belowTwenty: "⚠ फोल्ड मीटर 20 से कम — न्यूनतम C ग्रेड लागू",
+    belowTwenty: "⚠ फोल्ड मीटर 30 से कम — न्यूनतम C ग्रेड लागू",
     loading: "लोड हो रहा है...",
     errorLoading: "लॉट लोड करने में त्रुटि",
     selectLotMsg: "लॉट चुनें",
@@ -709,7 +709,7 @@ const PieceFoldingForm = ({ onClose }) => {
                     >
                       {result?.GRADENAME || t.noGrade}
                     </span>
-                    {checkedMetersNum < 20 && (
+                    {checkedMetersNum < 30 && (
                       <span className="ml-2 text-xs text-red-500 font-medium">
                         {t.belowTwenty}
                       </span>
