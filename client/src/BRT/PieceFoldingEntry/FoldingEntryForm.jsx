@@ -292,8 +292,8 @@ const PieceFoldingForm = ({ onClose }) => {
       (r) => value >= r.STPOINTS && (r.ENDPOINTD === 0 || value < r.ENDPOINTD),
     );
 
-    // ← Force C GRADE when checked meters < 20, no comparison needed
-    if (checkedMetersNum <= 20) {
+    // ← Force C GRADE when checked meters < 30, no comparison needed
+    if (checkedMetersNum <= 30) {
       const cGrade = gradeData?.data?.find((r) => r.GRADENAME === "C GRADE");
       return cGrade || pointsGrade || null;
     }
