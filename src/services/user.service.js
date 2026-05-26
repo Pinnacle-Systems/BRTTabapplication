@@ -5,48 +5,115 @@ import { getSubscriptionDetails } from "../utils/subscriptionCall.js";
 import oracledb from "oracledb";
 
 export async function login(req, res) {
-  console.log(req.body, "body");
-  // const returnData = await getSubscriptionDetails()
-  const connection = await getConnection(res);
-  const { username, password } = req.body;
-  if (!username)
-    return res.json({ statusCode: 1, message: "Username is Required" });
-  if (!password)
-    return res.json({ statusCode: 1, message: "Password is Required" });
 
-  const result = await connection.execute(
-    `SELECT * FROM TABUSER where  UPPER(USERNAME) = UPPER(:username)`,
-    { username },
-  );
-  if (result.rows.length === 0)
-    return res.json({ statusCode: 1, message: "Username Doesn't Exist" });
-  let storedPassword = result.rows[0][2];
-  console.log(result, "resultuser");
-  console.log(password, storedPassword, "storedPassword");
-  // let user = result.rows[0][0];
-  const user = result.rows.map((row) => {
-    let obj = {};
-    result.metaData.forEach(({ name }, idx) => {
-      obj[name] = row[idx];
+  let connection;
+
+  try {
+
+    console.log(req.body, "body");
+
+    const { username, password } = req.body;
+
+    if (!username) {
+      return res.json({
+        statusCode: 1,
+        message: "Username is Required"
+      });
+    }
+
+    if (!password) {
+      return res.json({
+        statusCode: 1,
+        message: "Password is Required"
+      });
+    }
+
+    connection = await getConnection(res);
+
+    const result = await connection.execute(
+      `
+      SELECT *
+      FROM TABUSER
+      WHERE UPPER(USERNAME) = UPPER(:username)
+      `,
+      { username }
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({
+        statusCode: 1,
+        message: "Username Doesn't Exist"
+      });
+    }
+
+    let storedPassword = result.rows[0][2];
+
+    const user = result.rows.map((row) => {
+      let obj = {};
+
+      result.metaData.forEach(({ name }, idx) => {
+        obj[name] = row[idx];
+      });
+
+      return obj;
     });
-    return obj;
-  });
-  console.log(user, "user");
 
-  const isMatched = await bcrypt.compare(password, storedPassword);
-  if (!isMatched)
-    return res.json({ statusCode: 1, message: "Password Doesn't Match" });
-  const token = jwt.sign(
-    {
-      user: user,
-    },
-    "RANDOM-TOKEN",
-    { expiresIn: "24h" },
-  );
-  console.log(token, "token");
+    const isMatched = await bcrypt.compare(
+      password,
+      storedPassword
+    );
 
-  await connection.close();
-  return res.json({ statusCode: 0, message: "Login Successful", token, user });
+    if (!isMatched) {
+      return res.json({
+        statusCode: 1,
+        message: "Password Doesn't Match"
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        user,
+      },
+      "RANDOM-TOKEN",
+      {
+        expiresIn: "24h",
+      }
+    );
+
+    return res.json({
+      statusCode: 0,
+      message: "Login Successful",
+      token,
+      user,
+    });
+
+  } catch (err) {
+
+    console.error("LOGIN ERROR:", err);
+
+    return res.status(500).json({
+      statusCode: 1,
+      message: err.message,
+    });
+
+  } finally {
+
+    try {
+
+      if (connection) {
+        await connection.close();
+      }
+
+    } catch (closeErr) {
+
+      console.error(
+        "Connection close error:",
+        closeErr
+      );
+
+    }
+
+  }
 }
 
 export async function create(req, res) {
