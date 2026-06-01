@@ -20,6 +20,8 @@ const ActiveMonitor = () => {
     };
   }, [refetch]);
 
+  console.log(data, "active monitor data");
+
   const workers = data?.data?.activeWorkers || [];
   const tables = data?.data?.lockedTables || [];
 

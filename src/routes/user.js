@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { login, create, get, remove, getOne,getRoles,createRole,update,updateRole } from "../services/user.service.js";
+import { login, create, get, remove, getOne,getRoles,createRole,update,updateRole ,getOneUser } from "../services/user.service.js";
 import { authenticateRequest } from '../utils/auth.js';
 
 router.post('/login', login);
@@ -9,7 +9,11 @@ router.post('/', create);
 router.post('/role', createRole);
 
 router.get('/', get);
+
 router.get('/getroles', getRoles);
+
+router.get('/:id', getOneUser);
+
 
 router.get('/userDetails', getOne)
 // router.get('/getUserDet', getUserDet)

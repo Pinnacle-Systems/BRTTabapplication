@@ -21,6 +21,8 @@ import Select from "react-select";
 import CheckingNoGrid from "./CheckingNoGrid ";
 import { push } from "../../redux/features/opentabs";
 import { useLanguage } from "../../Context/LanguageContext";
+import useInvalidateTags from "../../CustomHooks/useInvalidateTags.js";
+import { getCommonParams } from "../../Utils/helper.js";
 
 const translations = {
   en: {
@@ -200,6 +202,10 @@ const TableLotForm = ({
   const [allocatedTableId, setAllocatedtableId] = useState([]);
   const [widerTable, setWiderTable] = useState("No");
 
+  const { companyId } = getCommonParams();
+
+  console.log(selectedLotNo, "selectedLotNo");
+
   let NOOFPCSSTK = 1;
   let PCSTAKEN = "Yes";
   let NOTES1 = "YES";
@@ -228,6 +234,7 @@ const TableLotForm = ({
       skip: !storedUserId,
     });
   const dispatch = useDispatch();
+  const [dispatchInvalidate] = useInvalidateTags();
 
   // useEffect(() => {
   //   socketRef.current = io(process.env.REACT_APP_SERVER_URL);
@@ -291,7 +298,11 @@ const TableLotForm = ({
   }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
 
   // ✅ RTK Query
-  const { data: lots, error, isLoading } = useGetLotsQuery();
+  const {
+    data: lots,
+    error,
+    isLoading,
+  } = useGetLotsQuery({ params: { companyId } });
   const { data: checking } = useGetCheckingSectionQuery();
 
   const { data: cloths, refetch: clothsrefetch } = useGetClothQuery(
@@ -370,11 +381,13 @@ const TableLotForm = ({
     storedUserId: parseInt(storedUserId),
     weaverPieceNo,
     loomNo,
+    companyId,
   };
 
   const handleSubmitCustom = async (callback, data) => {
     try {
       let returnData = await callback(data).unwrap();
+      dispatchInvalidate();
       Swal.fire({
         title: t.addedSuccess,
         icon: "success",
@@ -388,6 +401,7 @@ const TableLotForm = ({
       clothsrefetch();
       piecesrefetch();
       setDcMeter("");
+      setSelectedLotNo("");
 
       setTimeout(() => {
         lotIdRef.current?.focus();
@@ -800,12 +814,22 @@ const TableLotForm = ({
                       onChange={(selectedOption) => {
                         setCheckerId(selectedOption?.value || "");
                       }}
+                      isOptionDisabled={(option) => option?.isWorked} // ✅ disables click
+                      formatOptionLabel={(option) => (
+                        <div
+                          style={{
+                            color: option?.isWorked ? "red" : "inherit",
+                          }}
+                        >
+                          {option?.label}
+                        </div>
+                      )}
                       placeholder={t.selectUser}
-                      isClearable={false} // ✅ disable cross icon
+                      isClearable={false}
                       styles={customSelectStyles}
                       className="text-left"
                       isSearchable={true}
-                      menuPortalTarget={document.body} // ← renders menu outside the clipped container
+                      menuPortalTarget={document.body}
                       menuPosition="fixed"
                     />
                   </>

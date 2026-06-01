@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 import Select from "react-select";
-import { customSelectStyles } from "../../Utils/helper.js";
+import { customSelectStyles, getCommonParams } from "../../Utils/helper.js";
 import { useGetWorkStatusQuery } from "../../redux/services/TableandLot";
 import {
   useGetLotsQuery,
@@ -27,6 +27,7 @@ import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import { ExpandMore } from "@mui/icons-material";
 import { useLanguage } from "../../Context/LanguageContext.jsx";
+import useInvalidateTags from "../../CustomHooks/useInvalidateTags.js";
 
 // ─── Translations ──────────────────────────────────────────────────────────────
 const translations = {
@@ -242,18 +243,23 @@ const DefectEntry = () => {
   const { data: workStatus } = useGetWorkStatusQuery(storedUserId, {
     skip: shouldSkipWorkStatus,
   });
+  const { companyId } = getCommonParams();
 
-  const { data: lots, refetch: refetchLots } = useGetLotsQuery();
+  const [dispatchInvalidate] = useInvalidateTags();
+
+  const { data: lots, refetch: refetchLots } = useGetLotsQuery({
+    params: { companyId },
+  });
   const { data: pieces } = useGetPiecesQuery({ lotId }, { skip: !lotId });
   const { data: setNoData } = useGetSetNOQuery(
     { lotId, pcNo: pieceNo },
     { skip: !lotId },
   );
+  console.log(pieces, "pieces");
 
   useEffect(() => {
     setSetNo(setNoData?.data[0]?.SETNO);
   }, [setNoData]);
-  console.log(setNo, "setNO");
 
   const { data: lotDetails } = useGetlotDetailsQuery(
     { pieceId },
@@ -261,13 +267,15 @@ const DefectEntry = () => {
   );
   // ← new: for admin/supervisor view of saved entries
   const { data: savedLots, refetch: refetchSavedLots } = useGetSavedLotsQuery(
-    undefined,
+    { params: { companyId } },
     { skip: !canEditLot },
   );
   const { data: savedPieces } = useGetSavedPiecesQuery(
     { lotId },
     { skip: !lotId || !canEditLot },
   );
+  console.log(savedPieces, "savedPieces");
+
   const { data: loomWeaver } = useGetloomWeaverByIdQuery(
     { lotId, pcno: pieceNo },
     { skip: !lotId || !pieceNo },
@@ -299,7 +307,7 @@ const DefectEntry = () => {
 
   useEffect(() => {
     if (!pieceId || !pieceNo || !meters) return;
-    setIsCompleted(false); // ← reset on piece change
+    // setIsCompleted(false);
     setData((prev) => {
       const existingDefects =
         prev.lotDetails[0]?.pieceId === pieceId
@@ -331,10 +339,22 @@ const DefectEntry = () => {
 
     setPerPieceForm({});
   }, [pieceId, pieceNo, meters]);
-  const { data: existingEntry } = useGetDefectDetailsQuery(
+  const {
+    data: existingEntry,
+    isLoading: isExistingEntryLoading,
+    isFetching: isExistingEntryFetching,
+  } = useGetDefectDetailsQuery(
     { lotId, pieceId },
     { skip: !lotId || !pieceId },
   );
+
+  useEffect(() => {
+    if (!existingEntry?.data || existingEntry.data.length === 0) return;
+    setIsCompleted(existingEntry?.data?.some((p) => p.isCompleted));
+  }, [existingEntry, isExistingEntryLoading, isExistingEntryFetching]);
+
+  console.log(existingEntry, "existingEntry");
+
   const isApproved = useMemo(() => {
     return existingEntry?.data?.some((p) => p.tabApproval === "YES");
   }, [existingEntry]);
@@ -432,6 +452,7 @@ const DefectEntry = () => {
         allocationId: piece?.ALLOCATIONID,
       }));
   }, [pieces?.data, savedPieces?.data, lotId, canEditLot]);
+  console.log(pieceOptions, "pieceOptions");
 
   useEffect(() => {
     if (workStatus?.hasActiveWork && !isAdmin && !isSuppervisor) {
@@ -575,6 +596,7 @@ const DefectEntry = () => {
         weaverPcsNo: weaverPieceNo || null, // ← add,
         setNo,
         originalPieceNo: piece.originalPieceNo,
+        isCompleted,
       };
     });
     return {
@@ -776,6 +798,7 @@ const DefectEntry = () => {
   const handleSubmitCustom = async (callback, data) => {
     try {
       await callback(data).unwrap();
+      dispatchInvalidate();
       Swal.fire({
         title: t.addedSuccess,
         icon: "success",

@@ -15,6 +15,8 @@ import {
 } from "../../redux/services/PieceFoldingEntry";
 import { useGetRolesQuery, useGetUsersQuery } from "../../redux/userservice";
 import { useLanguage } from "../../Context/LanguageContext";
+import useInvalidateTags from "../../CustomHooks/useInvalidateTags";
+import { getCommonParams } from "../../Utils/helper";
 
 const translations = {
   en: {
@@ -52,6 +54,8 @@ const translations = {
     addedSuccess: "Added Successfully",
     submissionError: "Submission error",
     somethingWentWrong: "Something went wrong!",
+    width: "Width",
+    pickup: "Pickup",
   },
   ta: {
     title: "பீஸ் மடிப்பு பதிவு",
@@ -90,6 +94,8 @@ const translations = {
     somethingWentWrong: "ஏதோ தவறு நடந்தது!",
     loomNo: "லூம் எண்",
     weaverPieceNo: "வீவர் பீஸ் எண்",
+    width: "அகலம்",
+    pickup: "பிக்கப்",
   },
   hi: {
     title: "पीस फोल्डिंग प्रविष्टि",
@@ -127,6 +133,8 @@ const translations = {
     somethingWentWrong: "कुछ गलत हो गया!",
     loomNo: "लूम नं ",
     weaverPieceNo: "वीवर पीसी नं",
+    width: "चौड़ाई",
+    pickup: "पिकअप",
   },
 };
 
@@ -153,6 +161,10 @@ const PieceFoldingForm = ({ onClose }) => {
   const [loomNo, setLoomNo] = useState("");
   const [weaverPieceNo, setWeaverPieceNo] = useState("");
   const [setNo, setSetNo] = useState("");
+  const [width, setWidth] = useState("");
+  const [pickup, SetPickup] = useState("");
+  const { companyId } = getCommonParams();
+
   let PCSFOLDED = "YES";
   const resetForm = () => {
     setSelectedLotNo("");
@@ -167,10 +179,12 @@ const PieceFoldingForm = ({ onClose }) => {
     setCheckedMeters("");
     setGradeName("");
     setActualPoints("");
-    setFoldPercentage("");
+    setFoldPercentage(100);
     setWeight("");
     setWeaverPieceNo("");
     setSetNo("");
+    SetPickup("");
+    setWidth("");
   };
 
   const customSelectStyles = {
@@ -251,12 +265,14 @@ const PieceFoldingForm = ({ onClose }) => {
     isLoading,
     isFetching,
     error,
-  } = useGetFoldingPendingQuery();
+  } = useGetFoldingPendingQuery({ params: { companyId } });
 
   const flodingOptions = foldingPendingData?.data?.map((cloth) => ({
     label: cloth?.DOCID,
     value: cloth?.RECEIPTNO,
   }));
+
+  const [dispatchInvalidate] = useInvalidateTags();
 
   const { data: singleData } = useGetpieceFoldingEntryByIdQuery(
     { selectedPiece },
@@ -389,10 +405,14 @@ const PieceFoldingForm = ({ onClose }) => {
     receiptMeters: Number(receiptMeters),
     PCSFOLDED,
     setNo,
+    companyId: parseInt(companyId),
+    width: Number(width),
+    pickup: Number(pickup),
   };
   const handleSubmitCustom = async (callback, data) => {
     try {
       let returnData = await callback(data).unwrap();
+      dispatchInvalidate();
       Swal.fire({
         title: t.addedSuccess,
         icon: "success",
@@ -663,7 +683,7 @@ const PieceFoldingForm = ({ onClose }) => {
                   <input
                     type="number"
                     value={foldPercentage}
-                    onChange={(e) => setFoldPercentage(e.target.value)}
+                    onChange={(e) => setFoldPercentage(100)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>
@@ -677,6 +697,29 @@ const PieceFoldingForm = ({ onClose }) => {
                     onBlur={(e) =>
                       setWeight(parseFloat(e.target.value).toFixed(3))
                     }
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  />
+                </div>
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">{t.width}</label>
+
+                  <input
+                    type="number"
+                    value={width} // ← fallback to empty string
+                    onChange={(e) => setWidth(e.target.value)}
+                    onBlur={(e) =>
+                      setWidth(parseFloat(e.target.value).toFixed(3))
+                    }
+                    className="w-full border rounded-lg px-1 py-1.5  text-right"
+                  />
+                </div>
+                <div className="col-span-1 lg:col-span-1">
+                  <label className="block font-medium mb-1">{t.pickup}</label>
+
+                  <input
+                    type="number"
+                    value={pickup} // ← fallback to empty string
+                    onChange={(e) => SetPickup(e.target.value)}
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>

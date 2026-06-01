@@ -14,6 +14,7 @@ import {
   pieceVerificationApi,
   packingSlipApi,
   userDetailsApi,
+  finYearMasterApi,
 } from "../redux";
 
 import { setupListeners } from "@reduxjs/toolkit/query";
@@ -37,6 +38,8 @@ export const store = configureStore({
     [pieceVerificationApi.reducerPath]: pieceVerificationApi.reducer,
     [packingSlipApi.reducerPath]: packingSlipApi.reducer,
     [userDetailsApi.reducerPath]: userDetailsApi.reducer,
+    [finYearMasterApi.reducerPath]: finYearMasterApi.reducer,
+
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -55,6 +58,7 @@ export const store = configureStore({
       pieceVerificationApi.middleware,
       packingSlipApi.middleware,
       userDetailsApi.middleware,
+      finYearMasterApi.middleware,
     ]),
 });
 setupListeners(store.dispatch);

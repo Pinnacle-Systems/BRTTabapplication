@@ -8,6 +8,7 @@ import {
   useGetUserslogQuery,
 } from "../../redux/userservice";
 import { useLanguage } from "../../Context/LanguageContext";
+import { useGetActiveUserDetailsQuery } from "../../redux/services/userDetails";
 
 // ─── Translations ─────────────────────────────────────────────────────────────
 const translations = {
@@ -66,6 +67,11 @@ const TableLotAllot = () => {
   const { data: roles } = useGetRolesQuery();
   const { data: userlog } = useGetUserslogQuery();
 
+
+  const { data: activeUserdata, } = useGetActiveUserDetailsQuery();
+
+  console.log(activeUserdata?.data?.activeWorkers, 'activeUserdata', userData?.data, 'userData')
+
   const adminRole = roles?.data?.find(
     (val) => val?.ROLENAME?.toLowerCase() === "admin",
   );
@@ -79,12 +85,28 @@ const TableLotAllot = () => {
   const isSuppervisor = Number(storedRoleId) === supervisorId;
   const storedUsername = localStorage.getItem("userName");
 
+  // const userOptions = userData?.data
+  //   ?.filter?.((val) => val?.ROLEID != adminId && val?.ROLEID != supervisorId)
+  //   ?.map((user) => ({
+  //     label: user?.USERNAME,
+  //     value: user?.USERID,
+  //   }));
+
   const userOptions = userData?.data
-    ?.filter?.((val) => val?.ROLEID != adminId && val?.ROLEID != supervisorId)
-    ?.map((user) => ({
-      label: user?.USERNAME,
-      value: user?.USERID,
-    }));
+    ?.filter((val) => val?.ROLEID != adminId && val?.ROLEID != supervisorId)
+    ?.map((user) => {
+      const activeWorker = activeUserdata?.data?.activeWorkers?.find(
+        (val) => val?.CHECKERID
+          === user?.USERID
+      );
+
+      return {
+        label: activeWorker ? `${user?.USERNAME} - Already Worked` : user?.USERNAME,
+        value: user?.USERID,
+        isDisabled: !!activeWorker, 
+        isWorked: !!activeWorker,
+      };
+    });
 
   const onNew = () => {
     setCheckingSectionId("");

@@ -47,6 +47,14 @@ function Signup({ autoLogout }) {
           sessionStorage.getItem("sessionId") + "token",
           data.token,
         );
+        secureLocalStorage.setItem(
+          sessionStorage.getItem("sessionId") + "userId",
+          data.user?.[0]?.USERID,
+        );
+        secureLocalStorage.setItem(
+          sessionStorage.getItem("sessionId") + "userId",
+          data.user?.[0]?.USERID,
+        );
         localStorage.setItem("userId", userId);
         sessionStorage.setItem("userId", userId);
 
@@ -55,8 +63,8 @@ function Signup({ autoLogout }) {
 
         localStorage.setItem("userName", username);
         sessionStorage.setItem("userName", username);
-        
         autoLogout(sessionStorage.getItem("sessionId"));
+
         navigate("/branch-finyear");
       } else {
         setError("Login failed, please try again.");
@@ -248,9 +256,8 @@ function Signup({ autoLogout }) {
               </div>
 
               <button
-                className={`w-full py-2 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg shadow transition duration-200 flex items-center justify-center ${
-                  isLoading ? "opacity-75 cursor-not-allowed" : ""
-                }`}
+                className={`w-full py-2 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg shadow transition duration-200 flex items-center justify-center ${isLoading ? "opacity-75 cursor-not-allowed" : ""
+                  }`}
                 type="submit"
                 disabled={isLoading}
               >

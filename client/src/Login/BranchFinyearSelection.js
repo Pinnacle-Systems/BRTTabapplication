@@ -2,28 +2,62 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
 import { useGetBranchDetailQuery } from "../redux/services/LotDetailData";
+import { useGetUserMasterByIdQuery } from "../redux/userservice";
+import { useGetFinYearQuery } from "../redux/services/finYear.services";
 
 function BranchFinYearSelection() {
   const navigate = useNavigate();
   const [branch, setBranch] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const storedUsername = localStorage.getItem("userName");
 
-  const { data: branchData, isLoading, error } = useGetBranchDetailQuery({ params: storedUsername });
+  const userId = secureLocalStorage.getItem(
+    sessionStorage.getItem("sessionId") + "userId"
+  );
 
+  console.log(userId, "userId")
+
+  const { data: branchData, isLoading, error } = useGetBranchDetailQuery({
+    params: {
+      userId
+    }
+  });
+
+
+
+  const branchOptions = branchData?.data?.map((br) => ({
+    ...br,
+    COMPNAME: br.COMPCODE,
+  }))
+
+  console.log(branchOptions, "branchOptions")
+
+  const {
+    data: singleUserData,
+    isFetching: isSingleFetching,
+    isLoading: isSingleLoading,
+  } = useGetUserMasterByIdQuery(userId, { skip: !userId });
 
   useEffect(() => {
-    navigate("/dashboard");
-  }, []);
+    if (singleUserData?.data?.ROLENAME == "Admin" || singleUserData?.data?.ROLENAME == "supervisor") {
+      setIsAdmin(true);
+    }
+
+  }, [singleUserData, isSingleFetching, isSingleLoading])
+
+
+  console.log(singleUserData, "singleUserData")
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // if (branch ) {
-    //   secureLocalStorage.setItem("selectedBranch", branch);
-    //   navigate("/dashboard");
-    // }
-
-    navigate("/dashboard");
-
+    if (branch) {
+      secureLocalStorage.setItem("selectedBranch", branch);
+         secureLocalStorage.setItem(
+          sessionStorage.getItem("sessionId") + "companyId",
+          branch,
+        );
+      navigate("/dashboard");
+    }
   };
 
   if (isLoading) {
@@ -42,8 +76,8 @@ function BranchFinYearSelection() {
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="p-8">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-[#03A454]">BRT Spinner Private Limited</h2>
-            <div className="h-1 w-16 bg-[#03A454] mx-auto mt-2 rounded-full"></div>
+            <h2 className="text-2xl font-bold text-[##1976D2]">Banu Radha Textiles</h2>
+            <div className="h-1 w-16 bg-[##1976D2] mx-auto mt-2 rounded-full"></div>
           </div>
 
           <h1 className="text-xl font-semibold text-center mb-6">Select Branch</h1>
@@ -60,23 +94,26 @@ function BranchFinYearSelection() {
               <select
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg text-sm focus:ring-[#03A454] focus:border-[#03A454]"
+                className="w-full px-4 py-2 border rounded-lg text-sm focus:ring-[#1976D2] focus:border-[#1976D2]"
                 required
               >
                 <option value="">Select Branch</option>
-                {branchData?.data?.map((br) => (
-                  <option key={br.GCOMPCODE} value={br.GCOMPCODE}>
-                    {br.GCOMPCODE}
-                  </option>
-                ))}
+                {
+                  (singleUserData?.data?.ROLENAME == "Admin" || singleUserData?.data?.ROLENAME == "supervisor" ?
+                    branchOptions : singleUserData?.data?.COMPANIES)?.map((br) => (
+                      <option key={br.COMPCODE} value={br.GTCOMPMASTID}>
+                        {br.COMPNAME}
+                      </option>
+                    ))}
               </select>
             </div>
+ 
 
 
 
             <button
               type="submit"
-              className="w-full py-2 bg-[#03A454] hover:bg-[#028a44] text-white font-semibold rounded-lg transition"
+              className="w-full py-2 bg-[#1976D2] hover:bg-[#1976D2] text-white font-semibold rounded-lg transition"
               disabled={!branch}
             >
               Continue to Dashboard

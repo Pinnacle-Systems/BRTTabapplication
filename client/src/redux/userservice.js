@@ -93,6 +93,18 @@ const UsersApi = createApi({
       }),
       invalidatesTags: ["Users"],
     }),
+    getUserMasterById: builder.query({
+      query: (id) => {
+        return {
+          url: `${USERS_API}/${id}`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["Users"],
+    }),
   }),
 });
 
@@ -105,6 +117,7 @@ export const {
   useGetRolesQuery,
   useCreateRoleMutation,
   useUpdateRoleMutation,
+  useGetUserMasterByIdQuery,
 } = UsersApi;
 
 export default UsersApi;

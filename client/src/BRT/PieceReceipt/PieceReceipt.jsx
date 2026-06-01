@@ -11,6 +11,7 @@ import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import Select from "react-select";
 import { useLanguage } from "../../Context/LanguageContext"; // ← import context
+import { getCommonParams } from "../../Utils/helper";
 
 // ─── Translations ────────────────────────────────────────────────────────────
 const translations = {
@@ -161,6 +162,7 @@ const PieceReceipt = ({
 
   setSelectedGridId,
   selectedGridId,
+  dispatchInvalidate
 }) => {
   // ← Get language from global context (set by NavbarHeader)
   const { lang } = useLanguage();
@@ -175,6 +177,9 @@ const PieceReceipt = ({
   const lotIdRef = useRef(null);
   const pieceNoRef = useRef(null);
   let CHK = 1;
+
+  const { companyId } = getCommonParams();
+
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -229,7 +234,9 @@ const PieceReceipt = ({
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
-  const { data: lots, error, isLoading } = useGetLotPieceReceiptQuery();
+  const { data: lots, error, isLoading } = useGetLotPieceReceiptQuery({
+    params : {companyId}
+  });
 
   const { data: setNoData } = useGetSetNoQuery(selectedLotId, {
     skip: !selectedLotId,
@@ -304,6 +311,7 @@ const PieceReceipt = ({
   const handleSubmitCustom = async (callback, data) => {
     try {
       await callback(data).unwrap();
+      dispatchInvalidate()
       Swal.fire({
         title: t.alertAddedSuccess,
         icon: "success",
@@ -715,9 +723,9 @@ const PieceReceipt = ({
                   value={
                     pieceNo
                       ? {
-                          value: subgridId,
-                          label: pieceNo,
-                        }
+                        value: subgridId,
+                        label: pieceNo,
+                      }
                       : null
                   }
                   onChange={(selectedOption) => {
@@ -740,11 +748,15 @@ const PieceReceipt = ({
                 <input
                   ref={pieceNoRef}
                   type="number"
-                  name="meter"
+                  // name="meter"
                   value={meter}
                   disabled={!pieceNo}
                   onChange={(e) => setMeter(e.target.value)}
-                  className="border rounded-lg text-right px-2 py-1.5 w-full"
+                  className="border rounded-lg text-right px-2 py-1.5 w-full 
+             [appearance:textfield] 
+             [&::-webkit-outer-spin-button]:appearance-none 
+             [&::-webkit-inner-spin-button]:appearance-none"
+
                 />
               </div>
 
@@ -797,11 +809,10 @@ const PieceReceipt = ({
                             onChange={(e) =>
                               handleChange(index, e.target.value, "pcNo")
                             }
-                            className={`focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full ${
-                              item?._isDbRow
-                                ? "bg-gray-100 cursor-not-allowed"
-                                : ""
-                            }`}
+                            className={`focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full ${item?._isDbRow
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
+                              }`}
                           />
                         </td>
                         <td className="py-1 border text-right focus:ring-2 focus:border-2">
@@ -820,11 +831,10 @@ const PieceReceipt = ({
                                 "meters",
                               )
                             }
-                            className={`focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full ${
-                              item?._isDbRow
-                                ? "bg-gray-100 cursor-not-allowed"
-                                : ""
-                            }`}
+                            className={`focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full ${item?._isDbRow
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
+                              }`}
                           />
                         </td>
                         <td className="px-2 py-1 border text-center">

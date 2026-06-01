@@ -38,3 +38,4 @@ export const PIECEVERIFICATIONAPI = "pieceVerification";
 export const CLOTHDELIVERYAPI = "clothDelivery";
 export const PACKINGSLIP = "packingSlip";
 export const USER_DETAILS = "userDetails";
+export const FIN_YEAR_API = "finYear";

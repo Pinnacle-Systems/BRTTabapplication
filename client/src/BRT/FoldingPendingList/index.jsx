@@ -10,9 +10,11 @@ import {
   useUpdateFoldingPendingMutation,
   useGetDefectsQuery,
 } from "../../redux/services/FoldingPendingList";
+import { getCommonParams } from "../../Utils/helper";
 
 import { useLanguage } from "../../Context/LanguageContext";
 import { MdOpenInNew, MdClose } from "react-icons/md";
+import useInvalidateTags from "../../CustomHooks/useInvalidateTags";
 
 // ─── Translations ─────────────────────────────────────────────────────────────
 const translations = {
@@ -111,6 +113,9 @@ const FoldingPendingList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subGridId, setSubGridId] = useState("");
   const [defectArray, setDefectArray] = useState([]);
+  const { companyId } = getCommonParams();
+
+  const [dispatchInvalidate] = useInvalidateTags();
 
   const openModal = (item) => {
     setSelectedItem(item);
@@ -221,7 +226,9 @@ const FoldingPendingList = () => {
     });
   }, [foldingItems, setFoldingItems]);
 
-  const { data: foldingPendingData } = useGetFoldingPendingQuery();
+  const { data: foldingPendingData } = useGetFoldingPendingQuery({
+    params: { companyId },
+  });
 
   const {
     data: singleData,
@@ -259,6 +266,7 @@ const FoldingPendingList = () => {
   const handleSubmitCustom = async (callback, data) => {
     try {
       let returnData = await callback(data).unwrap();
+      dispatchInvalidate();
       Swal.fire({
         title: t.addedSuccess,
         icon: "success",

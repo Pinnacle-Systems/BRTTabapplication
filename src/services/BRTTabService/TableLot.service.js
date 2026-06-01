@@ -56,6 +56,8 @@ export async function getTables(req, res) {
 }
 
 export async function getLotNo(req, res) {
+  const { companyId } = req.query;
+
   let connection;
 
   try {
@@ -69,6 +71,8 @@ left join GTLOTALLOTMENT c on A.GTLOTALLOTMENTID = c.GTLOTALLOTMENTID`;
     B.DOCID AS LOTNO,C.CLOTHNAME FROM GTLOTALLOTMENTDET A
     LEFT JOIN GTFABRICRECEIPT B ON A.LOTNO = B.GTFABRICRECEIPTID
     LEFT JOIN GTCLOTHCREATION C ON A.CLOTHNAME = C.GTCLOTHCREATIONID
+
+     WHERE B.COMPCODE  = '${companyId}'
 `;
 
     console.log(sql, "sql for getLotNo");
@@ -201,25 +205,10 @@ export async function update(req, res) {
       selectedLotNo,
       weaverPieceNo,
       loomNo,
+      companyId,
     } = req.body;
+
     const { selectedNonGridId, selectedGridId } = req.params;
-    console.log(
-      checkerId,
-      selectedTables,
-      selectedPiece,
-      checkingSectionId,
-      dcMeter,
-      NOOFPCSSTK,
-      PCSTAKEN,
-      TABDATE,
-      selectedSubGridId,
-      NOTES1,
-      storedUserId,
-      weaverPieceNo,
-      loomNo,
-      "body updatinglotAllot",
-    );
-    console.log(selectedNonGridId, selectedGridId, "params updatinglotAllot");
 
     // ✅ Check Parent Exists
     const parentResult = await connection.execute(
@@ -236,14 +225,22 @@ export async function update(req, res) {
       { autoCommit: false },
     );
 
-    if (parentResult.rows.length === 0) {
-      await connection.rollback();
+    console.log(
+      {
+        selectedNonGridId,
+        selectedGridId,
+      },
+      "selectedGridId",
+    );
 
-      return res.json({
-        statusCode: 1,
-        message: "Parent record not found",
-      });
-    }
+    // if (parentResult.rows.length === 0) {
+    //   await connection.rollback();
+
+    //   return res.json({
+    //     statusCode: 1,
+    //     message: "Parent record not found",
+    //   });
+    // }
 
     const updateResult = await connection.execute(
       `
@@ -306,8 +303,8 @@ export async function update(req, res) {
           message: `Table ${tableId} already taken by another user`,
         });
       }
-      const primaryKey = Date.now() + 1000 + Math.floor(Math.random() * 1000);
-      await connection.execute(
+      // const primaryKey = Date.now() + 1000 + Math.floor(Math.random() * 1000);
+      const subDetResult = await connection.execute(
         `
         INSERT INTO gtlotallosubdet
         (
@@ -318,22 +315,28 @@ export async function update(req, res) {
         )
         VALUES
         (
-          :id,
+          lotallotseq.NEXTVAL,
           :nonGridId,
           :gridId,
           :tableId
         )
+            RETURNING GTLOTALLOSUBDETID INTO :subDetId
         `,
         {
-          id: primaryKey,
+          // id: primaryKey,
           nonGridId: selectedNonGridId,
           gridId: selectedGridId,
           tableId: tableId,
+          subDetId: {
+            dir: oracledb.BIND_OUT,
+            type: oracledb.NUMBER,
+          },
         },
         { autoCommit: false },
       );
+      const subDetId = subDetResult.outBinds.subDetId[0];
       // ✅ stock table PK
-      const stockDetId = Date.now() + 1000 + Math.floor(Math.random() * 1000);
+      // const stockDetId = Date.now() + 1000 + Math.floor(Math.random() * 1000);
 
       // insert gtstockdet
       await connection.execute(
@@ -354,9 +357,9 @@ export async function update(req, res) {
         )
         VALUES
         (
-          :stockDetId,
+          lotgtstockseq.NEXTVAL,
           :nonGridId,
-          :primaryKey,
+          :subDetId,
           :dcMeter,
           :NOOFPCSSTK,
           :selectedPiece,
@@ -369,9 +372,9 @@ export async function update(req, res) {
         `,
 
         {
-          stockDetId,
+          // stockDetId,
           nonGridId: selectedNonGridId,
-          primaryKey,
+          subDetId,
           dcMeter,
           NOOFPCSSTK,
           selectedPiece,
@@ -394,7 +397,7 @@ export async function update(req, res) {
     PieceNo,
     pieceId,
     CREATEDAT,
-    METERS
+    METERS,COMPANYID
   )
   VALUES
   (
@@ -404,7 +407,7 @@ export async function update(req, res) {
     :pieceNo,
     :pieceId,
     SYSDATE,
-    :meters
+    :meters,:companyId
     
 
   )
@@ -418,6 +421,7 @@ export async function update(req, res) {
         allocationId: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
         pieceId: selectedSubGridId,
         meters: dcMeter,
+        companyId: parseInt(companyId),
       },
       { autoCommit: false },
     );
@@ -451,7 +455,6 @@ SET LOOMNO = :loomNo,
     WEAVERPCSNO = :weaverPieceNo
 WHERE GTFABRICRECEIPTID = :selectedLotNo
   AND SNO = :selectedPiece
-  AND (LOOMNO IS NULL OR WEAVERPCSNO IS NULL)
   `,
       {
         loomNo,
@@ -461,6 +464,7 @@ WHERE GTFABRICRECEIPTID = :selectedLotNo
       },
       { autoCommit: false },
     );
+
     if (scheduleUpdateResult.rowsAffected === 0) {
       await connection.rollback();
 

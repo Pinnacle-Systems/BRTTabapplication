@@ -238,8 +238,13 @@ export const getCommonParams = () => ({
 
     user: sessionStorage.getItem("userName"),
 
-    token: `Bearer ${secureLocalStorage.getItem(sessionStorage.getItem("sessionId") + 'token')}`
-
+    token: `Bearer ${secureLocalStorage.getItem(sessionStorage.getItem("sessionId") + 'token')}`,
+    companyId: secureLocalStorage.getItem(
+        sessionStorage.getItem("sessionId") + "companyId"
+    ),
+    userId: secureLocalStorage.getItem(
+        sessionStorage.getItem("sessionId") + "userId"
+    ),
 })
 
 export function isGridDatasValid(datas, isRequiredAllData, mandatoryFields = []) {
@@ -328,7 +333,7 @@ export const stringToLiteral = (value) => {
 
 
 
-const IDLE_TIME = 9 * 60 * 1000; 
+const IDLE_TIME = 9 * 60 * 1000;
 
 export const useIdleLogout = (
     onLogout,
@@ -337,7 +342,7 @@ export const useIdleLogout = (
     const timerRef = useRef(null);
 
     console.log(isLoggedIn, 'isLoggedIn');
-    
+
     useEffect(() => {
         if (!isLoggedIn) {
             if (timerRef.current) {
@@ -386,72 +391,72 @@ export const useIdleLogout = (
 
 export const customSelectStyles = {
     control: (base, state) => ({
-      ...base,
-      minHeight: "13px",
-      height: "36px",
-      padding: "0px 4px",
-      fontSize: "14px",
-      borderRadius: "8px",
+        ...base,
+        minHeight: "13px",
+        height: "36px",
+        padding: "0px 4px",
+        fontSize: "14px",
+        borderRadius: "8px",
 
-      color: state.isDisabled ? "#6b7280" : "black",
-      backgroundColor: state.isDisabled ? "white" : "white", // bg-gray-100 vs bg-white
-      cursor: state.isDisabled ? "not-allowed" : "default",
-      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db", // blue-500 vs gray-300
-      boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : base.boxShadow,
-      "&:hover": {
-        borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
-      },
-      zIndex:"999"
+        color: state.isDisabled ? "#6b7280" : "black",
+        backgroundColor: state.isDisabled ? "white" : "white", // bg-gray-100 vs bg-white
+        cursor: state.isDisabled ? "not-allowed" : "default",
+        borderColor: state.isFocused ? "#3b82f6" : "#d1d5db", // blue-500 vs gray-300
+        boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : base.boxShadow,
+        "&:hover": {
+            borderColor: state.isDisabled ? "#d1d5db" : "#9ca3af", // keep gray when disabled
+        },
+        zIndex: "999"
     }),
     valueContainer: (base, state) => ({
-      ...base,
-      padding: "0 3px",
-      fontSize: "14px",
+        ...base,
+        padding: "0 3px",
+        fontSize: "14px",
 
-      color: state.isDisabled ? "black" : "black",
+        color: state.isDisabled ? "black" : "black",
     }),
     input: (base, state) => ({
-      ...base,
-      margin: 0,
-      fontSize: "14px",
-      padding: 0,
+        ...base,
+        margin: 0,
+        fontSize: "14px",
+        padding: 0,
 
-      color: state.isDisabled ? "black" : "black",
+        color: state.isDisabled ? "black" : "black",
     }),
     singleValue: (base, state) => ({
-      ...base,
+        ...base,
 
-      fontSize: "14px",
-      color: state.isDisabled ? "black" : "black",
+        fontSize: "14px",
+        color: state.isDisabled ? "black" : "black",
     }),
     placeholder: (base) => ({
-      ...base,
-      // marginTop: "20px",
+        ...base,
+        // marginTop: "20px",
 
-      color: "black",
-      fontSize: "14px",
+        color: "black",
+        fontSize: "14px",
     }),
     menu: (base, state) => ({
-      ...base,
+        ...base,
 
-      maxHeight: 140,
-      // overflowY: "auto",
-      fontSize: "14px",
-      color: state.isDisabled ? "#6b7280" : "black",
+        maxHeight: 140,
+        // overflowY: "auto",
+        fontSize: "14px",
+        color: state.isDisabled ? "#6b7280" : "black",
     }),
     option: (base, state) => ({
-      ...base,
+        ...base,
 
-      fontSize: "14px",
-      color: state.isDisabled ? "#6b7280" : "black",
-      padding: "6px 8px",
+        fontSize: "14px",
+        color: state.isDisabled ? "#6b7280" : "black",
+        padding: "6px 8px",
     }),
     dropdownIndicator: () => ({}),
 
     indicatorSeparator: () => ({ display: "none" }),
     menuList: (base) => ({
-      ...base,
-      maxHeight: 140,
-      // overflowY: "auto",
+        ...base,
+        maxHeight: 140,
+        // overflowY: "auto",
     }),
-  };
+};

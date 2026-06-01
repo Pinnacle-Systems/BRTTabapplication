@@ -7,6 +7,7 @@ import {
 import PieceReceipt from "./PieceReceipt";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { useLanguage } from "../../Context/LanguageContext"; // ← import context
+import useInvalidateTags from "../../CustomHooks/useInvalidateTags";
 
 // ─── Translations ─────────────────────────────────────────────────────────────
 const translations = {
@@ -49,6 +50,10 @@ const PieceReport = () => {
   const [selectedGridId, setSelectedGridId] = useState("");
 
   // const { data, isLoading, error } = useGetPieceReceiptQuery({});
+
+      const [dispatchInvalidate] = useInvalidateTags();
+
+
   let data;
   let isLoading;
   let error;
@@ -72,6 +77,7 @@ const PieceReport = () => {
           setOpenForm(false);
           setEditData(null);
         }}
+        dispatchInvalidate={dispatchInvalidate}
       />
     );
   }

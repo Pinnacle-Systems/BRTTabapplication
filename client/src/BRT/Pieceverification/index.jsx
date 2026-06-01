@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import Swal from "sweetalert2";
 import Select from "react-select";
 import { useLanguage } from "../../Context/LanguageContext";
+import { getCommonParams } from "../../Utils/helper";
 
 // ─── Translations ─────────────────────────────────────────────────────────────
 const translations = {
@@ -31,7 +32,7 @@ const translations = {
     grade: "Grade",
     weight: "Weight",
     approve: "First Approval",
-    approve2: "Second  Approval",
+    approve2: "Second Approval",
     reject: "Reject",
     noData: "No Data Found",
     // Swal
@@ -39,6 +40,8 @@ const translations = {
     addedSuccess: "Added Successfully",
     submissionError: "Submission error",
     somethingWentWrong: "Something went wrong!",
+    rejectedSuccess: "Rejected Successfully",
+    deleteFailed: "Delete failed",
   },
   ta: {
     title: "பீஸ் சரிபார்ப்பு",
@@ -57,11 +60,15 @@ const translations = {
     grade: "தரம்",
     weight: "எடை",
     approve: "அனுமதி",
+    approve2: "இரண்டாம் அனுமதி",
+    reject: "நிராகரி",
     noData: "தரவு இல்லை",
     approveAtLeastOne: "குறைந்தது ஒரு துண்டை அனுமதிக்கவும்",
     addedSuccess: "வெற்றிகரமாக சேர்க்கப்பட்டது",
     submissionError: "சமர்ப்பிப்பு பிழை",
     somethingWentWrong: "ஏதோ தவறு நடந்தது!",
+    rejectedSuccess: "வெற்றிகரமாக நிராகரிக்கப்பட்டது",
+    deleteFailed: "நீக்கம் தோல்வியடைந்தது",
   },
   hi: {
     title: "पीस सत्यापन",
@@ -80,11 +87,15 @@ const translations = {
     grade: "ग्रेड",
     weight: "वजन",
     approve: "अनुमोदन",
+    approve2: "द्वितीय अनुमोदन",
+    reject: "अस्वीकार",
     noData: "कोई डेटा नहीं मिला",
     approveAtLeastOne: "कम से कम एक पीस को अनुमोदित करें",
     addedSuccess: "सफलतापूर्वक जोड़ा गया",
     submissionError: "सबमिट त्रुटि",
     somethingWentWrong: "कुछ गलत हो गया!",
+    rejectedSuccess: "सफलतापूर्वक अस्वीकार कर दिया गया",
+    deleteFailed: "हटाना विफल रहा",
   },
 };
 
@@ -162,6 +173,7 @@ const PieceVerification = () => {
       // overflowY: "auto",
     }),
   };
+  const { companyId } = getCommonParams();
 
   const [foldingItems, setFoldingItems] = useState([]);
   const [lotNo, setLotNo] = useState("");
@@ -188,7 +200,9 @@ const PieceVerification = () => {
     });
   }, [foldingItems, setFoldingItems]);
 
-  const { data: lotData } = useGetLotsQuery();
+  const { data: lotData } = useGetLotsQuery({
+    params: { companyId },
+  });
 
   const { data: foldDetailsData } = useGetFoldQuery(
     { lotNo },
@@ -437,7 +451,7 @@ const PieceVerification = () => {
 
                                   Swal.fire({
                                     icon: "success",
-                                    title: "Rejected Successfully",
+                                    title: t.rejectedSuccess,
                                     timer: 1500,
                                     showConfirmButton: false,
                                   });
@@ -449,12 +463,12 @@ const PieceVerification = () => {
                                 } catch (err) {
                                   Swal.fire({
                                     icon: "error",
-                                    title: "Delete failed",
+                                    title: t.deleteFailed,
                                   });
                                 }
                               }}
                             >
-                              Reject
+                              {t.reject}
                             </button>
                           )}
                         </td>
