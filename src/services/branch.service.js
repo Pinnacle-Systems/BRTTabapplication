@@ -16,6 +16,8 @@ export async function get(req, res) {
 
     const result = await connection.execute(sql);
 
+    console.log(result, "branch result");
+
     const resp = result.rows.map((row) =>
       result.metaData.reduce((obj, col, index) => {
         obj[col.name] = row[index];
