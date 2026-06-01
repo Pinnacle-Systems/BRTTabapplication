@@ -91,6 +91,9 @@ function DrawerAppBar({ onLogout }) {
   }, [currentUser, userData, storedUsername]);
 
   // Check if user is admin or has specific permissions
+
+  console.log(currentUser,"currentUser")
+
   const isAdmin = useMemo(() => {
     return currentUser?.userName === "Admin" || currentUser?.role === "Admin" || currentUser?.isAdmin;
   }, [currentUser]);

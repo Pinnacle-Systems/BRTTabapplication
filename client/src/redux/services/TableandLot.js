@@ -110,7 +110,7 @@ const tableLotApi = createApi({
           "Content-type": "application/json; charset=UTF-8",
         },
       }),
-      providesTags: ["pieceReceipt"],
+      providesTags: ["tableLotApi"],
     }),
     getTableLotById: builder.query({
       query: ({ selectedLotId, selectedGridId }) => {
@@ -161,14 +161,14 @@ const tableLotApi = createApi({
           "Content-type": "application/json; charset=UTF-8",
         },
       }),
-      providesTags: ["WorkStatus"],
+      providesTags: ["tableLotApi"],
     }),
     revertAllocation: builder.mutation({
       query: (allocationId) => ({
         url: `${TABLELOTAPI}/${allocationId}`,
         method: "POST",
       }),
-      invalidatesTags: ["WorkStatus"],
+      invalidatesTags: ["tableLotApi"],
     }),
     deleteWorkStatusLot: builder.mutation({
       query: (allocationId) => ({

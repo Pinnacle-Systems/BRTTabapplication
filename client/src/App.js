@@ -64,6 +64,8 @@ const App = () => {
     <Router>
       <Routes>
         <Route path="/" element={<Signup autoLogout={autoLogout} />} />
+        <Route path="/branch-finyear" element={<BranchFinYearSelection />} />
+
         <Route
           path="/dashboard"
           element={
@@ -83,7 +85,6 @@ const App = () => {
             </>
           }
         />
-        <Route path="/branch-finyear" element={<BranchFinYearSelection />} />
       </Routes>
     </Router>
   );

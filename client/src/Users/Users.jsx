@@ -28,6 +28,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import Form from "../Form/Form";
+import { MultiSelectDropdownNew } from "../MultiSelect/MultiSelect";
+import { useGetBranchDetailQuery } from "../redux/services/LotDetailData";
 
 // Theme color
 const primaryColor = "#2BA94C";
@@ -67,6 +69,7 @@ export default function UserManagement() {
   const [open, setOpen] = React.useState(false);
   const [editUser, setEditUser] = React.useState(null); // ← add
 
+
   const handleOpen = () => {
     setEditUser(null); // ← new user
     setOpen(true);
@@ -81,9 +84,13 @@ export default function UserManagement() {
     refetch();
   };
 
+
+
+  const storedUsername = localStorage.getItem("userName");
+
   const { data: userData, refetch, isLoading } = useGetUsersQuery();
   const { data: Roles } = useGetRolesQuery();
-  console.log(userData, "userData");
+  const { data: branchData  } = useGetBranchDetailQuery({ params: storedUsername });
 
   useEffect(() => {
     refetch();
@@ -207,10 +214,11 @@ export default function UserManagement() {
                 </CompactTableRow>
               ))}
             </TableBody>
+  
           </Table>
         </TableContainer>
       </CompactPaper>
-
+     
       <Modal open={open} onClose={handleClose} closeAfterTransition>
         <Fade in={open}>
           <Box
@@ -232,6 +240,7 @@ export default function UserManagement() {
               Roles={Roles}
               primaryColor={primaryColor}
               editUser={editUser}
+              branchData={branchData}
             />
           </Box>
         </Fade>

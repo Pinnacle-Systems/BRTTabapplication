@@ -56,6 +56,10 @@ export async function getTables(req, res) {
 }
 
 export async function getLotNo(req, res) {
+
+
+  const { companyId } = req.query;
+
   let connection;
 
   try {
@@ -69,6 +73,8 @@ left join GTLOTALLOTMENT c on A.GTLOTALLOTMENTID = c.GTLOTALLOTMENTID`;
     B.DOCID AS LOTNO,C.CLOTHNAME FROM GTLOTALLOTMENTDET A
     LEFT JOIN GTFABRICRECEIPT B ON A.LOTNO = B.GTFABRICRECEIPTID
     LEFT JOIN GTCLOTHCREATION C ON A.CLOTHNAME = C.GTCLOTHCREATIONID
+
+     WHERE B.COMPCODE  = '${companyId}'
 `;
 
     console.log(sql, "sql for getLotNo");
@@ -202,6 +208,10 @@ export async function update(req, res) {
       weaverPieceNo,
       loomNo,
     } = req.body;
+
+
+ 
+
     const { selectedNonGridId, selectedGridId } = req.params;
     console.log(
       checkerId,
@@ -236,14 +246,20 @@ export async function update(req, res) {
       { autoCommit: false },
     );
 
-    if (parentResult.rows.length === 0) {
-      await connection.rollback();
+    console.log({
+      selectedNonGridId,
+      selectedGridId,
+ 
+    },"selectedGridId");
 
-      return res.json({
-        statusCode: 1,
-        message: "Parent record not found",
-      });
-    }
+    // if (parentResult.rows.length === 0) {
+    //   await connection.rollback();
+
+    //   return res.json({
+    //     statusCode: 1,
+    //     message: "Parent record not found",
+    //   });
+    // }
 
     const updateResult = await connection.execute(
       `
@@ -451,7 +467,6 @@ SET LOOMNO = :loomNo,
     WEAVERPCSNO = :weaverPieceNo
 WHERE GTFABRICRECEIPTID = :selectedLotNo
   AND SNO = :selectedPiece
-  AND (LOOMNO IS NULL OR WEAVERPCSNO IS NULL)
   `,
       {
         loomNo,
@@ -461,6 +476,9 @@ WHERE GTFABRICRECEIPTID = :selectedLotNo
       },
       { autoCommit: false },
     );
+
+
+
     if (scheduleUpdateResult.rowsAffected === 0) {
       await connection.rollback();
 

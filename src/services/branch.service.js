@@ -1,32 +1,27 @@
 import { getConnection } from "../constants/db.connection.js";
 
 export async function get(req, res) {
+
+    const { userId } = req.query;
+
   const connection = await getConnection(res);
-  console.log(req.body, "req.body");
 
   try {
-  const { username } = req.query;
-
     const sql = `
-      SELECT DISTINCT A.COMPCODE AS GCOMPCODE 
-      FROM GTCOMPMAST A, GTEMPCOMPDET B, GTEMPMAST C
-      WHERE A.GTCOMPMASTID = B.EMPCOMP 
-        AND B.GTEMPMASTID = C.GTEMPMASTID
-        AND LOWER(C.EUSERS) = LOWER(:USERNAME)
-        AND PTRANSACTION = 'COMPANY'
-      ORDER BY 1
+      SELECT A.GTCOMPMASTID, A.COMPCODE
+      FROM GTCOMPMAST A
+      WHERE A.PTRANSACTION = 'COMPANY'
+        AND A.DIVISION = 'FABRIC'
     `;
 
-    const result = await connection.execute(sql, { USERNAME: username });
+    const result = await connection.execute(sql);
 
-    const resp = result.rows.map((i) => {
-      let newObj = {};
-      for (let columnIndex = 0; columnIndex < result.metaData.length; columnIndex++) {
-        const element = result.metaData[columnIndex];
-        newObj[element.name] = i[columnIndex];
-      }
-      return newObj;
-    });
+    const resp = result.rows.map((row) =>
+      result.metaData.reduce((obj, col, index) => {
+        obj[col.name] = row[index];
+        return obj;
+      }, {})
+    );
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {

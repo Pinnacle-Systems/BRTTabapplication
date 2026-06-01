@@ -22,35 +22,35 @@ const LotDetailApi = createApi({
   }),
   tagTypes: ["LotDetail"],
   endpoints: (builder) => ({
-getLotDetail: builder.query({
-  query: () => {
-    const selectedBranch = secureLocalStorage.getItem("selectedBranch");
-    return {
-      url: LOTPREPERATION,
-      method: "GET",
-      params: { branch: selectedBranch },
-      headers: {
-        "Content-type": "application/json; charset=UTF-8",
+    getLotDetail: builder.query({
+      query: () => {
+        const selectedBranch = secureLocalStorage.getItem("selectedBranch");
+        return {
+          url: LOTPREPERATION,
+          method: "GET",
+          params: { branch: selectedBranch },
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
       },
-    };
-  },
-  providesTags: ["LotDetail"],
-}),
+      providesTags: ["LotDetail"],
+    }),
 
-getLotPrepareDetail: builder.query({
-  query: () => {
-    const selectedBranch = secureLocalStorage.getItem("selectedBranch");
-    return {
-      url: `${LOTPREPERATION}/prepare`, // 👈 make sure backend handles this
-      method: "GET",
-      params: { branch: selectedBranch },
-      headers: {
-        "Content-type": "application/json; charset=UTF-8",
+    getLotPrepareDetail: builder.query({
+      query: () => {
+        const selectedBranch = secureLocalStorage.getItem("selectedBranch");
+        return {
+          url: `${LOTPREPERATION}/prepare`, // 👈 make sure backend handles this
+          method: "GET",
+          params: { branch: selectedBranch },
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
       },
-    };
-  },
-  providesTags: ["LotPrepareDetail"],
-}),
+      providesTags: ["LotPrepareDetail"],
+    }),
 
 
     updateLotDetail: builder.mutation({
@@ -64,10 +64,10 @@ getLotPrepareDetail: builder.query({
       },
       invalidatesTags: ["LotDetail"],
     }),
-    
+
     getLoadingDetail: builder.query({
       query: () => {
-         const selectedBranch = secureLocalStorage.getItem("selectedBranch"); 
+        const selectedBranch = secureLocalStorage.getItem("selectedBranch");
 
         return {
           url: LOADINGPREPERATION,
@@ -80,7 +80,7 @@ getLotPrepareDetail: builder.query({
       },
       providesTags: ["LotDetail"],
     }),
-    
+
     updateLoadingDetail: builder.mutation({
       query: (payload) => {
         const { id, ...body } = payload;
@@ -92,10 +92,10 @@ getLotPrepareDetail: builder.query({
       },
       invalidatesTags: ["LotDetail"],
     }),
-    
+
     getContractorDetail: builder.query({
       query: () => {
-         const selectedBranch = secureLocalStorage.getItem("selectedBranch"); 
+        const selectedBranch = secureLocalStorage.getItem("selectedBranch");
 
         return {
           url: CONTRACTOR,
@@ -108,10 +108,10 @@ getLotPrepareDetail: builder.query({
       },
       providesTags: ["LotDetail"],
     }),
-    
+
     getMachineDetail: builder.query({
       query: ({ params }) => {
-         const selectedBranch = secureLocalStorage.getItem("selectedBranch"); 
+        const selectedBranch = secureLocalStorage.getItem("selectedBranch");
 
         return {
           url: MACHINE,
@@ -124,10 +124,10 @@ getLotPrepareDetail: builder.query({
       },
       providesTags: ["LotDetail"],
     }),
-    
+
     getUnLoadingDetail: builder.query({
       query: () => {
-         const selectedBranch = secureLocalStorage.getItem("selectedBranch"); 
+        const selectedBranch = secureLocalStorage.getItem("selectedBranch");
 
         return {
           url: UNLOADINGPREPERATION,
@@ -140,9 +140,9 @@ getLotPrepareDetail: builder.query({
       },
       providesTags: ["LotDetail"],
     }),
-      getStopDetail: builder.query({
+    getStopDetail: builder.query({
       query: () => {
-         const selectedBranch = secureLocalStorage.getItem("selectedBranch"); 
+        const selectedBranch = secureLocalStorage.getItem("selectedBranch");
 
         return {
           url: STOPDETAIL,
@@ -167,7 +167,7 @@ getLotPrepareDetail: builder.query({
       invalidatesTags: ["LotDetail"],
     }),
     updateStopDetail: builder.mutation({
-        query: (payload) => {
+      query: (payload) => {
         const { id, ...body } = payload;
         return {
           url: `${STOPDETAIL}`,
@@ -180,7 +180,7 @@ getLotPrepareDetail: builder.query({
     ,
     getApprovalDetail: builder.query({
       query: () => {
-         const selectedBranch = secureLocalStorage.getItem("selectedBranch"); 
+        const selectedBranch = secureLocalStorage.getItem("selectedBranch");
 
         return {
           url: APPROVALPREPERATION,
@@ -193,7 +193,7 @@ getLotPrepareDetail: builder.query({
       },
       providesTags: ["LotDetail"],
     }),
-    
+
     updateApprovalDetail: builder.mutation({
       query: (payload) => {
         const { id, ...body } = payload;
@@ -205,10 +205,10 @@ getLotPrepareDetail: builder.query({
       },
       invalidatesTags: ["LotDetail"],
     }),
-    
+
     getRevertDetail: builder.query({
       query: () => {
-         const selectedBranch = secureLocalStorage.getItem("selectedBranch"); 
+        const selectedBranch = secureLocalStorage.getItem("selectedBranch");
 
         return {
           url: REVERTPREPERATION,
@@ -221,7 +221,7 @@ getLotPrepareDetail: builder.query({
       },
       providesTags: ["LotDetail"],
     }),
-    
+
     updateRevertDetail: builder.mutation({
       query: (payload) => {
         const { id, ...body } = payload;
@@ -233,9 +233,9 @@ getLotPrepareDetail: builder.query({
       },
       invalidatesTags: ["LotDetail"],
     }),
-     getInspectionDetail: builder.query({
+    getInspectionDetail: builder.query({
       query: () => {
-         const selectedBranch = secureLocalStorage.getItem("selectedBranch"); 
+        const selectedBranch = secureLocalStorage.getItem("selectedBranch");
 
         return {
           url: INSPECTION,
@@ -248,7 +248,7 @@ getLotPrepareDetail: builder.query({
       },
       providesTags: ["LotDetail"],
     }),
-     updateInspectionDetail: builder.mutation({
+    updateInspectionDetail: builder.mutation({
       query: (payload) => {
         const { id, ...body } = payload;
         return {
@@ -259,18 +259,20 @@ getLotPrepareDetail: builder.query({
       },
       invalidatesTags: ["LotDetail"],
     }),
-    
-    
- getBranchDetail: builder.query({
-  query: ({ params }) => ({
-    url: BRANCHQUERY,
-    method: "GET",
-    params: { username: params }, 
-    headers: {
-      "Content-type": "application/json; charset=UTF-8",
-    },
-  }),
-}),
+
+
+    getBranchDetail: builder.query({
+      query: ({ params }) => {
+         return {
+          url: BRANCHQUERY,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        }
+      },
+    }),
   }),
 });
 
@@ -291,7 +293,7 @@ export const {
   useGetRevertDetailQuery,
   useUpdateRevertDetailMutation,
   useGetInspectionDetailQuery,
-  useUpdateInspectionDetailMutation, 
+  useUpdateInspectionDetailMutation,
   useGetBranchDetailQuery
 } = LotDetailApi;
 

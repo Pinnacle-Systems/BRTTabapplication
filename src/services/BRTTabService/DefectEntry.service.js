@@ -455,6 +455,7 @@ export async function updateDefectEntry(req, res) {
         weaverPcsNo,
         setNo,
         originalPieceNo,
+        isCompleted,
       } = piece;
 
       // Validate defects for each piece
@@ -495,7 +496,11 @@ export async function updateDefectEntry(req, res) {
           ACTUALMETER,
           RECEIPTMETER,
            LOOMNO,        
-    WEAVERPCSNO,CHECKINGSECTION,SETNO,OGPCSNO
+          WEAVERPCSNO,
+          CHECKINGSECTION,
+          SETNO,
+          OGPCSNO,
+          ISCOMPLETED
         ) VALUES (
           :primaryKey,
           :piecesDefectId,
@@ -511,8 +516,12 @@ export async function updateDefectEntry(req, res) {
           :totalPoints,
           :actualMeters,
           :meters,
-            :loomNo,   
-    :weaverPcsNo,:checkingSectionId,:setNo,:originalPieceNo
+          :loomNo,   
+          :weaverPcsNo,
+          :checkingSectionId,
+          :setNo,
+          :originalPieceNo,
+          :isCompleted
         )`,
         {
           primaryKey,
@@ -534,6 +543,7 @@ export async function updateDefectEntry(req, res) {
           checkingSectionId: Number(checkingSectionId),
           setNo: setNo,
           originalPieceNo: originalPieceNo,
+          isCompleted: isCompleted ? "YES" : "NO",
         },
         { autoCommit: false },
       );
@@ -666,7 +676,8 @@ export async function getExistingDefectEntry(req, res) {
         T.TABLENOTAB,
         T.CHECKER,
         T.ALLACATIONID,
-        T.TABAPPROVAL
+        T.TABAPPROVAL,
+        T.ISCOMPLETED
        FROM Gtdefectdettab T
        JOIN Gtpiecesdefect P ON P.GTPIECESDEFECTID = T.GTPIECESDEFECTID
        WHERE P.LOTNO = :lotId
@@ -711,6 +722,7 @@ export async function getExistingDefectEntry(req, res) {
         endMeter: tab.ENDMTR,
         totalPointsSum: tab.TOTPOINTSTAB,
         tabApproval: tab.TABAPPROVAL,
+        isCompleted : tab.ISCOMPLETED === "YES",
         defects: defectResult.rows.map((d) => ({
           meter: d.MTRAT,
           defectId: d.DEFECTNAME1,

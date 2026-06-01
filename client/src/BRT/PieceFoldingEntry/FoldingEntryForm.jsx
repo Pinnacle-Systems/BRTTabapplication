@@ -15,6 +15,7 @@ import {
 } from "../../redux/services/PieceFoldingEntry";
 import { useGetRolesQuery, useGetUsersQuery } from "../../redux/userservice";
 import { useLanguage } from "../../Context/LanguageContext";
+import useInvalidateTags from "../../CustomHooks/useInvalidateTags";
 
 const translations = {
   en: {
@@ -258,6 +259,10 @@ const PieceFoldingForm = ({ onClose }) => {
     value: cloth?.RECEIPTNO,
   }));
 
+
+        const [dispatchInvalidate] = useInvalidateTags();
+
+
   const { data: singleData } = useGetpieceFoldingEntryByIdQuery(
     { selectedPiece },
     { skip: !selectedPiece },
@@ -393,6 +398,7 @@ const PieceFoldingForm = ({ onClose }) => {
   const handleSubmitCustom = async (callback, data) => {
     try {
       let returnData = await callback(data).unwrap();
+      dispatchInvalidate()
       Swal.fire({
         title: t.addedSuccess,
         icon: "success",

@@ -13,10 +13,21 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
 
   <>
-    <ToastContainer />
+    <ToastContainer
+      position="top-right"
+      autoClose={3000}
+      hideProgressBar={false}
+      newestOnTop={true}
+      closeOnClick
+      pauseOnHover
+      draggable
+      theme="colored"
+      style={{ zIndex: 999999999 }}
+    />
     <Provider store={store}>
       <App />
-    </Provider></>
+    </Provider>
+  </>
 
 );
 

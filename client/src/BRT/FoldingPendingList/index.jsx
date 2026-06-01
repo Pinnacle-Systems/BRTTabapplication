@@ -13,6 +13,7 @@ import {
 
 import { useLanguage } from "../../Context/LanguageContext";
 import { MdOpenInNew, MdClose } from "react-icons/md";
+import useInvalidateTags from "../../CustomHooks/useInvalidateTags";
 
 // ─── Translations ─────────────────────────────────────────────────────────────
 const translations = {
@@ -111,6 +112,9 @@ const FoldingPendingList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subGridId, setSubGridId] = useState("");
   const [defectArray, setDefectArray] = useState([]);
+
+  const [dispatchInvalidate] = useInvalidateTags();
+
 
   const openModal = (item) => {
     setSelectedItem(item);
@@ -259,6 +263,7 @@ const FoldingPendingList = () => {
   const handleSubmitCustom = async (callback, data) => {
     try {
       let returnData = await callback(data).unwrap();
+      dispatchInvalidate()
       Swal.fire({
         title: t.addedSuccess,
         icon: "success",
