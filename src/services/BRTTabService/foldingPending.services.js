@@ -5,10 +5,15 @@ import oracledb from "oracledb";
 export async function getFoldingPending(req, res) {
   let connection;
 
+  const { companyId } = req.query;
   try {
     connection = await getConnection();
     const sql = `select FR.DOCID,GT.RECEIPTNO from Gtpiecesdefectdet   GT
-LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO`;
+    JOIN Gtpiecesdefect A ON A.GTPIECESDEFECTID = GT.GTPIECESDEFECTID
+LEFT JOIN gtfabricreceipt FR ON FR.GTFABRICRECEIPTID = GT.RECEIPTNO
+where A.COMPCODE = ${companyId}
+ORDER BY RECEIPTNO
+`;
 
     const result = await connection.execute(sql);
 
@@ -68,6 +73,7 @@ LEFT JOIN GTSCHEDULESUNDET GS
 
 WHERE PD.RECEIPTNO = ${lotNo}
   AND NVL(DT.TABAPPROVAL, 'NO') <> 'YES'
+  AND DT.ISCOMPLETED = 'YES'
   AND DT.GTDEFECTDETTABID IS NOT NULL`;
 
     const result = await connection.execute(sql);

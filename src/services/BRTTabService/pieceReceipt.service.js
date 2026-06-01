@@ -4,7 +4,7 @@ import oracledb from "oracledb";
 export async function getLotNo(req, res) {
   let connection;
 
-  const {  companyId } = req.query;
+  const { companyId } = req.query;
   console.log(companyId, "received companyId in getLotNo");
   // const connection = await getConnection(res);
   //   const { branch } = req.query;
@@ -24,14 +24,13 @@ export async function getLotNo(req, res) {
     //       AND gsd.sno = grd.pcs
     //   )
     // `;
-//     const sql = `
-//   SELECT gr.gtfabricreceiptid, gr.docid
-//   FROM GTFABRICRECEIPT gr
-// `;
+    //     const sql = `
+    //   SELECT gr.gtfabricreceiptid, gr.docid
+    //   FROM GTFABRICRECEIPT gr
+    // `;
 
-
-const sql = `
-SELECT 
+    const sql = `
+SELECT DISTINCT
     A.gtfabricreceiptid,
     A.docid
 FROM GTFABRICRECEIPT A
@@ -54,8 +53,7 @@ HAVING
     COUNT(S.GTSCHEDULESUNDETID) != B.PCS
     OR COUNT(CASE WHEN S.MTR IS NULL OR S.MTR = 0 THEN 1 END) > 0
 ORDER BY
-    A.GTFABRICRECEIPTID,
-    B.GTFABRICRECEIPTDETID`;
+    A.GTFABRICRECEIPTID`;
 
     console.log(sql, "sql for Piecereceipt");
     const result = await connection.execute(sql);
@@ -86,12 +84,12 @@ export async function getSetNo(req, res) {
   try {
     connection = await getConnection();
     // const sql = `
-    //   SELECT 
+    //   SELECT
     //       A.GTFABRICRECEIPTID,
     //       B.GTFABRICRECEIPTDETID AS GRIDID,
     //       B.SETNO
     //   FROM GTFABRICRECEIPT A
-    //   JOIN GTFABRICRECEIPTDET B 
+    //   JOIN GTFABRICRECEIPTDET B
     //       ON B.GTFABRICRECEIPTID = A.GTFABRICRECEIPTID
     //   WHERE A.GTFABRICRECEIPTID = '${selectedLotId}'
     //   AND B.SETNO IS NOT NULL
@@ -121,8 +119,6 @@ HAVING
     OR COUNT(CASE WHEN S.MTR IS NULL OR S.MTR = 0 THEN 1 END) > 0
 ORDER BY
     B.GTFABRICRECEIPTDETID`;
-
-
 
     console.log(sql, "sql for getLotDetails");
     const result = await connection.execute(sql);

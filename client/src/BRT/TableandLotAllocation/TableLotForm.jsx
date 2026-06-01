@@ -202,11 +202,9 @@ const TableLotForm = ({
   const [allocatedTableId, setAllocatedtableId] = useState([]);
   const [widerTable, setWiderTable] = useState("No");
 
+  const { companyId } = getCommonParams();
 
-    const { companyId } = getCommonParams();
-
-      console.log(selectedLotNo,"selectedLotNo")
-
+  console.log(selectedLotNo, "selectedLotNo");
 
   let NOOFPCSSTK = 1;
   let PCSTAKEN = "Yes";
@@ -236,8 +234,7 @@ const TableLotForm = ({
       skip: !storedUserId,
     });
   const dispatch = useDispatch();
-      const [dispatchInvalidate] = useInvalidateTags();
-
+  const [dispatchInvalidate] = useInvalidateTags();
 
   // useEffect(() => {
   //   socketRef.current = io(process.env.REACT_APP_SERVER_URL);
@@ -301,7 +298,11 @@ const TableLotForm = ({
   }, [isAdmin, isSuppervisor, storedUserId, setCheckerId]);
 
   // ✅ RTK Query
-  const { data: lots, error, isLoading } = useGetLotsQuery({ params: { companyId } });
+  const {
+    data: lots,
+    error,
+    isLoading,
+  } = useGetLotsQuery({ params: { companyId } });
   const { data: checking } = useGetCheckingSectionQuery();
 
   const { data: cloths, refetch: clothsrefetch } = useGetClothQuery(
@@ -352,7 +353,7 @@ const TableLotForm = ({
   const [revertAllocation] = useRevertAllocationMutation();
 
   const syncFormWithDb = useCallback(
-    (data) => { },
+    (data) => {},
     [selectedLotNo, selectedGridId],
   );
 
@@ -380,12 +381,13 @@ const TableLotForm = ({
     storedUserId: parseInt(storedUserId),
     weaverPieceNo,
     loomNo,
+    companyId,
   };
 
   const handleSubmitCustom = async (callback, data) => {
     try {
       let returnData = await callback(data).unwrap();
-      dispatchInvalidate()
+      dispatchInvalidate();
       Swal.fire({
         title: t.addedSuccess,
         icon: "success",
@@ -399,7 +401,7 @@ const TableLotForm = ({
       clothsrefetch();
       piecesrefetch();
       setDcMeter("");
-      setSelectedLotNo("")
+      setSelectedLotNo("");
 
       setTimeout(() => {
         lotIdRef.current?.focus();
@@ -805,14 +807,20 @@ const TableLotForm = ({
                     <Select
                       options={userOptions}
                       value={
-                        userOptions?.find((option) => option.value === checkerId) || null
+                        userOptions?.find(
+                          (option) => option.value === checkerId,
+                        ) || null
                       }
                       onChange={(selectedOption) => {
                         setCheckerId(selectedOption?.value || "");
                       }}
-                      isOptionDisabled={(option) => option?.isWorked}  // ✅ disables click
+                      isOptionDisabled={(option) => option?.isWorked} // ✅ disables click
                       formatOptionLabel={(option) => (
-                        <div style={{ color: option?.isWorked ? "red" : "inherit" }}>
+                        <div
+                          style={{
+                            color: option?.isWorked ? "red" : "inherit",
+                          }}
+                        >
                           {option?.label}
                         </div>
                       )}

@@ -1,51 +1,50 @@
 import { useDispatch } from "react-redux";
 
 const useInvalidateTags = () => {
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
-    const apiInvalidateData = [
+  const apiInvalidateData = [
+    {
+      type: `pieceReceipt/invalidateTags`,
+      payload: ["pieceReceipt"],
+    },
+    {
+      type: `tableLot/invalidateTags`,
+      payload: ["tableLotApi"],
+    },
+    {
+      type: `defectEntryApi/invalidateTags`,
+      payload: ["defectEntryApi"],
+    },
+    {
+      type: `foldingPending/invalidateTags`,
+      payload: ["foldingPending"],
+    },
+    {
+      type: `pieceFoldingEntry/invalidateTags`,
+      payload: ["pieceFoldingEntry"],
+    },
+    {
+      type: `pieceVerificationApi/invalidateTags`,
+      payload: ["pieceVerificationApi"],
+    },
 
-        {
-            type: `pieceReceipt/invalidateTags`,
-            payload: ["pieceReceipt"],
-        },
-        {
-            type: `tableLot/invalidateTags`,
-            payload: ["tableLotApi"],
-        },
-        {
-            type: `defectEntryApi/invalidateTags`,
-            payload: ["defectEntryApi"],
-        },
-        {
-            type: `foldingPending/invalidateTags`,
-            payload: ["foldingPending"],
-        },
-        {
-            type: `pieceVerificationApi/invalidateTags`,
-            payload: ["pieceVerificationApi"],
-        },
+    {
+      type: `packingSlip/invalidateTags`,
+      payload: ["packingSlip"],
+    },
+    {
+      type: `finYearMaster/invalidateTags`,
+      payload: ["FinYear"],
+    },
+  ];
 
-        {
-            type: `packingSlip/invalidateTags`,
-            payload: ["packingSlip"],
-        },
-        {
-            type: `finYearMaster/invalidateTags`,
-            payload: ["FinYear"],
-        },
-
-       
-
-
-    ];
-
-    function dispatchInvalidate() {
-        apiInvalidateData.forEach(item => {
-            dispatch(item);
-        })
-    }
-    return [dispatchInvalidate];
+  function dispatchInvalidate() {
+    apiInvalidateData.forEach((item) => {
+      dispatch(item);
+    });
+  }
+  return [dispatchInvalidate];
 };
 
 export default useInvalidateTags;

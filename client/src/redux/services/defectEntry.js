@@ -113,16 +113,37 @@ const defectEntryApi = createApi({
       }),
       providesTags: ["defectEntryApi"],
     }),
+    // getSavedLotsa: builder.query({
+    //   query: (arg) => ({
+    //     url: `${DEFECTENTRY}/savedLots`,
+    //     method: "GET",
+    //     headers: {
+    //       "Content-type": "application/json; charset=UTF-8",
+    //     },
+    //   }),
+    //   providesTags: ["defectEntryApi"],
+    // }),
     getSavedLots: builder.query({
-      query: () => ({
-        url: `${DEFECTENTRY}/savedLots`,
-        method: "GET",
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-        },
-      }),
+      query: (arg) => {
+        const { params, searchParams } = arg || {};
+
+        if (searchParams) {
+          return {
+            url: DEFECTENTRY + "/search/" + searchParams,
+            method: "GET",
+            params,
+          };
+        }
+
+        return {
+          url: `${DEFECTENTRY}/savedLots`,
+          method: "GET",
+          params,
+        };
+      },
       providesTags: ["defectEntryApi"],
     }),
+
     getSavedPieces: builder.query({
       query: ({ lotId }) => ({
         url: `${DEFECTENTRY}/savedPieces/${lotId}`,

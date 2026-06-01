@@ -4,11 +4,13 @@ import oracledb from "oracledb";
 
 export async function getLotNo(req, res) {
   let connection;
-
+  const { companyId } = req.query;
   try {
     connection = await getConnection();
     const sql = `SELECT C.LOTNO,L.DOCID FROM PCS_APPROVAL C
-JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LOTNO`;
+JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LOTNO
+WHERE C.COMPANYID = '${companyId}'
+`;
     console.log(sql, "sql for getLotNo");
     const result = await connection.execute(sql);
 

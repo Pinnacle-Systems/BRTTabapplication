@@ -247,18 +247,19 @@ const DefectEntry = () => {
 
   const [dispatchInvalidate] = useInvalidateTags();
 
-
-  const { data: lots, refetch: refetchLots } = useGetLotsQuery({ params: { companyId } });
+  const { data: lots, refetch: refetchLots } = useGetLotsQuery({
+    params: { companyId },
+  });
   const { data: pieces } = useGetPiecesQuery({ lotId }, { skip: !lotId });
   const { data: setNoData } = useGetSetNOQuery(
     { lotId, pcNo: pieceNo },
     { skip: !lotId },
   );
+  console.log(pieces, "pieces");
 
   useEffect(() => {
     setSetNo(setNoData?.data[0]?.SETNO);
   }, [setNoData]);
-  console.log(setNo, "setNO");
 
   const { data: lotDetails } = useGetlotDetailsQuery(
     { pieceId },
@@ -266,13 +267,15 @@ const DefectEntry = () => {
   );
   // ← new: for admin/supervisor view of saved entries
   const { data: savedLots, refetch: refetchSavedLots } = useGetSavedLotsQuery(
-    {params: { companyId }},
+    { params: { companyId } },
     { skip: !canEditLot },
   );
   const { data: savedPieces } = useGetSavedPiecesQuery(
     { lotId },
     { skip: !lotId || !canEditLot },
   );
+  console.log(savedPieces, "savedPieces");
+
   const { data: loomWeaver } = useGetloomWeaverByIdQuery(
     { lotId, pcno: pieceNo },
     { skip: !lotId || !pieceNo },
@@ -304,7 +307,7 @@ const DefectEntry = () => {
 
   useEffect(() => {
     if (!pieceId || !pieceNo || !meters) return;
-    // setIsCompleted(false); 
+    // setIsCompleted(false);
     setData((prev) => {
       const existingDefects =
         prev.lotDetails[0]?.pieceId === pieceId
@@ -336,17 +339,19 @@ const DefectEntry = () => {
 
     setPerPieceForm({});
   }, [pieceId, pieceNo, meters]);
-  const { data: existingEntry, isLoading: isExistingEntryLoading, isFetching: isExistingEntryFetching } = useGetDefectDetailsQuery(
+  const {
+    data: existingEntry,
+    isLoading: isExistingEntryLoading,
+    isFetching: isExistingEntryFetching,
+  } = useGetDefectDetailsQuery(
     { lotId, pieceId },
     { skip: !lotId || !pieceId },
   );
-
 
   useEffect(() => {
     if (!existingEntry?.data || existingEntry.data.length === 0) return;
     setIsCompleted(existingEntry?.data?.some((p) => p.isCompleted));
   }, [existingEntry, isExistingEntryLoading, isExistingEntryFetching]);
-
 
   console.log(existingEntry, "existingEntry");
 
@@ -447,6 +452,7 @@ const DefectEntry = () => {
         allocationId: piece?.ALLOCATIONID,
       }));
   }, [pieces?.data, savedPieces?.data, lotId, canEditLot]);
+  console.log(pieceOptions, "pieceOptions");
 
   useEffect(() => {
     if (workStatus?.hasActiveWork && !isAdmin && !isSuppervisor) {
@@ -590,8 +596,7 @@ const DefectEntry = () => {
         weaverPcsNo: weaverPieceNo || null, // ← add,
         setNo,
         originalPieceNo: piece.originalPieceNo,
-        isCompleted
-
+        isCompleted,
       };
     });
     return {
@@ -793,7 +798,7 @@ const DefectEntry = () => {
   const handleSubmitCustom = async (callback, data) => {
     try {
       await callback(data).unwrap();
-      dispatchInvalidate()
+      dispatchInvalidate();
       Swal.fire({
         title: t.addedSuccess,
         icon: "success",
@@ -913,8 +918,9 @@ const DefectEntry = () => {
                 checked={isCompleted}
                 disabled={isApproved}
                 onChange={(e) => setIsCompleted(e.target.checked)}
-                className={`w-4 h-4 accent-green-600 ${isApproved ? "cursor-not-allowed" : "cursor-pointer"
-                  }`}
+                className={`w-4 h-4 accent-green-600 ${
+                  isApproved ? "cursor-not-allowed" : "cursor-pointer"
+                }`}
               />
               {t.completed}
             </label>
@@ -922,10 +928,11 @@ const DefectEntry = () => {
               type="button"
               onClick={saveData}
               disabled={isApproved}
-              className={`py-1 rounded-lg transition px-2 ${isApproved
-                ? "bg-gray-400 cursor-not-allowed text-white"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
+              className={`py-1 rounded-lg transition px-2 ${
+                isApproved
+                  ? "bg-gray-400 cursor-not-allowed text-white"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
             >
               {t.save}
             </button>
@@ -1164,10 +1171,11 @@ const DefectEntry = () => {
                                 if (result.isConfirmed) deletePiece(pieceIndex);
                               });
                             }}
-                            className={`${isApproved
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-red-500 hover:bg-red-600"
-                              } text-white text-xs px-2 py-1 rounded-lg ml-2 flex items-center gap-1`}
+                            className={`${
+                              isApproved
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-red-500 hover:bg-red-600"
+                            } text-white text-xs px-2 py-1 rounded-lg ml-2 flex items-center gap-1`}
                           >
                             <MdDelete size={14} />
                             {t.deletePiece}
@@ -1278,10 +1286,11 @@ const DefectEntry = () => {
                                   Number(prev.defectPoints) * Number(times),
                               }));
                             }}
-                            className={`w-full border rounded-lg px-1 py-1.5 text-right ${isNoDefectSelected
-                              ? "bg-gray-200 cursor-not-allowed"
-                              : ""
-                              }`}
+                            className={`w-full border rounded-lg px-1 py-1.5 text-right ${
+                              isNoDefectSelected
+                                ? "bg-gray-200 cursor-not-allowed"
+                                : ""
+                            }`}
                           />
                         </div>
 
@@ -1305,10 +1314,11 @@ const DefectEntry = () => {
                               type="button"
                               disabled={isApproved}
                               onClick={(e) => FillDefectArray(e, pieceIndex)}
-                              className={`${isApproved
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-green-600 hover:bg-green-700"
-                                } text-white py-1.5 rounded-lg transition px-2`}
+                              className={`${
+                                isApproved
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-green-600 hover:bg-green-700"
+                              } text-white py-1.5 rounded-lg transition px-2`}
                             >
                               {t.add}
                             </button>
@@ -1323,10 +1333,11 @@ const DefectEntry = () => {
                                   Number(form.checkedMeter),
                                 )
                               }
-                              className={`${isApproved
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-purple-600 hover:bg-purple-700"
-                                } text-white py-1.5 rounded-lg transition px-2`}
+                              className={`${
+                                isApproved
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-purple-600 hover:bg-purple-700"
+                              } text-white py-1.5 rounded-lg transition px-2`}
                             >
                               {t.split}
                             </button>
@@ -1380,10 +1391,11 @@ const DefectEntry = () => {
                                       onClick={() =>
                                         deleteRow(pieceIndex, index)
                                       }
-                                      className={`${isApproved
-                                        ? "bg-gray-300 cursor-not-allowed"
-                                        : "bg-red-500"
-                                        } text-white px-1 py-1 rounded text-sm`}
+                                      className={`${
+                                        isApproved
+                                          ? "bg-gray-300 cursor-not-allowed"
+                                          : "bg-red-500"
+                                      } text-white px-1 py-1 rounded text-sm`}
                                     >
                                       <MdDelete />
                                     </button>

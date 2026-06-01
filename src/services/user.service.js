@@ -51,7 +51,7 @@ export async function login(req, res) {
 
 export async function create(req, res) {
   const connection = await getConnection();
-  const { username, password, roleId ,companyList } = req.body;
+  const { username, password, roleId, companyList } = req.body;
   // const roles = checkboxes?.map((item) => item.label.toUpperCase());
 
   if (!username || !password) {
@@ -72,6 +72,47 @@ export async function create(req, res) {
       return res.json({ statusCode: 1, message: "UserName Already Exists" });
     }
 
+    // ==========================
+    // BRTF USER LIMIT CHECK
+    // ==========================
+
+    const selectedCompanyIds = companyList?.map((c) => Number(c.value)) || [];
+
+    if (selectedCompanyIds.length > 0) {
+      const brtfResult = await connection.execute(
+        `
+        SELECT GTCOMPMASTID
+        FROM GTCOMPMAST
+        WHERE COMPCODE = 'BRTF'
+        `,
+      );
+
+      if (brtfResult.rows.length > 0) {
+        const brtfCompanyId = brtfResult.rows[0][0];
+
+        if (selectedCompanyIds.includes(brtfCompanyId)) {
+          const countResult = await connection.execute(
+            `
+            SELECT COUNT(DISTINCT USERID)
+            FROM TABUSERGRID
+            WHERE COMPCODE = :brtfCompanyId
+            `,
+            { brtfCompanyId },
+          );
+
+          const userCount = countResult.rows[0][0];
+
+          if (userCount >= 10) {
+            await connection.close();
+            return res.json({
+              statusCode: 1,
+              message: "user Limit reached.",
+            });
+          }
+        }
+      }
+    }
+
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     console.log(username, hashedPassword, "username,hashedPassword");
@@ -84,26 +125,25 @@ export async function create(req, res) {
         password: hashedPassword,
         roleId,
       },
-      { autoCommit: false } 
+      { autoCommit: false },
     );
 
-
     const userResult = await connection.execute(
-  `SELECT USERID FROM TABUSER WHERE USERNAME = :username`,
-  { username }
-);
+      `SELECT USERID FROM TABUSER WHERE USERNAME = :username`,
+      { username },
+    );
 
-const userId = userResult.rows[0][0];
+    const userId = userResult.rows[0][0];
 
-const companyInserts = companyList.map((comp) =>
-  connection.execute(
-    `INSERT INTO TABUSERGRID (USERID, COMPCODE)
+    const companyInserts = companyList.map((comp) =>
+      connection.execute(
+        `INSERT INTO TABUSERGRID (USERID, COMPCODE)
      VALUES (:userId, :companyId)`,
-    { userId, companyId: comp.value },
-    { autoCommit: false }
-  )
-);
-await Promise.all(companyInserts);
+        { userId, companyId: comp.value },
+        { autoCommit: false },
+      ),
+    );
+    await Promise.all(companyInserts);
 
     await connection.commit();
     await connection.close();
@@ -148,19 +188,19 @@ await Promise.all(companyInserts);
 //       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
 //       await connection.execute(
-//         `UPDATE TABUSER 
-//          SET USERNAME = :username, 
-//              PASSWORD = :password, 
-//              ROLEID = :roleId 
+//         `UPDATE TABUSER
+//          SET USERNAME = :username,
+//              PASSWORD = :password,
+//              ROLEID = :roleId
 //          WHERE USERID = :userId`,
 //         { username, password: hashedPassword, roleId, userId },
 //       );
 //     } else {
 //       // ← No password change
 //       await connection.execute(
-//         `UPDATE TABUSER 
-//          SET USERNAME = :username, 
-//              ROLEID = :roleId 
+//         `UPDATE TABUSER
+//          SET USERNAME = :username,
+//              ROLEID = :roleId
 //          WHERE USERID = :userId`,
 //         { username, roleId, userId },
 //       );
@@ -179,7 +219,6 @@ await Promise.all(companyInserts);
 //     });
 //   }
 // }
-
 
 export async function update(req, res) {
   const connection = await getConnection();
@@ -203,6 +242,52 @@ export async function update(req, res) {
     if (userNameResult.rows[0][0] > 0) {
       await connection.close();
       return res.json({ statusCode: 1, message: "Username Already Exists" });
+    }
+
+    // ==========================
+    // BRTF USER LIMIT CHECK
+    // ==========================
+
+    const selectedCompanyIds = companyList?.map((c) => Number(c.value)) || [];
+
+    if (selectedCompanyIds.length > 0) {
+      const brtfResult = await connection.execute(
+        `
+    SELECT GTCOMPMASTID
+    FROM GTCOMPMAST
+    WHERE COMPCODE = 'BRTF'
+    `,
+      );
+
+      if (brtfResult.rows.length > 0) {
+        const brtfCompanyId = brtfResult.rows[0][0];
+
+        // Is BRTF being assigned to this user?
+        if (selectedCompanyIds.includes(brtfCompanyId)) {
+          const countResult = await connection.execute(
+            `
+        SELECT COUNT(DISTINCT USERID)
+        FROM TABUSERGRID
+        WHERE COMPCODE = :brtfCompanyId
+          AND USERID <> :userId
+        `,
+            {
+              brtfCompanyId,
+              userId,
+            },
+          );
+
+          const userCount = countResult.rows[0][0];
+
+          if (userCount >= 10) {
+            await connection.close();
+            return res.json({
+              statusCode: 1,
+              message: "Cannot assign BRTF. Maximum users limit reached.",
+            });
+          }
+        }
+      }
     }
 
     // If password provided, hash it; otherwise keep existing
@@ -244,7 +329,7 @@ export async function update(req, res) {
         await connection.execute(
           `INSERT INTO TABUSERGRID (USERID, COMPCODE)
            VALUES (:userId, :companyId)`,
-          { userId, companyId : companyId.value },
+          { userId, companyId: companyId.value },
           { autoCommit: false },
         );
       }
@@ -268,7 +353,7 @@ export async function update(req, res) {
 // export async function get(req, res) {
 //   const connection = await getConnection(res);
 //   try {
-//     const sql = `  
+//     const sql = `
 // select A.USERNAME,B.ROLENAME,A.ROLEID,A.USERID from  TABUSER A
 //  left join roletab B ON A.ROLEID = B.ROLEID`;
 
@@ -319,8 +404,6 @@ export async function get(req, res) {
       return obj;
     });
 
-
-
     // Group COMPANYID array under each user
     const usersMap = {};
 
@@ -338,7 +421,10 @@ export async function get(req, res) {
       }
 
       if (row.COMPCODE) {
-        usersMap[uid].companyList.push({  label: row.COMPANYCODE, value: row.COMPCODE }); 
+        usersMap[uid].companyList.push({
+          label: row.COMPANYCODE,
+          value: row.COMPCODE,
+        });
       }
     }
 
@@ -379,7 +465,8 @@ export async function getUserDet(req, res) {
 
   try {
     const { gtCompMastId } = req.query;
-    const result = await connection.execute(`
+    const result = await connection.execute(
+      `
       SELECT spuserlog.userName, spuserlog.gtCompMastId, gtCompMast.compname, pcategory
       FROM spuserlog
       JOIN gtCompMast ON gtCompMast.gtCompMastId = spuserlog.gtCompMastId
@@ -389,15 +476,20 @@ export async function getUserDet(req, res) {
         JOIN gtpartycatmast ON gtcompprodet.partycat = gtpartycatmast.gtpartycatmastid
       ) partyCat ON gtCompMast.gtCompMastId = partyCat.gtCompMastId
       WHERE gtCompMast.gtCompMastId = :gtCompMastId
-    `, { gtCompMastId });
-    const resp = result.rows.map(user => ({
-      userName: user[0], gtCompMastId: user[1], compName: user[2], pCategory: user[3]
+    `,
+      { gtCompMastId },
+    );
+    const resp = result.rows.map((user) => ({
+      userName: user[0],
+      gtCompMastId: user[1],
+      compName: user[2],
+      pCategory: user[3],
     }));
 
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
-    console.error('Error retrieving data:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   } finally {
     await connection.close();
   }
@@ -499,8 +591,7 @@ export async function createRole(req, res) {
 }
 
 export async function getRoles(req, res) {
-
-  console.log("Fetching roles with permissions...",);
+  console.log("Fetching roles with permissions...");
 
   const connection = await getConnection();
   try {
@@ -618,13 +709,8 @@ export async function updateRole(req, res) {
 export async function getOneUser(req, res) {
   const connection = await getConnection(res);
   try {
-    const  userId = req.params.id;
+    const userId = req.params.id;
     console.log(userId, "userIdddd");
-
-
-
-
-
 
     const result = await connection.execute(
       `
@@ -663,7 +749,11 @@ export async function getOneUser(req, res) {
       ROLENAME: rows[0].ROLENAME,
       COMPANIES: rows
         .filter((row) => row.COMPCODE !== null)
-        .map((row) => ({ COMPCODE: row.COMPCODE ,COMPNAME : row.COMPNAME , GTCOMPMASTID : row.COMPCODE })),
+        .map((row) => ({
+          COMPCODE: row.COMPCODE,
+          COMPNAME: row.COMPNAME,
+          GTCOMPMASTID: row.COMPCODE,
+        })),
     };
 
     console.log(user, "resp");

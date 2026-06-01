@@ -5,10 +5,16 @@ import oracledb from "oracledb";
 export async function getLotNo(req, res) {
   let connection;
 
+  const { companyId } = req.query;
+
+  console.log(companyId, "companyIdcheckingreceived");
+
   try {
     connection = await getConnection();
     const sql = `SELECT C.AllocationID,C.LotID,L.DOCID FROM CheckerWorkingDetails C
-JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LotID`;
+JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LotID
+ WHERE C.COMPANYID = ${companyId}
+`;
     console.log(sql, "sql for getLotNo");
     const result = await connection.execute(sql);
 
@@ -23,6 +29,43 @@ JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LotID`;
     return res.json({ statusCode: 0, data: resp });
   } catch (err) {
     console.error("Error retrieving data:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
+  }
+}
+
+export async function getSavedLots(req, res) {
+  let connection;
+  const { companyId } = req.query;
+  try {
+    connection = await getConnection();
+    const sql = `
+      SELECT DISTINCT LOTID, DOCID FROM (
+        SELECT
+          C.LOTID   AS LOTID,
+          R.DOCID   AS DOCID
+        FROM CheckerWorkingDetails C
+        JOIN GTFABRICRECEIPT R ON R.GTFABRICRECEIPTID = C.LOTID
+         WHERE C.COMPANYID = ${companyId}
+
+        UNION
+
+       
+        SELECT
+          P.LOTNO   AS LOTID,
+          R.DOCID   AS DOCID
+        FROM Gtpiecesdefect P
+        JOIN GTFABRICRECEIPT R ON R.GTFABRICRECEIPTID = P.LOTNO
+        WHERE P.COMPCODE = ${companyId}
+      )
+      ORDER BY DOCID`;
+    const result = await connection.execute(sql, [], {
+      outFormat: oracledb.OUT_FORMAT_OBJECT,
+    });
+    return res.json({ statusCode: 0, data: result.rows });
+  } catch (err) {
+    console.error("Error retrieving saved lots:", err);
     res.status(500).json({ error: "Internal Server Error" });
   } finally {
     await connection.close();
@@ -117,40 +160,7 @@ AND gsd.SNO = ${pcNo}`;
 //     await connection.close();
 //   }
 // }
-export async function getSavedLots(req, res) {
-  let connection;
-  try {
-    connection = await getConnection();
-    const sql = `
-      SELECT DISTINCT LOTID, DOCID FROM (
-        -- ← active lots from CheckerWorkingDetails
-        SELECT
-          C.LOTID   AS LOTID,
-          R.DOCID   AS DOCID
-        FROM CheckerWorkingDetails C
-        JOIN GTFABRICRECEIPT R ON R.GTFABRICRECEIPTID = C.LOTID
 
-        UNION
-
-        -- ← completed lots from defect tables
-        SELECT
-          P.LOTNO   AS LOTID,
-          R.DOCID   AS DOCID
-        FROM Gtpiecesdefect P
-        JOIN GTFABRICRECEIPT R ON R.GTFABRICRECEIPTID = P.LOTNO
-      )
-      ORDER BY DOCID`;
-    const result = await connection.execute(sql, [], {
-      outFormat: oracledb.OUT_FORMAT_OBJECT,
-    });
-    return res.json({ statusCode: 0, data: result.rows });
-  } catch (err) {
-    console.error("Error retrieving saved lots:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  } finally {
-    await connection.close();
-  }
-}
 // export async function getSavedPieces(req, res) {
 //   let connection;
 //   const { lotId } = req.params;
@@ -187,6 +197,7 @@ export async function getSavedLots(req, res) {
 //     await connection.close();
 //   }
 // }
+
 export async function getSavedPieces(req, res) {
   let connection;
   const { lotId } = req.params;
@@ -202,7 +213,7 @@ export async function getSavedPieces(req, res) {
              LOOMNO, WEAVERPCSNO, TABLENO, CHECKERNAME, CHECKERID,
              CHECKINGSECTIONID, SECTIONNAME
       FROM (
-        -- ← active pieces not yet saved to defect tables
+       
         SELECT
           C.PIECEID        AS PIECEID,
           C.PIECENO        AS PIECENO,
@@ -232,7 +243,7 @@ export async function getSavedPieces(req, res) {
 
         UNION
 
-        -- ← completed pieces already saved to defect tables
+        
         SELECT DISTINCT
           T.PCSID            AS PIECEID,
           T.BASEPCSNO        AS PIECENO,
@@ -479,7 +490,7 @@ export async function updateDefectEntry(req, res) {
       );
 
       // ✅ Insert into Gtdefectdettab — one row per piece (original or split)
-      await connection.execute(
+      const subDetResult = await connection.execute(
         `INSERT INTO Gtdefectdettab (
           GTDEFECTDETTABID,
           GTPIECESDEFECTID,
@@ -502,7 +513,7 @@ export async function updateDefectEntry(req, res) {
           OGPCSNO,
           ISCOMPLETED
         ) VALUES (
-          :primaryKey,
+          defectsubgridseq.NEXTVAL,
           :piecesDefectId,
           :piecesDefectDetId,
           :basePcsNo,
@@ -522,9 +533,11 @@ export async function updateDefectEntry(req, res) {
           :setNo,
           :originalPieceNo,
           :isCompleted
-        )`,
+        )
+          RETURNING GTDEFECTDETTABID INTO :subDetId
+        `,
         {
-          primaryKey,
+          // primaryKey,
           piecesDefectId: GTPIECESDEFECTID,
           piecesDefectDetId: GTPIECESDEFECTDETID,
           basePcsNo: Number(pieceNo),
@@ -544,9 +557,14 @@ export async function updateDefectEntry(req, res) {
           setNo: setNo,
           originalPieceNo: originalPieceNo,
           isCompleted: isCompleted ? "YES" : "NO",
+          subDetId: {
+            dir: oracledb.BIND_OUT,
+            type: oracledb.NUMBER,
+          },
         },
         { autoCommit: false },
       );
+      const subDetId = subDetResult.outBinds.subDetId[0];
 
       // ✅ Insert defects for this piece into GTPCSDEFDET
       const seen = new Set();
@@ -579,9 +597,9 @@ export async function updateDefectEntry(req, res) {
             SPLITPCSNO1,
             BASEPCSNO1
           ) VALUES (
-            :childId,
+            defectsubsubgridseq.NEXTVAL,
             :piecesDefectId,
-            :defectDetTabId,
+            :subDetId,
             :meter,
             :defectId,
             :times,
@@ -591,9 +609,10 @@ export async function updateDefectEntry(req, res) {
             :pieceNo
           )`,
           {
-            childId: childPrimaryKey,
+            // childId: childPrimaryKey,
             piecesDefectId: GTPIECESDEFECTID,
-            defectDetTabId: primaryKey, // links to the parent tab row for this piece
+            // defectDetTabId: primaryKey,
+            subDetId,
             meter: Number(defect.meter),
             defectId: Number(defect.defectId),
             times: Number(defect.times),
@@ -722,7 +741,7 @@ export async function getExistingDefectEntry(req, res) {
         endMeter: tab.ENDMTR,
         totalPointsSum: tab.TOTPOINTSTAB,
         tabApproval: tab.TABAPPROVAL,
-        isCompleted : tab.ISCOMPLETED === "YES",
+        isCompleted: tab.ISCOMPLETED === "YES",
         defects: defectResult.rows.map((d) => ({
           meter: d.MTRAT,
           defectId: d.DEFECTNAME1,
