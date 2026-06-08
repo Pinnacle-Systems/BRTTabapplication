@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { MdDelete } from "react-icons/md";
 
-import { useGetBarCodeDataQuery } from "../../redux/services/PackingSlip.js";
+import {
+  useGetBarCodeDataQuery,
+  useGetCurrentFinyearQuery,
+} from "../../redux/services/PackingSlip.js";
 import { useLanguage } from "../../Context/LanguageContext";
+import { getCommonParams } from "../../Utils/helper";
 
 // ─── Translations ─────────────────────────────────────────────────────────────
 const translations = {
@@ -114,33 +118,33 @@ const translations = {
 const PackingSlip = () => {
   const { lang } = useLanguage();
   const t = translations[lang] ?? translations["en"];
+  const { companyId, companyName } = getCommonParams();
+  const [finyear, SetFinyear] = useState("");
+  const [docId, setDocId] = useState("");
+  const [date, setDate] = useState("");
+  const [docTime, setDocTime] = useState("");
+  const [clothId, setClothId] = useState("");
+  const [clothName, setClothName] = useState("");
+  const [clothGrade, setClothGrade] = useState("");
   const [packingType, setPackingType] = useState("BALE");
-  const [baleGroup, setBaleGroup] = useState("AL");
-  const [baleNo1, setBaleNo1] = useState("");
-  const [baleNo3, setBaleNo3] = useState("");
+  const [loomId, setLoomId] = useState("");
+  const [prefix, setPrefix] = useState("");
+  const [suffix, setSuffix] = useState("");
+  const [slipNo, setSlipNo] = useState("");
+  const [foldind, setFolding] = useState("");
+
   const [barCode, setBarCode] = useState("");
   const [barCodeInput, setBarCodeInput] = useState(""); // typed value
 
   const [pieceRows, setPieceRows] = useState([]); // table rows
 
-  const [totalPcs, setTotalPcs] = useState("");
-  const [totalMeters, setTotalMeters] = useState("");
-
-  console.log(packingType, "packingType");
-  console.log(baleGroup, "baleGroup");
-
-  const baleGroups = [
-    { id: "AL", label: "AL", color: "bg-[#004a99]" },
-    { id: "ARJ", label: "ARJ", color: "bg-[#8dc63f]" },
-    { id: "PL", label: "PL", color: "bg-[#00aeef]" },
-    { id: "SU", label: "SU", color: "bg-[#d14124]" },
-    { id: "SUL", label: "SUL", color: "bg-[#e3853d]" },
-  ];
-
   const { data: barCodeData } = useGetBarCodeDataQuery(
     { barCode },
     { skip: !barCode },
   );
+  const { data: currentFinyear } = useGetCurrentFinyearQuery();
+  console.log(currentFinyear, "currentFinyear");
+
   useEffect(() => {
     if (!barCodeData?.data?.length) return;
     setPieceRows((prev) => {
@@ -153,9 +157,7 @@ const PackingSlip = () => {
     setBarCode(""); // reset so next scan triggers fresh query
     setBarCodeInput(""); // clear input
   }, [barCodeData]);
-  const handleBaleGroupSelect = (group) => {
-    setBaleGroup(group);
-  };
+
   const handleAddPcs = () => {
     if (barCodeInput.trim()) setBarCode(barCodeInput.trim());
   };
@@ -165,13 +167,10 @@ const PackingSlip = () => {
   return (
     <div className="h-full md:h-[75vh] pt-0">
       {/* Header */}
-      <div className="flex flex-wrap bg-white justify-between items-center py-2 px-2 rounded-lg gap-2">
+      <div className="flex flex-wrap bg-white justify-between items-center py-1.5 px-2 rounded-lg gap-2">
         <h1 className="text-lg md:text-xl font-bold">{t.title}</h1>
         <div className="flex gap-2">
-          {/* <button className="bg-red-600 text-white py-1.5 rounded-lg hover:bg-red-700 transition px-4 text-sm font-semibold whitespace-nowrap">
-            {t.back}
-          </button> */}
-          <button className="bg-blue-600 text-white py-1.5 rounded-lg hover:bg-blue-700 transition px-4 text-sm font-semibold whitespace-nowrap">
+          <button className="bg-blue-600 text-white py-1 rounded-lg hover:bg-blue-700 transition px-4 text-sm font-semibold whitespace-nowrap">
             {t.save}
           </button>
         </div>
@@ -210,59 +209,10 @@ const PackingSlip = () => {
                 ))}
               </div>
             </div>
-
-            <div className="sm:col-span-1 lg:col-span-7">
-              <label className="block font-medium mb-2">{t.selectBaleNo}</label>
-              <div className="flex flex-wrap gap-2">
-                {baleGroups.map((group) => (
-                  <button
-                    key={group.id}
-                    onClick={() => handleBaleGroupSelect(group.id)}
-                    className={`${group.color} text-white py-2 px-3 rounded-md font-bold text-xs shadow-sm hover:opacity-90 transition-opacity uppercase flex-1 sm:flex-none min-w-[60px] ${baleGroup === group.id ? "ring-2 ring-offset-2 ring-blue-500" : ""}`}
-                  >
-                    {group.label}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2">
-          {/* Bale Details Section */}
-          <div className="mb-3 col-span-1 border border-gray-200 rounded-lg p-3">
-            <h2 className="text-lg font-semibold mb-3 border-b pb-1">
-              {t.baleDetails}
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-10 gap-4 text-sm">
-              <div className="md:col-span-2 xl:col-span-4">
-                <label className="block font-medium mb-1">{t.baleNo}</label>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={baleNo1}
-                    onChange={(e) => setBaleNo1(e.target.value)}
-                    className="w-32 border rounded-lg px-2 py-1.5 text-right focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    value={baleGroup}
-                    onChange={(e) => setBaleGroup(e.target.value)}
-                    readOnly
-                    className="w-20 border bg-gray-100 rounded-lg px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    value={baleNo3}
-                    onChange={(e) => setBaleNo3(e.target.value)}
-                    className="w-32 border rounded-lg px-2 py-1.5 text-right focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* BarCode Selection Section */}
 
           <div className="mb-3 col-span-1 border border-gray-200 rounded-lg p-3">
@@ -380,7 +330,7 @@ const PackingSlip = () => {
                             : "-"}
                         </td>
                         <td className=" py-2 border-r text-left pl-1">
-                          {row.CLOTHID}
+                          {row.CLOTHNAME}
                         </td>
                         <td className=" py-2 border-r text-right pr-1">
                           {row.FOLD_PERCENTAGE}%

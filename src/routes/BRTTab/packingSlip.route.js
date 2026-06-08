@@ -1,13 +1,11 @@
-import { Router } from 'express';
+import { Router } from "express";
 const router = Router();
-import { getBarCodeData,get,getLotDetails,update ,getOne} from "../../services/BRTTabService/packingSlip.route.js";
+import {
+  getBarCodeData,
+  getCurrentFinyear,
+} from "../../services/BRTTabService/packingSlip.service.js";
 
-router.get('/:barCode/getBarCodeDetails', getBarCodeData);
-router.get('/:selectedLotId/lotReceiptDetails', getLotDetails);
-router.put('/:selectedLotId/:selectedGridId', update);
-router.get('/', get);
-router.get('/:selectedLotId/:selectedGridId',getOne);
-
-
+router.get("/:barCode/getBarCodeDetails", getBarCodeData);
+router.get("/getCurrentFinyear", getCurrentFinyear);
 
 export default router;

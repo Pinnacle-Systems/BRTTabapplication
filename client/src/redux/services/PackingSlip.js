@@ -10,58 +10,6 @@ const packingSlipApi = createApi({
   }),
   tagTypes: ["packingSlip"],
   endpoints: (builder) => ({
-    getLotPieceReceipt: builder.query({
-      query: (arg) => {
-        const { params, searchParams } = arg || {}; // 👈 FIX HERE
-
-        if (searchParams) {
-          return {
-            url: PACKINGSLIP + "/search/" + searchParams,
-            method: "GET",
-            params,
-          };
-        }
-
-        return {
-          url: `${PACKINGSLIP}/getLot`,
-          method: "GET",
-          params,
-        };
-      },
-      providesTags: ["packingSlip"],
-    }),
-    getLotPieceReceiptDetails: builder.query({
-      query: (selectedLotId) => ({
-        url: `${PACKINGSLIP}/${selectedLotId}/lotReceiptDetails`,
-        method: "GET",
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-        },
-      }),
-      providesTags: ["packingSlip"],
-    }),
-
-    getPieceReceipt: builder.query({
-      query: (arg) => {
-        const { params, searchParams } = arg || {}; // 👈 FIX HERE
-
-        if (searchParams) {
-          return {
-            url: PACKINGSLIP + "/search/" + searchParams,
-            method: "GET",
-            params,
-          };
-        }
-
-        return {
-          url: PACKINGSLIP,
-          method: "GET",
-          params,
-        };
-      },
-      providesTags: ["packingSlip"],
-    }),
-
     getBarCodeData: builder.query({
       query: ({ barCode }) => {
         return {
@@ -74,47 +22,22 @@ const packingSlipApi = createApi({
       },
       providesTags: ["packingSlip"],
     }),
-   
-    addPieceReceipt: builder.mutation({
-      query: (payload) => ({
-        url: PACKINGSLIP,
-        method: "POST",
-        body: payload,
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-        },
-      }),
-      invalidatesTags: ["packingSlip"],
-    }),
-    updatePieceReceipt: builder.mutation({
-      query: (payload) => {
-        const { selectedLotId, selectedGridId, ...body } = payload;
+    getCurrentFinyear: builder.query({
+      query: () => {
         return {
-          url: `${PACKINGSLIP}/${selectedLotId}/${selectedGridId}`,
-          method: "PUT",
-          body,
+          url: `${PACKINGSLIP}/getCurrentFinyear`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
         };
       },
-      invalidatesTags: ["packingSlip"],
-    }),
-    deletePieceReceipt: builder.mutation({
-      query: (id) => ({
-        url: `${PACKINGSLIP}/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["packingSlip"],
+      providesTags: ["packingSlip"],
     }),
   }),
 });
 
-export const {
-  useGetLotPieceReceiptQuery,
-  useGetLotPieceReceiptDetailsQuery,
-  useGetPieceReceiptQuery,
-  useGetBarCodeDataQuery,
-  useAddPieceReceiptMutation,
-  useUpdatePieceReceiptMutation,
-  useDeletePieceReceiptMutation,
-} = packingSlipApi;
+export const { useGetBarCodeDataQuery, useGetCurrentFinyearQuery } =
+  packingSlipApi;
 
 export default packingSlipApi;
