@@ -34,10 +34,38 @@ const packingSlipApi = createApi({
       },
       providesTags: ["packingSlip"],
     }),
+    getClothData: builder.query({
+      query: ({ companyName }) => {
+        return {
+          url: `${PACKINGSLIP}/${companyName}/getCloth`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["packingSlip"],
+    }),
+    getGradeData: builder.query({
+      query: ({ companyName, clothName }) => {
+        return {
+          url: `${PACKINGSLIP}/${companyName}/${clothName}/getGrade`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["packingSlip"],
+    }),
   }),
 });
 
-export const { useGetBarCodeDataQuery, useGetCurrentFinyearQuery } =
-  packingSlipApi;
+export const {
+  useGetBarCodeDataQuery,
+  useGetCurrentFinyearQuery,
+  useGetClothDataQuery,
+  useGetGradeDataQuery,
+} = packingSlipApi;
 
 export default packingSlipApi;

@@ -106,3 +106,73 @@ WHERE CURRENTFINYR = 'T'`;
     await connection.close();
   }
 }
+
+export async function getCloth(req, res) {
+  let connection;
+
+  try {
+    const { companyName } = req.params;
+    connection = await getConnection();
+
+    const sql = `
+  SELECT B.GTCLOTHCREATIONID,B.CLOTHNAME,C.LOOMTYNAME,B.PREFIX,100 FOLDING
+FROM GTFABRICSTOCKMAST A
+JOIN GTCLOTHCREATION B ON B.CLOTHNAME = A.CLOTHNAME
+JOIN GTLOOMMAST C ON C.GTLOOMMASTID = B.LOOMTYP
+WHERE A.COMPCODE='${companyName}' AND A.STOCKCONTROL='SPLIT PIECE NO STOCK' AND A.TTYPE='UNPACKING PCS'
+GROUP BY B.GTCLOTHCREATIONID,B.CLOTHNAME,C.LOOMTYNAME,B.PREFIX
+HAVING (SUM(A.STOCKMTRS) >0 )`;
+
+    console.log(sql, "sql for getCloth");
+    const result = await connection.execute(sql);
+
+    const resp = result.rows.map((row) => {
+      let obj = {};
+      result.metaData.forEach(({ name }, idx) => {
+        obj[name] = row[idx];
+      });
+      return obj;
+    });
+
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
+  }
+}
+
+export async function getGrade(req, res) {
+  let connection;
+
+  try {
+    const { companyName, clothName } = req.params;
+    connection = await getConnection();
+
+    const sql = `
+ SELECT A.GRADE GRADEE
+FROM GTFABRICSTOCKMAST A
+WHERE A.COMPCODE='${companyName}' AND A.STOCKCONTROL='SPLIT PIECE NO STOCK' AND A.TTYPE='UNPACKING PCS' AND  A.CLOTHNAME='${clothName}'
+GROUP BY A.GRADE
+HAVING (SUM(A.STOCKMTRS) >0 )`;
+
+    console.log(sql, "sql for getGrade");
+    const result = await connection.execute(sql);
+
+    const resp = result.rows.map((row) => {
+      let obj = {};
+      result.metaData.forEach(({ name }, idx) => {
+        obj[name] = row[idx];
+      });
+      return obj;
+    });
+
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
+  }
+}

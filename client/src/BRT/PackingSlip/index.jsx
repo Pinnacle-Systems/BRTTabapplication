@@ -4,9 +4,12 @@ import { MdDelete } from "react-icons/md";
 import {
   useGetBarCodeDataQuery,
   useGetCurrentFinyearQuery,
+  useGetClothDataQuery,
+  useGetGradeDataQuery,
 } from "../../redux/services/PackingSlip.js";
 import { useLanguage } from "../../Context/LanguageContext";
 import { getCommonParams } from "../../Utils/helper";
+import moment from "moment";
 
 // ─── Translations ─────────────────────────────────────────────────────────────
 const translations = {
@@ -120,9 +123,10 @@ const PackingSlip = () => {
   const t = translations[lang] ?? translations["en"];
   const { companyId, companyName } = getCommonParams();
   const [finyear, SetFinyear] = useState("");
+  const [finyearId, SetFinyearId] = useState("");
   const [docId, setDocId] = useState("");
-  const [date, setDate] = useState("");
-  const [docTime, setDocTime] = useState("");
+  const [date, setDate] = useState(moment().format("DD-MM-YYYY"));
+  const [docTime, setDocTime] = useState(moment().format("HH:mm:ss"));
   const [clothId, setClothId] = useState("");
   const [clothName, setClothName] = useState("");
   const [clothGrade, setClothGrade] = useState("");
@@ -143,7 +147,64 @@ const PackingSlip = () => {
     { skip: !barCode },
   );
   const { data: currentFinyear } = useGetCurrentFinyearQuery();
-  console.log(currentFinyear, "currentFinyear");
+  console.log(currentFinyear, docTime, "currentFinyear");
+
+  const { data: clothData } = useGetClothDataQuery(
+    { companyName },
+    { skip: !companyName },
+  );
+  console.log(clothData, "clothData");
+
+  const clothOptions = clothData?.data?.map?.((va) => {
+    return {
+      label: va?.CLOTHNAME,
+      value: va?.GTCLOTHCREATIONID,
+      prefix: va?.PREFIX,
+      folding: va?.FOLDING,
+      LOOMNAME: va?.LOOMTYNAME,
+    };
+  });
+
+  const handleClothChange = (value) => {
+    console.log(value, "value");
+
+    const selectedOption = clothOptions?.find(
+      (opt) => String(opt.value) === String(value),
+    );
+    console.log(selectedOption, "selectedOption");
+
+    if (selectedOption) {
+      setClothId(value);
+      setClothName(selectedOption.label);
+      setPrefix(selectedOption.prefix);
+      setFolding(selectedOption.folding);
+      setLoomId(selectedOption.LOOMNAME);
+    }
+  };
+  console.log(clothName, "clothName");
+
+  console.log(clothOptions, "clothOptions");
+
+  const { data: gradeData } = useGetGradeDataQuery(
+    { companyName, clothName },
+    { skip: !companyName || !clothName },
+  );
+  console.log(gradeData, "gradeData");
+
+  useEffect(() => {
+    if (currentFinyear) {
+      const mappedData = currentFinyear?.data?.map?.((va) => {
+        return {
+          finYearName: va?.FINYR,
+          finYearId: va?.GTFINANCIALYEARID,
+        };
+      });
+      console.log(mappedData, "mappedData");
+
+      SetFinyear(mappedData?.[0].finYearName);
+      SetFinyearId(mappedData?.[0].finYearId);
+    }
+  }, [currentFinyear]);
 
   useEffect(() => {
     if (!barCodeData?.data?.length) return;
@@ -158,8 +219,9 @@ const PackingSlip = () => {
     setBarCodeInput(""); // clear input
   }, [barCodeData]);
 
-  const handleAddPcs = () => {
-    if (barCodeInput.trim()) setBarCode(barCodeInput.trim());
+  const handleAddPcs = (value) => {
+    const val = typeof value === "string" ? value : barCodeInput;
+    if (val.trim()) setBarCode(val.trim());
   };
   const handleDeleteRow = (gridId) => {
     setPieceRows((prev) => prev.filter((r) => r.GRIDID !== gridId));
@@ -179,35 +241,166 @@ const PackingSlip = () => {
       <div className="h-auto md:h-[70vh] overflow-y-auto bg-white shadow-lg rounded-xl mt-2 p-3 md:p-3">
         {/* Selection Section */}
         <div className="mb-3 border border-gray-200 rounded-lg p-3">
-          <h2 className="text-lg font-semibold mb- border-b pb-1">
-            {t.selection}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-10 gap-6 text-sm mt-2">
-            <div className="sm:col-span-1 lg:col-span-3">
-              <label className="block font-medium mb-2">
-                {t.selectPackingType}
+          {/* Responsive Selection Grid */}
+          <div className="grid grid-cols-6 lg:grid-cols-12 gap-4 mb-3 items-end text-sm">
+            {/* ROW 1 */}
+            {/* Comp Code */}
+            <div className="col-span-2 lg:col-span-2">
+              <label className="block font-medium mb-1">
+                Comp Code<span className="text-red-500">*</span>
               </label>
+              <input
+                type="text"
+                value={companyName}
+                readOnly
+                className="w-full border rounded-lg px-2 py-1.5 text-left bg-gray-100 focus:outline-none"
+              />
+            </div>
+            {/* Fin Year */}
+            <div className="col-span-1 lg:col-span-2">
+              <label className="block font-medium mb-1">
+                Fin Year<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={finyear}
+                disabled
+                className="w-full border rounded-lg px-2 py-1.5 text-left bg-gray-100 focus:outline-none"
+              />
+            </div>
+            {/* Doc Id */}
+            <div className="col-span-2 lg:col-span-4">
+              <label className="block font-medium mb-1">
+                Doc Id<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={docId}
+                readOnly
+                className="w-full border rounded-lg px-2 py-1.5 text-left bg-gray-100 focus:outline-none"
+              />
+            </div>
+            {/* Doc Date */}
+            <div className="col-span-1 lg:col-span-4">
+              <label className="block font-medium mb-1">
+                Doc Date<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={date}
+                readOnly
+                className="w-full border rounded-lg px-2 py-1.5 text-left bg-gray-100 focus:outline-none"
+              />
+            </div>
 
-              <div className="flex flex-wrap gap-4">
-                {["BALE", "ROLL", "BUNDLE"].map((type) => (
-                  <label
-                    key={type}
-                    className="flex items-center space-x-2 cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name="packingType"
-                      value={type}
-                      checked={packingType === type}
-                      onChange={(e) => setPackingType(e.target.value)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      {type}
-                    </span>
-                  </label>
+            {/* ROW 2 */}
+
+            {/* Cloth Name */}
+            <div className="col-span-3 lg:col-span-6">
+              <label className="block font-medium mb-1">
+                Cloth Name<span className="text-red-500">*</span>
+              </label>
+              <select
+                value={clothId}
+                type="number"
+                onChange={(e) => handleClothChange(e.target.value)}
+                className="w-full border border-blue-500 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 h-[34px]"
+              >
+                <option value="">Select Cloth</option>
+                {clothOptions?.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
-              </div>
+              </select>
+            </div>
+            {/* Cloth Grade */}
+            <div className="col-span-2 lg:col-span-4">
+              <label className="block font-medium mb-1">Cloth Grade</label>
+              <select
+                value={clothGrade}
+                onChange={(e) => setClothGrade(e.target.value)}
+                className="w-full border rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 h-[34px]"
+              >
+                <option value=""></option>
+                {/* Options would go here */}
+              </select>
+            </div>
+
+            {/* ROW 3 */}
+            {/* Loom Name */}
+            <div className="col-span-1 lg:col-span-2">
+              <label className="block font-medium mb-1">Loom Name</label>
+              <select
+                value={loomId}
+                onChange={(e) => setLoomId(e.target.value)}
+                className="w-full border rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 h-[34px]"
+              >
+                <option value=""></option>
+              </select>
+            </div>
+            {/* Packing Type */}
+            <div className="col-span-1 lg:col-span-2">
+              <label className="block font-medium mb-1">
+                Packing Type<span className="text-red-500">*</span>
+              </label>
+              <select
+                value={packingType}
+                onChange={(e) => setPackingType(e.target.value)}
+                className="w-full border rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 h-[34px]"
+              >
+                <option value="BALE">BALE</option>
+                <option value="ROLL">ROLL</option>
+                <option value="BUNDLE">BUNDLE</option>
+              </select>
+            </div>
+            {/* Prefix */}
+            <div className="col-span-1 lg:col-span-2">
+              <label className="block font-medium mb-1">
+                Prefix<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={prefix}
+                readOnly
+                className="w-full border rounded-lg px-2 py-1.5 text-left bg-gray-100 focus:outline-none"
+              />
+            </div>
+            {/* Suffix */}
+            <div className="col-span-1 lg:col-span-2">
+              <label className="block font-medium mb-1">
+                Suffix<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={suffix}
+                readOnly
+                className="w-full border rounded-lg px-2 py-1.5 text-left bg-gray-100 focus:outline-none"
+              />
+            </div>
+            {/* Slip No */}
+            <div className="col-span-1 lg:col-span-2">
+              <label className="block font-medium mb-1">
+                Slip No<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={slipNo}
+                readOnly
+                className="w-full border rounded-lg px-2 py-1.5 text-left bg-gray-100 focus:outline-none"
+              />
+            </div>
+            {/* Folding */}
+            <div className="col-span-1 lg:col-span-2">
+              <label className="block font-medium mb-1">
+                Folding<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={foldind}
+                readOnly
+                className="w-full border rounded-lg px-2 py-1.5 text-left bg-gray-100 focus:outline-none"
+              />
             </div>
           </div>
         </div>
@@ -229,11 +422,14 @@ const PackingSlip = () => {
                   <input
                     type="text"
                     className="border rounded-lg text-right px-2 py-1.5  focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    value={barCode}
-                    onChange={(e) => setBarCode(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddPcs()}
+                    value={barCodeInput}
+                    onChange={(e) => setBarCodeInput(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleAddPcs(e.target.value)
+                    }
                   />
                 </div>
+
                 <button
                   onClick={handleAddPcs}
                   className="bg-green-600 px-6 text-white rounded-lg py-2 whitespace-nowrap hover:bg-green-700 transition font-semibold text-xs w-full sm:w-auto"
