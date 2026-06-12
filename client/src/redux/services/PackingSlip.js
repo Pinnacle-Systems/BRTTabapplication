@@ -10,10 +10,22 @@ const packingSlipApi = createApi({
   }),
   tagTypes: ["packingSlip"],
   endpoints: (builder) => ({
-    getBarCodeData: builder.query({
-      query: ({ barCode }) => {
+    getDocId: builder.query({
+      query: ({ companyName, finYear }) => {
         return {
-          url: `${PACKINGSLIP}/${barCode}/getBarCodeDetails`,
+          url: `${PACKINGSLIP}/${companyName}/${finYear}/getDocId`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["packingSlip"],
+    }),
+    getBarCodeData: builder.query({
+      query: ({ companyName, clothName, clothGrade, barCode }) => {
+        return {
+          url: `${PACKINGSLIP}/${companyName}/${clothName}/${clothGrade}/${barCode}/getBarCodeDetails`,
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
@@ -58,14 +70,40 @@ const packingSlipApi = createApi({
       },
       providesTags: ["packingSlip"],
     }),
+    getLoomData: builder.query({
+      query: () => {
+        return {
+          url: `${PACKINGSLIP}/getLoomData`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["packingSlip"],
+    }),
+    addPackingSlip: builder.mutation({
+      query: (payload) => ({
+        url: PACKINGSLIP,
+        method: "POST",
+        body: payload,
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      }),
+      invalidatesTags: ["packingSlip"],
+    }),
   }),
 });
 
 export const {
+  useGetDocIdQuery,
   useGetBarCodeDataQuery,
   useGetCurrentFinyearQuery,
   useGetClothDataQuery,
   useGetGradeDataQuery,
+  useGetLoomDataQuery,
+  useAddPackingSlipMutation,
 } = packingSlipApi;
 
 export default packingSlipApi;

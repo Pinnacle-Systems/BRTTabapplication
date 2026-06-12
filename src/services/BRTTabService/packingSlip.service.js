@@ -1,68 +1,72 @@
 import { getConnection } from "../../constants/db.connection.js";
 
-export async function getBarCodeData(req, res) {
+export async function getDocId(req, res) {
   let connection;
-  const { barCode } = req.params;
-
-  const joinedSql = `
-    SELECT 
-      B.GTPIECESCHKID AS NONGRIDID,
-      A.GTPCSCHKERDETTID AS GRIDID,
-      A.PCSNO,
-      A.LMNO AS LOOMNO,
-      A.RECMTER AS RECEIPTMETER,
-      A.TOTRECMTR AS METERS,
-      A.LOTNO2 AS LOTNO,
-      B.LOTNONON AS LOTID,
-      A.WEGHTT AS WEIGHT,
-      A.BARCODECOLUMWISE AS GRID_BARCODE,
-      A.FOLD AS FOLD_PERCENTAGE,
-      B.BARCODE AS NON_GRIDBAR_CODE,
-       B.CLOTHNAMENON AS CLOTHID,
-      C.CLOTHNAME AS CLOTHNAME,
-      B.WEAVER AS WEAVERID
-    FROM GTPCSCHKERDETT A
-    LEFT JOIN GTPIECESCHK B ON B.GTPIECESCHKID = A.GTPIECESCHKID
-    LEFT JOIN GTCLOTHCREATION C ON C.GTCLOTHCREATIONID = B.CLOTHNAMENON
-  `;
 
   try {
+    const { companyName, finYear } = req.params;
     connection = await getConnection();
-    // Step 1: Check if barCode exists in parent table GTPIECESCHK
-    const parentResult = await connection.execute(
-      `SELECT GTPIECESCHKID FROM GTPIECESCHK WHERE BARCODE = :barCode`,
-      { barCode },
-    );
 
-    const parentRows = parentResult.rows.map((row) => {
+    const sql = `
+ SELECT A.*
+            FROM AUTOGENERATE A 
+            WHERE A.TX_VIEW_ID = 'packing_slip'
+              AND A.PREFIX LIKE '%'||:finYear||'%' 
+              AND A.PREFIX LIKE '%'||:compcode||'%'
+`;
+
+    console.log(sql, "sql for getDocId");
+    const result = await connection.execute(sql, {
+      finYear: finYear,
+      compcode: companyName,
+    });
+
+    const resp = result.rows.map((row) => {
       let obj = {};
-      parentResult.metaData.forEach(({ name }, idx) => {
+      result.metaData.forEach(({ name }, idx) => {
         obj[name] = row[idx];
       });
       return obj;
     });
 
-    let childResult;
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
+  }
+}
 
-    if (parentRows.length > 0) {
-      // ── Found in parent → return ALL child rows for that parent ──
-      const parentId = parentRows[0].GTPIECESCHKID;
+export async function getBarCodeData(req, res) {
+  let connection;
+  const { companyName, clothName, clothGrade, barCode } = req.params;
 
-      childResult = await connection.execute(
-        `${joinedSql} WHERE A.GTPIECESCHKID = :parentId`,
-        { parentId },
-      );
-    } else {
-      // ── Not in parent → search child by BARCODECOLUMWISE ──
-      childResult = await connection.execute(
-        `${joinedSql} WHERE A.BARCODECOLUMWISE = :barCode`,
-        { barCode },
-      );
-    }
+  const joinedSql = `
+   SELECT A.LOTNO,A.SPLITNO,A.GRADE,A.LOOMNO,SUM(A.STOCKMTRS) STOCKMTRS,A.WEIGHTCALS,A.CLOTHNAME, 
+A.FOLDPER,A.ORDERNO,A.SUPPLIER,A.DOCID,A.TTYPE,
+ROUND(SUM(A.AMOUNT) / SUM(A.STOCKMTRS), 2)  AVG_RATE,A.LOCID,A.STOREID,A.ENDCOUNT,A.WEAVERPCSWNO,A.SETNO,A.BARCODE
+FROM GTFABRICSTOCKMAST A 
+WHERE A.COMPCODE=:COMPCODE AND A.STOCKCONTROL='SPLIT PIECE NO STOCK' AND 
+A.CLOTHNAME=:clothname  AND A.GRADE= :clothtype AND A.BARCODE = :BARCODE
+AND A.TTYPE='UNPACKING PCS'
+GROUP BY A.LOTNO,A.SPLITNO,A.GRADE,A.LOOMNO,A.WEIGHTCALS,A.FOLDPER,A.ORDERNO,A.SUPPLIER,A.DOCID,A.TTYPE,A.CLOTHNAME,A.LOCID,A.STOREID,A.ENDCOUNT,
+A.WEAVERPCSWNO,A.SETNO,A.BARCODE
+HAVING SUM (A.STOCKMTRS) >0
+  `;
 
-    const resp = childResult.rows.map((row) => {
+  try {
+    connection = await getConnection();
+    const result = await connection.execute(joinedSql, {
+      COMPCODE: companyName,
+      clothname: clothName,
+      clothtype: clothGrade,
+      BARCODE: barCode,
+    });
+
+    const resp = result.rows.map((row) => {
       let obj = {};
-      childResult.metaData.forEach(({ name }, idx) => {
+      result.metaData.forEach(({ name }, idx) => {
         obj[name] = row[idx];
       });
       return obj;
@@ -73,7 +77,9 @@ export async function getBarCodeData(req, res) {
     console.error("Error retrieving BarCodeData:", err);
     res.status(500).json({ error: "Internal Server Error" });
   } finally {
-    await connection.close();
+    if (connection) {
+      await connection.close();
+    }
   }
 }
 
@@ -174,5 +180,225 @@ HAVING (SUM(A.STOCKMTRS) >0 )`;
     res.status(500).json({ error: "Internal Server Error" });
   } finally {
     await connection.close();
+  }
+}
+
+export async function getLoom(req, res) {
+  let connection;
+
+  try {
+    connection = await getConnection();
+
+    const sql = `
+     SELECT GTLOOMMASTID,LOOMTYNAME,SHORTNAME FROM GTLOOMMAST
+`;
+
+    console.log(sql, "sql for getLoom");
+    const result = await connection.execute(sql);
+
+    const resp = result.rows.map((row) => {
+      let obj = {};
+      result.metaData.forEach(({ name }, idx) => {
+        obj[name] = row[idx];
+      });
+      return obj;
+    });
+
+    return res.json({ statusCode: 0, data: resp });
+  } catch (err) {
+    console.error("Error retrieving data:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    await connection.close();
+  }
+}
+
+export async function addPackingSlip(req, res) {
+  let connection;
+
+  try {
+    const {
+      companyId,
+      companyName,
+      finyearId,
+      finyear,
+      clothId,
+      clothName,
+      clothGrade,
+      packingType,
+      loomId,
+      prefix,
+      suffix,
+      slipNo,
+      docId,
+      docDate,
+      docTime,
+      details,
+      foldind,
+    } = req.body;
+
+    connection = await getConnection();
+
+    // Generate Header ID
+    const seqResult = await connection.execute(
+      `SELECT packingsliptab_seq.NEXTVAL FROM DUAL`,
+    );
+
+    const packingSlipId = seqResult.rows[0][0];
+
+    // Header Insert
+    const headerSql = `
+      INSERT INTO GTPACKINGSLIP
+      (
+        GTPACKINGSLIPID,
+        COMPCODE,
+        FINYEAR,
+        CLOTHNAME,
+        CLOTHTYPE,
+        PACKINGTYPE,
+        LOOMNAME,
+        PREFIX,
+        SUFFIX,
+        SLIPNO,
+        DOCID,
+        DOCDATE,
+        DOCTIME,
+        FOLDING
+      )
+      VALUES
+      (
+        :GTPACKINGSLIPID,
+        :COMPANYID,
+        :FINYEARID,
+        :CLOTHID,
+        :CLOTHGRADE,
+        :PACKINGTYPE,
+        :LOOMID,
+        :PREFIX,
+        :SUFFIX,
+        :SLIPNO,
+        :DOCID,
+        TO_DATE(:DOCDATE,'DD-MM-YYYY'),
+        :DOCTIME,
+        :FOLDING
+      )
+    `;
+    console.log("Before Header");
+
+    await connection.execute(headerSql, {
+      GTPACKINGSLIPID: packingSlipId,
+      COMPANYID: companyId,
+      COMPANYNAME: companyName,
+      FINYEARID: finyearId,
+
+      CLOTHID: clothId,
+      CLOTHNAME: clothName,
+      CLOTHGRADE: clothGrade,
+      PACKINGTYPE: packingType,
+      LOOMID: loomId,
+      PREFIX: prefix,
+      SUFFIX: suffix,
+      SLIPNO: slipNo,
+      DOCID: docId,
+      DOCDATE: docDate,
+      DOCTIME: docTime,
+      FOLDING: foldind,
+    });
+    console.log("After Header");
+    // Detail Insert
+    const detailSql = `
+      INSERT INTO GTPACKINGSLIPDET
+      (
+        GTPACKINGSLIPDETID,
+        GTPACKINGSLIPID,
+        LOTNO,
+        PCSNO,
+        CLOTHTYPE1,
+        LOOMNO,
+        MTR,
+       
+      
+        ORDERNO,
+        WEAVERNAME,
+       
+        LOCANAME,
+        STORENAME,
+      
+        WEAVERPCSNO,
+        SETNO,
+        FOLD
+      )
+      VALUES
+      (
+        packingslipDettab_seq.NEXTVAL,
+        :PACKINGSLIPID,
+        :LOTNO,
+        :SPLITNO,
+        :GRADE,
+        :LOOMNO,
+        :STOCKMTRS,
+  
+        :ORDERNO,
+        :SUPPLIER,
+        
+        :LOCID,
+        :STOREID,
+   
+        :WEAVERPCSWNO,
+        :SETNO,
+        :FOLDPER
+      )
+    `;
+
+    for (const item of details || []) {
+      console.log("Before Detail");
+      await connection.execute(detailSql, {
+        PACKINGSLIPID: packingSlipId,
+        LOTNO: item.LOTNO,
+        SPLITNO: item.SPLITNO,
+        GRADE: item.GRADE,
+        LOOMNO: item.LOOMNO,
+        STOCKMTRS: item.STOCKMTRS,
+
+        ORDERNO: item.ORDERNO,
+        SUPPLIER: item.SUPPLIER,
+
+        LOCID: item.LOCID,
+        STOREID: item.STOREID,
+
+        WEAVERPCSWNO: item.WEAVERPCSWNO,
+        SETNO: item.SETNO,
+        FOLDPER: item.FOLDPER,
+      });
+    }
+    console.log("After Detail");
+    await connection.commit();
+    console.log("After Commit");
+
+    return res.json({
+      statusCode: 0,
+      message: "Packing Slip Saved Successfully",
+      packingSlipId,
+      totalPieces: details?.length || 0,
+    });
+  } catch (err) {
+    console.error("Error inserting Packing Slip:");
+    console.error("message =", err.message);
+    console.error("errorNum =", err.errorNum);
+    console.error("offset =", err.offset);
+    console.error(err);
+
+    if (connection) {
+      await connection.rollback();
+    }
+
+    return res.status(500).json({
+      statusCode: 1,
+      error: err.message,
+    });
+  } finally {
+    if (connection) {
+      await connection.close();
+    }
   }
 }
