@@ -35,7 +35,7 @@ const translations = {
     slipNo: "Slip No",
     folding: "Folding",
     selectCloth: "Select Cloth",
-    selectGrade: "Select Grade",
+    selectGrade: "Select",
     selectLoom: "Select Loom",
     selection: "Selection",
     selectPackingType: "Select Packing Type",
@@ -182,6 +182,7 @@ const PackingSlip = () => {
   const [finyearId, SetFinyearId] = useState("");
   const [docId, setDocId] = useState("");
   const [docNo, setDocNo] = useState("");
+  const [docPrefix, setDocPrefix] = useState("");
   const [date, setDate] = useState(moment().format("DD-MM-YYYY"));
   const [docTime, setDocTime] = useState(moment().format("HH:mm:ss"));
   const [clothId, setClothId] = useState("");
@@ -198,7 +199,7 @@ const PackingSlip = () => {
   const [barCodeInput, setBarCodeInput] = useState(""); // typed value
 
   const [pieceRows, setPieceRows] = useState([]); // table rows
-  const [dispatchInvalidate] = useInvalidateTags();
+  // const [dispatchInvalidate] = useInvalidateTags();
 
   useEffect(() => {
     if (prefix || suffix || docNo) {
@@ -312,7 +313,7 @@ const PackingSlip = () => {
       SetFinyearId(mappedData?.[0].finYearId);
     }
   }, [currentFinyear]);
-  const { data: docData } = useGetDocIdQuery(
+  const { data: docData, refetch: refetchDocId } = useGetDocIdQuery(
     { companyName, finYear: finyear },
     { skip: !companyName || !finyear },
   );
@@ -326,13 +327,14 @@ const PackingSlip = () => {
         docConf.LASTNO != null &&
         docConf.ZEROPADDING != null
       ) {
-        const nextNo = Number(docConf.LASTNO) + 1;
+        const nextNo = Number(docConf.LASTNO);
         const paddedNo = String(nextNo).padStart(
           Number(docConf.ZEROPADDING),
           "0",
         );
         setDocId(`${docConf.PREFIX}${paddedNo}`);
         setDocNo(paddedNo);
+        setDocPrefix(docConf.PREFIX);
       }
     }
   }, [docData]);
@@ -359,25 +361,54 @@ const PackingSlip = () => {
     setPieceRows((prev) => prev.filter((r) => r.BARCODE !== gridId));
   };
 
+  const dispatchInvalidate = useInvalidateTags();
   const [addData] = useAddPackingSlipMutation();
 
   const handleSubmitCustom = async (callback, data) => {
     try {
+      Swal.fire({
+        title: "Saving...",
+        text: "Please wait while your data is being saved.",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       await callback(data).unwrap();
       dispatchInvalidate();
+
       Swal.fire({
-        title: t.alertAddedSuccess,
+        title: t.alertAddedSuccess || "Saved Successfully",
         icon: "success",
         draggable: true,
         timer: 2000,
         showConfirmButton: false,
       });
-    } catch {
+
+      setPieceRows([]);
+      setBarCode("");
+      setBarCodeInput("");
+      setClothId("");
+      setClothName("");
+      setPrefix("");
+      setSuffix("");
+      setFolding("");
+      setLoomId("");
+      setClothGrade("");
+      setSlipNo("");
+      refetchDocId();
+    } catch (error) {
+      const errorMsg =
+        error?.data?.message ||
+        error?.message ||
+        t.alertSubmitError ||
+        "Failed to save data";
       Swal.fire({
         icon: "error",
-        title: t.alertSubmitErrorTitle,
-        text: t.alertSubmitError,
-        timer: 2000,
+        title: t.alertSubmitErrorTitle || "Error",
+        text: errorMsg,
+        timer: 3000,
       });
     }
   };
@@ -399,6 +430,7 @@ const PackingSlip = () => {
       finyearId: parseInt(finyearId),
       finyear,
       docId,
+      docPrefix,
       docDate: date,
       docTime,
       clothId: parseInt(clothId),
@@ -443,7 +475,7 @@ const PackingSlip = () => {
           </summary>
           <div className="p-3">
             {/* Responsive Selection Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-12 gap-2 mb-2 items-end text-xs">
+            <div className="grid grid-cols-6 md:grid-cols-12 gap-2 mb-2 items-end text-xs">
               {/* ROW 1 */}
               {/* Comp Code */}
               <div className="col-span-1 md:col-span-4">
@@ -472,7 +504,7 @@ const PackingSlip = () => {
                 />
               </div>
               {/* Doc Id */}
-              <div className="col-span-2 md:col-span-4">
+              <div className="col-span-3 md:col-span-4">
                 <label className="block font-medium mb-1">
                   {t.docId}
                   <span className="text-red-500">*</span>
@@ -501,7 +533,7 @@ const PackingSlip = () => {
               {/* ROW 2 */}
 
               {/* Cloth Name */}
-              <div className="col-span-1 md:col-span-4">
+              <div className="col-span-3 md:col-span-4">
                 <label className="block font-medium mb-1">
                   {t.clothName}
                   <span className="text-red-500">*</span>
@@ -539,7 +571,7 @@ const PackingSlip = () => {
 
               {/* ROW 3 */}
               {/* Loom Name */}
-              <div className="col-span-1 md:col-span-3">
+              <div className="col-span-2 md:col-span-3">
                 <label className="block font-medium mb-1">{t.loomName}</label>
                 <select
                   value={loomId}
@@ -555,7 +587,7 @@ const PackingSlip = () => {
                 </select>
               </div>
               {/* Packing Type */}
-              <div className="col-span-1 md:col-span-3">
+              <div className="col-span-2 md:col-span-3">
                 <label className="block font-medium mb-1">
                   {t.packingType}
                   <span className="text-red-500">*</span>
@@ -597,7 +629,7 @@ const PackingSlip = () => {
                 />
               </div>
               {/* Slip No */}
-              <div className="col-span-1 md:col-span-3">
+              <div className="col-span-2 md:col-span-3">
                 <label className="block font-medium mb-1">
                   {t.slipNo}
                   <span className="text-red-500">*</span>
@@ -624,7 +656,7 @@ const PackingSlip = () => {
               </div>
 
               {/* Barcode Input */}
-              <div className="col-span-1 md:col-span-4">
+              <div className="col-span-3 md:col-span-4">
                 <label className="block font-medium mb-1 uppercase tracking-wider">
                   {t.barCode}
                 </label>
@@ -646,7 +678,7 @@ const PackingSlip = () => {
               </div>
 
               {/* Add button */}
-              <div className="col-span-1 md:col-span-2 h-[30px]">
+              <div className="col-span-2 md:col-span-2 h-[30px]">
                 <button
                   onClick={handleAddPcs}
                   className="bg-green-600 px-6 text-white rounded-lg whitespace-nowrap hover:bg-green-700 transition font-semibold text-xs w-full h-full"

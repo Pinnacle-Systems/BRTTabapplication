@@ -54,7 +54,9 @@ export async function getPieceAgainstLotNo(req, res) {
     TB.USERNAME AS CHECKERNAME,
 
     GS.LOOMNO,
-    GS.WEAVERPCSNO
+    GS.WEAVERPCSNO,
+    DT.WIDTH,
+    DT.PICK
 
 FROM Gtpiecesdefectdet PD
 

@@ -235,6 +235,7 @@ export async function addPackingSlip(req, res) {
       docTime,
       details,
       foldind,
+      docPrefix,
     } = req.body;
 
     connection = await getConnection();
@@ -246,65 +247,93 @@ export async function addPackingSlip(req, res) {
 
     const packingSlipId = seqResult.rows[0][0];
 
-    // Header Insert
+    const binds = {
+      p1: packingSlipId,
+      p2: companyId,
+      p3: finyearId,
+      p4: clothId,
+      p5: clothGrade,
+      p6: packingType,
+      p7: loomId,
+      p8: prefix,
+      p9: suffix,
+      p10: slipNo,
+      p11: docId,
+      p12: docDate,
+      p13: docTime,
+      p14: foldind,
+      p15: docPrefix,
+    };
+
     const headerSql = `
-      INSERT INTO GTPACKINGSLIP
-      (
-        GTPACKINGSLIPID,
-        COMPCODE,
-        FINYEAR,
-        CLOTHNAME,
-        CLOTHTYPE,
-        PACKINGTYPE,
-        LOOMNAME,
-        PREFIX,
-        SUFFIX,
-        SLIPNO,
-        DOCID,
-        DOCDATE,
-        DOCTIME,
-        FOLDING
-      )
-      VALUES
-      (
-        :GTPACKINGSLIPID,
-        :COMPANYID,
-        :FINYEARID,
-        :CLOTHID,
-        :CLOTHGRADE,
-        :PACKINGTYPE,
-        :LOOMID,
-        :PREFIX,
-        :SUFFIX,
-        :SLIPNO,
-        :DOCID,
-        TO_DATE(:DOCDATE,'DD-MM-YYYY'),
-        :DOCTIME,
-        :FOLDING
-      )
-    `;
-    console.log("Before Header");
+INSERT INTO GTPACKINGSLIP
+(
+  GTPACKINGSLIPID,
+  COMPCODE,
+  FINYEAR,
+  CLOTHNAME,
+  CLOTHTYPE,
+  PACKINGTYPE,
+  LOOMNAME,
+  PREFIX,
+  SUFFIX,
+  SLIPNO,
+  DOCID,
+  DOCDATE,
+  DOCTIME,
+  FOLDING,PRE,  CREATED_ON
 
-    await connection.execute(headerSql, {
-      GTPACKINGSLIPID: packingSlipId,
-      COMPANYID: companyId,
-      COMPANYNAME: companyName,
-      FINYEARID: finyearId,
-
-      CLOTHID: clothId,
-      CLOTHNAME: clothName,
-      CLOTHGRADE: clothGrade,
-      PACKINGTYPE: packingType,
-      LOOMID: loomId,
-      PREFIX: prefix,
-      SUFFIX: suffix,
-      SLIPNO: slipNo,
-      DOCID: docId,
-      DOCDATE: docDate,
-      DOCTIME: docTime,
-      FOLDING: foldind,
+)
+VALUES
+(
+  :p1,
+  :p2,
+  :p3,
+  :p4,
+  :p5,
+  :p6,
+  :p7,
+  :p8,
+  :p9,
+  :p10,
+  :p11,
+  TO_DATE(:p12,'DD-MM-YYYY'),
+  :p13,
+  :p14,:p15,  SYSDATE
+)
+`;
+    console.log({
+      companyId,
+      finyearId,
+      clothId,
+      clothGrade,
+      packingType,
+      loomId,
+      prefix,
+      suffix,
+      slipNo,
+      docId,
+      docDate,
+      docTime,
+      foldind,
+      docPrefix,
     });
+    await connection.execute(headerSql, binds);
+
     console.log("After Header");
+
+    await connection.execute(
+      `
+    UPDATE AUTOGENERATE
+    SET LASTNO = NVL(LASTNO,0) + 1
+    WHERE PREFIX = :PREFIX
+  `,
+      {
+        PREFIX: docPrefix,
+      },
+    );
+
+    console.log("AUTOGENERATE Updated");
     // Detail Insert
     const detailSql = `
       INSERT INTO GTPACKINGSLIPDET
