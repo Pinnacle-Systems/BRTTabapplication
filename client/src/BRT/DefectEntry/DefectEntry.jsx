@@ -87,6 +87,10 @@ const translations = {
     tablePoints: "Points",
     loomNo: "Loom No",
     weaverPieceNo: "Weaver Pcs No",
+    pick: "Pick",
+    width: "Width",
+    pleaseEnterPick: "Please enter Pick",
+    pleaseEnterWidth: "Please enter Width",
   },
   ta: {
     title: "குறைபாடு பதிவு",
@@ -139,6 +143,10 @@ const translations = {
     tablePoints: "புள்ளி",
     loomNo: "லூம் எண்",
     weaverPieceNo: "வீவர் பீஸ் எண்",
+    pick: "பிக்",
+    width: "அகலம்",
+    pleaseEnterPick: "தயவுசெய்து பிக் உள்ளிடவும்",
+    pleaseEnterWidth: "தயவுசெய்து அகலம் உள்ளிடவும்",
   },
   hi: {
     title: "दोष प्रविष्टि",
@@ -190,6 +198,10 @@ const translations = {
     tablePoints: "अंक",
     loomNo: "लूम नं ",
     weaverPieceNo: "वीवर पीसी नं",
+    pick: "पिक",
+    width: "चौड़ाई",
+    pleaseEnterPick: "कृपया पिक दर्ज करें",
+    pleaseEnterWidth: "कृपया चौड़ाई दर्ज करें",
   },
 };
 
@@ -219,6 +231,8 @@ const DefectEntry = () => {
   const isInitialLotMount = useRef(true);
   const [loomNo, setLoomNo] = useState("");
   const [weaverPieceNo, setWeaverPieceNo] = useState("");
+  const [pick, setPick] = useState("");
+  const [width, setWidth] = useState("");
   const storedUserId = Number(localStorage.getItem("userId"));
   const storedRoleId = Number(localStorage.getItem("roleId"));
   const { data: roles } = useGetRolesQuery();
@@ -332,6 +346,8 @@ const DefectEntry = () => {
             sectionName,
             defects: existingDefects,
             originalPieceNo: pieceNo.toString(),
+            width: Number(width),
+            pick: Number(pick),
           },
         ],
       };
@@ -385,6 +401,8 @@ const DefectEntry = () => {
       checkerId,
       checkingSectionId,
       sectionName,
+      pick: p.pick,
+      width: p.width,
       defects: p.defects,
       originalPieceNo:
         p.originalPieceNo || p.subPieceNo || p.pieceNo.toString(),
@@ -392,6 +410,10 @@ const DefectEntry = () => {
 
     setData({ lotDetails });
     setPerPieceForm({});
+    if (existingEntry.data[0]) {
+      setPick(existingEntry.data[0].pick || "");
+      setWidth(existingEntry.data[0].width || "");
+    }
   }, [existingEntry]);
 
   useEffect(() => {
@@ -440,6 +462,8 @@ const DefectEntry = () => {
           sectionName: piece?.SECTIONNAME,
           checkerId: piece?.CHECKERID,
           checkingSectionId: piece?.CHECKINGSECTIONID, //
+          PICK: piece?.PICK,
+          WIDTH: piece?.WIDTH,
         }));
     }
 
@@ -470,6 +494,8 @@ const DefectEntry = () => {
       setPieceNo(work?.pieceNo);
       setMeters(work?.meters);
       setTableNo(tableNumbers);
+      setWidth(work?.WIDTH);
+      setPick(work?.PICK);
     }
   }, [workStatus, isAdmin, isSuppervisor]);
 
@@ -487,6 +513,8 @@ const DefectEntry = () => {
     setCheckingSectionId(work?.checkingSectionId || "");
     setSectionName(work?.sectionName || "");
     if (work?.pieceNo) setPieceNo(work.pieceNo);
+    if (work?.pick) setPick(work.pick);
+    if (work?.width) setWidth(work.width);
   }, [lotDetails]);
 
   useEffect(() => {
@@ -510,6 +538,8 @@ const DefectEntry = () => {
       setIsCompleted(false); // ← reset on lot change
       setLoomNo("");
       setWeaverPieceNo("");
+      setWidth("");
+      setPick("");
     }
   }, [lotId, canEditLot]);
 
@@ -597,6 +627,8 @@ const DefectEntry = () => {
         setNo,
         originalPieceNo: piece.originalPieceNo,
         isCompleted,
+        width,
+        pick,
       };
     });
     return {
@@ -830,6 +862,8 @@ const DefectEntry = () => {
       setData({ lotDetails: [] });
       setPerPieceForm({});
       setExpandedIndex(null);
+      setPick("");
+      setWidth("");
 
       // Refocus lot selector for next entry
       setTimeout(() => {
@@ -866,6 +900,22 @@ const DefectEntry = () => {
       Swal.fire({
         icon: "warning",
         title: t.noPieceData,
+        timer: 2000,
+      });
+      return false;
+    }
+    if (!pick) {
+      Swal.fire({
+        icon: "warning",
+        title: t.pleaseEnterPick,
+        timer: 2000,
+      });
+      return false;
+    }
+    if (!width) {
+      Swal.fire({
+        icon: "warning",
+        title: t.pleaseEnterWidth,
         timer: 2000,
       });
       return false;
@@ -987,6 +1037,8 @@ const DefectEntry = () => {
                       setSectionName(sel?.sectionName || "");
                       setCheckerId(sel?.checkerId || "");
                       setCheckingSectionId(sel?.checkingSectionId || ""); // ← now works, removed the empty call
+                      setPick(sel?.PICK || "");
+                      setWidth(sel?.WIDTH || "");
                     }
                   }}
                   placeholder={t.selectPiece}
@@ -1070,6 +1122,26 @@ const DefectEntry = () => {
                   value={sectionName}
                   readOnly
                   className="w-full border rounded-lg px-2 py-1.5 bg-gray-50"
+                />
+              </div>
+              <div className="col-span-6 sm:col-span-4 lg:col-span-2">
+                <label className="block font-medium mb-1">{t.pick}</label>
+                <input
+                  type="text"
+                  value={pick}
+                  onChange={(e) => setPick(e.target.value)}
+                  disabled={isApproved}
+                  className="w-full border rounded-lg px-2 py-1.5 text-right"
+                />
+              </div>
+              <div className="col-span-6 sm:col-span-4 lg:col-span-2">
+                <label className="block font-medium mb-1">{t.width}</label>
+                <input
+                  type="text"
+                  value={width}
+                  onChange={(e) => setWidth(e.target.value)}
+                  disabled={isApproved}
+                  className="w-full border rounded-lg px-2 py-1.5 text-right"
                 />
               </div>
 

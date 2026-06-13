@@ -1,13 +1,24 @@
-import { Router } from 'express';
+import { Router } from "express";
 const router = Router();
-import { getBarCodeData,get,getLotDetails,update ,getOne} from "../../services/BRTTabService/packingSlip.route.js";
+import {
+  getDocId,
+  getBarCodeData,
+  getCurrentFinyear,
+  getCloth,
+  getGrade,
+  getLoom,
+  addPackingSlip,
+} from "../../services/BRTTabService/packingSlip.service.js";
 
-router.get('/:barCode/getBarCodeDetails', getBarCodeData);
-router.get('/:selectedLotId/lotReceiptDetails', getLotDetails);
-router.put('/:selectedLotId/:selectedGridId', update);
-router.get('/', get);
-router.get('/:selectedLotId/:selectedGridId',getOne);
-
-
+router.get(
+  "/:companyName/:clothName/:clothGrade/:barCode/getBarCodeDetails",
+  getBarCodeData,
+);
+router.get("/:companyName/:finYear/getDocId", getDocId);
+router.get("/getCurrentFinyear", getCurrentFinyear);
+router.get("/:companyName/getCloth", getCloth);
+router.get("/:companyName/:clothName/getGrade", getGrade);
+router.get("/getLoomData", getLoom);
+router.post("/", addPackingSlip);
 
 export default router;

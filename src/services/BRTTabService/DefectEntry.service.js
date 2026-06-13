@@ -467,6 +467,8 @@ export async function updateDefectEntry(req, res) {
         setNo,
         originalPieceNo,
         isCompleted,
+        pick,
+        width,
       } = piece;
 
       // Validate defects for each piece
@@ -511,7 +513,7 @@ export async function updateDefectEntry(req, res) {
           CHECKINGSECTION,
           SETNO,
           OGPCSNO,
-          ISCOMPLETED
+          ISCOMPLETED,PICK,WIDTH
         ) VALUES (
           defectsubgridseq.NEXTVAL,
           :piecesDefectId,
@@ -532,7 +534,9 @@ export async function updateDefectEntry(req, res) {
           :checkingSectionId,
           :setNo,
           :originalPieceNo,
-          :isCompleted
+          :isCompleted,
+          :pick,
+          :width
         )
           RETURNING GTDEFECTDETTABID INTO :subDetId
         `,
@@ -557,6 +561,8 @@ export async function updateDefectEntry(req, res) {
           setNo: setNo,
           originalPieceNo: originalPieceNo,
           isCompleted: isCompleted ? "YES" : "NO",
+          pick: Number(pick),
+          width: Number(width),
           subDetId: {
             dir: oracledb.BIND_OUT,
             type: oracledb.NUMBER,
@@ -668,12 +674,23 @@ export async function updateDefectEntry(req, res) {
       message: `Defect entry updated successfully for ${Lot.length} piece(s)`,
     });
   } catch (error) {
-    await connection.rollback();
+    if (connection) {
+      await connection.rollback();
+    }
+
     console.error("Update Defect Entry Error:", error);
     return res.status(500).json({
       message: "Server error",
       error: error.message,
     });
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error("Error closing connection:", err);
+      }
+    }
   }
 }
 
@@ -696,7 +713,9 @@ export async function getExistingDefectEntry(req, res) {
         T.CHECKER,
         T.ALLACATIONID,
         T.TABAPPROVAL,
-        T.ISCOMPLETED
+        T.ISCOMPLETED,
+        T.PICK,
+        T.WIDTH
        FROM Gtdefectdettab T
        JOIN Gtpiecesdefect P ON P.GTPIECESDEFECTID = T.GTPIECESDEFECTID
        WHERE P.LOTNO = :lotId
@@ -742,6 +761,8 @@ export async function getExistingDefectEntry(req, res) {
         totalPointsSum: tab.TOTPOINTSTAB,
         tabApproval: tab.TABAPPROVAL,
         isCompleted: tab.ISCOMPLETED === "YES",
+        pick: tab.PICK,
+        width: tab.WIDTH,
         defects: defectResult.rows.map((d) => ({
           meter: d.MTRAT,
           defectId: d.DEFECTNAME1,

@@ -10,62 +10,10 @@ const packingSlipApi = createApi({
   }),
   tagTypes: ["packingSlip"],
   endpoints: (builder) => ({
-    getLotPieceReceipt: builder.query({
-      query: (arg) => {
-        const { params, searchParams } = arg || {}; // 👈 FIX HERE
-
-        if (searchParams) {
-          return {
-            url: PACKINGSLIP + "/search/" + searchParams,
-            method: "GET",
-            params,
-          };
-        }
-
+    getDocId: builder.query({
+      query: ({ companyName, finYear }) => {
         return {
-          url: `${PACKINGSLIP}/getLot`,
-          method: "GET",
-          params,
-        };
-      },
-      providesTags: ["packingSlip"],
-    }),
-    getLotPieceReceiptDetails: builder.query({
-      query: (selectedLotId) => ({
-        url: `${PACKINGSLIP}/${selectedLotId}/lotReceiptDetails`,
-        method: "GET",
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-        },
-      }),
-      providesTags: ["packingSlip"],
-    }),
-
-    getPieceReceipt: builder.query({
-      query: (arg) => {
-        const { params, searchParams } = arg || {}; // 👈 FIX HERE
-
-        if (searchParams) {
-          return {
-            url: PACKINGSLIP + "/search/" + searchParams,
-            method: "GET",
-            params,
-          };
-        }
-
-        return {
-          url: PACKINGSLIP,
-          method: "GET",
-          params,
-        };
-      },
-      providesTags: ["packingSlip"],
-    }),
-
-    getBarCodeData: builder.query({
-      query: ({ barCode }) => {
-        return {
-          url: `${PACKINGSLIP}/${barCode}/getBarCodeDetails`,
+          url: `${PACKINGSLIP}/${companyName}/${finYear}/getDocId`,
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
@@ -74,8 +22,67 @@ const packingSlipApi = createApi({
       },
       providesTags: ["packingSlip"],
     }),
-   
-    addPieceReceipt: builder.mutation({
+    getBarCodeData: builder.query({
+      query: ({ companyName, clothName, clothGrade, barCode }) => {
+        return {
+          url: `${PACKINGSLIP}/${companyName}/${clothName}/${clothGrade}/${barCode}/getBarCodeDetails`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["packingSlip"],
+    }),
+    getCurrentFinyear: builder.query({
+      query: () => {
+        return {
+          url: `${PACKINGSLIP}/getCurrentFinyear`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["packingSlip"],
+    }),
+    getClothData: builder.query({
+      query: ({ companyName }) => {
+        return {
+          url: `${PACKINGSLIP}/${companyName}/getCloth`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["packingSlip"],
+    }),
+    getGradeData: builder.query({
+      query: ({ companyName, clothName }) => {
+        return {
+          url: `${PACKINGSLIP}/${companyName}/${clothName}/getGrade`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["packingSlip"],
+    }),
+    getLoomData: builder.query({
+      query: () => {
+        return {
+          url: `${PACKINGSLIP}/getLoomData`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        };
+      },
+      providesTags: ["packingSlip"],
+    }),
+    addPackingSlip: builder.mutation({
       query: (payload) => ({
         url: PACKINGSLIP,
         method: "POST",
@@ -86,35 +93,17 @@ const packingSlipApi = createApi({
       }),
       invalidatesTags: ["packingSlip"],
     }),
-    updatePieceReceipt: builder.mutation({
-      query: (payload) => {
-        const { selectedLotId, selectedGridId, ...body } = payload;
-        return {
-          url: `${PACKINGSLIP}/${selectedLotId}/${selectedGridId}`,
-          method: "PUT",
-          body,
-        };
-      },
-      invalidatesTags: ["packingSlip"],
-    }),
-    deletePieceReceipt: builder.mutation({
-      query: (id) => ({
-        url: `${PACKINGSLIP}/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["packingSlip"],
-    }),
   }),
 });
 
 export const {
-  useGetLotPieceReceiptQuery,
-  useGetLotPieceReceiptDetailsQuery,
-  useGetPieceReceiptQuery,
+  useGetDocIdQuery,
   useGetBarCodeDataQuery,
-  useAddPieceReceiptMutation,
-  useUpdatePieceReceiptMutation,
-  useDeletePieceReceiptMutation,
+  useGetCurrentFinyearQuery,
+  useGetClothDataQuery,
+  useGetGradeDataQuery,
+  useGetLoomDataQuery,
+  useAddPackingSlipMutation,
 } = packingSlipApi;
 
 export default packingSlipApi;

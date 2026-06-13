@@ -55,7 +55,7 @@ const translations = {
     submissionError: "Submission error",
     somethingWentWrong: "Something went wrong!",
     width: "Width",
-    pickup: "Pickup",
+    pickup: "Pick",
   },
   ta: {
     title: "பீஸ் மடிப்பு பதிவு",
@@ -95,7 +95,7 @@ const translations = {
     loomNo: "லூம் எண்",
     weaverPieceNo: "வீவர் பீஸ் எண்",
     width: "அகலம்",
-    pickup: "பிக்கப்",
+    pickup: "பிக்",
   },
   hi: {
     title: "पीस फोल्डिंग प्रविष्टि",
@@ -134,7 +134,7 @@ const translations = {
     loomNo: "लूम नं ",
     weaverPieceNo: "वीवर पीसी नं",
     width: "चौड़ाई",
-    pickup: "पिकअप",
+    pickup: "पिक",
   },
 };
 
@@ -287,6 +287,8 @@ const PieceFoldingForm = ({ onClose }) => {
       setLoomNo(data?.LOOMNO);
       setWeaverPieceNo(data?.WEAVERPCSNO);
       setSetNo(data?.SETNO);
+      SetPickup(data?.PICK);
+      setWidth(data?.WIDTH);
     },
     [selectedPiece],
   );
@@ -706,10 +708,8 @@ const PieceFoldingForm = ({ onClose }) => {
                   <input
                     type="number"
                     value={width} // ← fallback to empty string
-                    onChange={(e) => setWidth(e.target.value)}
-                    onBlur={(e) =>
-                      setWidth(parseFloat(e.target.value).toFixed(3))
-                    }
+                    // onChange={(e) => setWidth(e.target.value)}
+                    disabled
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>
@@ -719,7 +719,8 @@ const PieceFoldingForm = ({ onClose }) => {
                   <input
                     type="number"
                     value={pickup} // ← fallback to empty string
-                    onChange={(e) => SetPickup(e.target.value)}
+                    // onChange={(e) => SetPickup(e.target.value)}
+                    disabled
                     className="w-full border rounded-lg px-1 py-1.5  text-right"
                   />
                 </div>

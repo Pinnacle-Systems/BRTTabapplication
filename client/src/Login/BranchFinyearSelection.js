@@ -12,25 +12,27 @@ function BranchFinYearSelection() {
   const storedUsername = localStorage.getItem("userName");
 
   const userId = secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "userId"
+    sessionStorage.getItem("sessionId") + "userId",
   );
 
-  console.log(userId, "userId")
+  console.log(userId, "userId");
 
-  const { data: branchData, isLoading, error } = useGetBranchDetailQuery({
+  const {
+    data: branchData,
+    isLoading,
+    error,
+  } = useGetBranchDetailQuery({
     params: {
-      userId
-    }
+      userId,
+    },
   });
-
-
 
   const branchOptions = branchData?.data?.map((br) => ({
     ...br,
     COMPNAME: br.COMPCODE,
-  }))
+  }));
 
-  console.log(branchOptions, "branchOptions")
+  console.log(branchOptions, "branchOptions");
 
   const {
     data: singleUserData,
@@ -39,23 +41,38 @@ function BranchFinYearSelection() {
   } = useGetUserMasterByIdQuery(userId, { skip: !userId });
 
   useEffect(() => {
-    if (singleUserData?.data?.ROLENAME == "Admin" || singleUserData?.data?.ROLENAME == "supervisor") {
+    if (
+      singleUserData?.data?.ROLENAME == "Admin" ||
+      singleUserData?.data?.ROLENAME == "supervisor"
+    ) {
       setIsAdmin(true);
     }
+  }, [singleUserData, isSingleFetching, isSingleLoading]);
 
-  }, [singleUserData, isSingleFetching, isSingleLoading])
-
-
-  console.log(singleUserData, "singleUserData")
+  console.log(singleUserData, "singleUserData");
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (branch) {
+      const branches =
+        singleUserData?.data?.ROLENAME === "Admin" ||
+        singleUserData?.data?.ROLENAME === "supervisor"
+          ? branchOptions
+          : singleUserData?.data?.COMPANIES;
+
+      const selectedBranch = branches?.find(
+        (br) => parseInt(br.GTCOMPMASTID) === parseInt(branch),
+      );
+
       secureLocalStorage.setItem("selectedBranch", branch);
-         secureLocalStorage.setItem(
-          sessionStorage.getItem("sessionId") + "companyId",
-          branch,
-        );
+      secureLocalStorage.setItem(
+        sessionStorage.getItem("sessionId") + "companyId",
+        branch,
+      );
+      secureLocalStorage.setItem(
+        sessionStorage.getItem("sessionId") + "companyName",
+        selectedBranch?.COMPNAME || "",
+      );
       navigate("/dashboard");
     }
   };
@@ -65,7 +82,9 @@ function BranchFinYearSelection() {
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading branches and financial years...</p>
+          <p className="mt-4 text-gray-600">
+            Loading branches and financial years...
+          </p>
         </div>
       </div>
     );
@@ -76,15 +95,21 @@ function BranchFinYearSelection() {
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="p-8">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-[##1976D2]">Banu Radha Textiles</h2>
+            <h2 className="text-2xl font-bold text-[##1976D2]">
+              Banu Radha Textiles
+            </h2>
             <div className="h-1 w-16 bg-[##1976D2] mx-auto mt-2 rounded-full"></div>
           </div>
 
-          <h1 className="text-xl font-semibold text-center mb-6">Select Branch</h1>
+          <h1 className="text-xl font-semibold text-center mb-6">
+            Select Branch
+          </h1>
 
           {error && (
             <div className="bg-red-100 border-l-4 border-red-500 p-3 rounded mb-4">
-              <p className="text-red-700 text-sm">{error.message || "Failed to fetch data"}</p>
+              <p className="text-red-700 text-sm">
+                {error.message || "Failed to fetch data"}
+              </p>
             </div>
           )}
 
@@ -98,18 +123,17 @@ function BranchFinYearSelection() {
                 required
               >
                 <option value="">Select Branch</option>
-                {
-                  (singleUserData?.data?.ROLENAME == "Admin" || singleUserData?.data?.ROLENAME == "supervisor" ?
-                    branchOptions : singleUserData?.data?.COMPANIES)?.map((br) => (
-                      <option key={br.COMPCODE} value={br.GTCOMPMASTID}>
-                        {br.COMPNAME}
-                      </option>
-                    ))}
+                {(singleUserData?.data?.ROLENAME == "Admin" ||
+                singleUserData?.data?.ROLENAME == "supervisor"
+                  ? branchOptions
+                  : singleUserData?.data?.COMPANIES
+                )?.map((br) => (
+                  <option key={br.COMPCODE} value={br.GTCOMPMASTID}>
+                    {br.COMPNAME}
+                  </option>
+                ))}
               </select>
             </div>
- 
-
-
 
             <button
               type="submit"
