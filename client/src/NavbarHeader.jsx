@@ -458,7 +458,7 @@ const NavbarHeader = ({ onLogout }) => {
   const openTabs = useSelector((state) => state.openTabs);
   const dispatch = useDispatch();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1280);
   const [darkMode, setDarkMode] = useState(false);
   const tabContainerRef = useRef(null);
   const [count, setCount] = useState(0);
@@ -478,7 +478,7 @@ const NavbarHeader = ({ onLogout }) => {
 
   console.log(roles, "roles");
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 1280);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
