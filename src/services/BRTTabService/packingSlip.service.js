@@ -345,7 +345,7 @@ VALUES
         CLOTHTYPE1,
         LOOMNO,
         MTR,
-       
+        CLOTHNAME1,
       
         ORDERNO,
         WEAVERNAME,
@@ -355,7 +355,8 @@ VALUES
       
         WEAVERPCSNO,
         SETNO,
-        FOLD
+        FOLD,WEIGHTTT,
+        WTMTR
       )
       VALUES
       (
@@ -366,7 +367,7 @@ VALUES
         :GRADE,
         :LOOMNO,
         :STOCKMTRS,
-  
+        :CLOTHNAME1,
         :ORDERNO,
         :SUPPLIER,
         
@@ -375,7 +376,9 @@ VALUES
    
         :WEAVERPCSWNO,
         :SETNO,
-        :FOLDPER
+        :FOLDPER,
+        :WEIGHTTT,
+        :WTMTR
       )
     `;
 
@@ -388,7 +391,7 @@ VALUES
         GRADE: item.GRADE,
         LOOMNO: item.LOOMNO,
         STOCKMTRS: item.STOCKMTRS,
-
+        CLOTHNAME1: item.CLOTHNAME,
         ORDERNO: item.ORDERNO,
         SUPPLIER: item.SUPPLIER,
 
@@ -398,6 +401,8 @@ VALUES
         WEAVERPCSWNO: item.WEAVERPCSWNO,
         SETNO: item.SETNO,
         FOLDPER: item.FOLDPER,
+        WEIGHTTT: item.WEIGHTCALS,
+        WTMTR: Number(item.WGTMTR),
       });
     }
     console.log("After Detail");

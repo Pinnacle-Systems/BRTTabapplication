@@ -344,9 +344,14 @@ const PackingSlip = () => {
     if (!barCodeData?.data?.length) return;
     setPieceRows((prev) => {
       const existingIds = new Set(prev.map((r) => r.BARCODE));
-      const newRows = barCodeData.data.filter(
-        (r) => !existingIds.has(r.BARCODE),
-      );
+      const newRows = barCodeData.data
+        .filter((r) => !existingIds.has(r.BARCODE))
+        .map((r) => ({
+          ...r,
+          WGTMTR: r.STOCKMTRS
+            ? (Number(r.WEIGHTCALS) / Number(r.STOCKMTRS)).toFixed(3)
+            : "-",
+        }));
       return [...prev, ...newRows];
     });
     setBarCode(""); // reset so next scan triggers fresh query
@@ -361,7 +366,7 @@ const PackingSlip = () => {
     setPieceRows((prev) => prev.filter((r) => r.BARCODE !== gridId));
   };
 
-  const dispatchInvalidate = useInvalidateTags();
+  const [dispatchInvalidate] = useInvalidateTags();
   const [addData] = useAddPackingSlipMutation();
 
   const handleSubmitCustom = async (callback, data) => {
@@ -414,6 +419,60 @@ const PackingSlip = () => {
   };
 
   const saveData = () => {
+    if (!clothName) {
+      Swal.fire({
+        icon: "warning",
+        title: "Please select Cloth Name",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+    if (!clothGrade) {
+      Swal.fire({
+        icon: "warning",
+        title: "Please select Cloth Grade",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+    if (!loomId) {
+      Swal.fire({
+        icon: "warning",
+        title: "Please select Loom Name",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+    if (!prefix) {
+      Swal.fire({
+        icon: "warning",
+        title: "Prefix is missing",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+    if (!suffix) {
+      Swal.fire({
+        icon: "warning",
+        title: "Suffix is missing",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+    if (!slipNo) {
+      Swal.fire({
+        icon: "warning",
+        title: "Slip No is missing",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    }
     if (pieceRows?.length === 0) {
       Swal.fire({
         icon: "warning",
@@ -779,11 +838,7 @@ const PackingSlip = () => {
                           {Number(row.WEIGHTCALS).toFixed(3)}
                         </td>
                         <td className=" py-2 border-r text-right pr-1">
-                          {row.STOCKMTRS
-                            ? (
-                                Number(row.WEIGHTCALS) / Number(row.STOCKMTRS)
-                              ).toFixed(3)
-                            : "-"}
+                          {row.WGTMTR}
                         </td>
                         <td className=" py-2 border-r text-left pl-1">
                           {row.CLOTHNAME}
