@@ -23,9 +23,9 @@ const packingSlipApi = createApi({
       providesTags: ["packingSlip"],
     }),
     getBarCodeData: builder.query({
-      query: ({ companyName, clothName, clothGrade, barCode }) => {
+      query: ({ companyName, barCode }) => {
         return {
-          url: `${PACKINGSLIP}/${companyName}/${clothName}/${clothGrade}/${barCode}/getBarCodeDetails`,
+          url: `${PACKINGSLIP}/${companyName}/${barCode}/getBarCodeDetails`,
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",

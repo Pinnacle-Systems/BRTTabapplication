@@ -11,7 +11,7 @@ import {
 } from "../../services/BRTTabService/packingSlip.service.js";
 
 router.get(
-  "/:companyName/:clothName/:clothGrade/:barCode/getBarCodeDetails",
+  "/:companyName/:barCode/getBarCodeDetails",
   getBarCodeData,
 );
 router.get("/:companyName/:finYear/getDocId", getDocId);

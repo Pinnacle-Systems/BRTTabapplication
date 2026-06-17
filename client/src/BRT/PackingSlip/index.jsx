@@ -209,9 +209,9 @@ const PackingSlip = () => {
     }
   }, [prefix, suffix, docNo]);
 
-  const { data: barCodeData } = useGetBarCodeDataQuery(
-    { companyName, clothName, clothGrade, barCode },
-    { skip: !companyName || !barCode || !clothName || !clothGrade },
+  const { data: barCodeData, isFetching: isBarCodeFetching } = useGetBarCodeDataQuery(
+    { companyName, barCode },
+    { skip: !companyName || !barCode },
   );
   console.log(barCodeData, "barCodeData");
 
@@ -341,7 +341,37 @@ const PackingSlip = () => {
 
   console.log(docData, "docData");
   useEffect(() => {
-    if (!barCodeData?.data?.length) return;
+    if (!barCodeData?.data?.length || !barCode || isBarCodeFetching) return;
+    
+    const fetchedRow = barCodeData.data[0];
+
+    if (fetchedRow.BARCODE !== barCode) return;
+
+    if (pieceRows.length === 0) {
+      const matchedCloth = clothOptions?.find(
+        (opt) => opt.label === fetchedRow.CLOTHNAME
+      );
+      if (matchedCloth) {
+        handleClothChange(matchedCloth.value);
+      } else {
+        // Fallback if not found in options but we still want to set it
+        setClothName(fetchedRow.CLOTHNAME);
+      }
+      setClothGrade(fetchedRow.GRADE);
+    } else {
+      if (clothName !== fetchedRow.CLOTHNAME || clothGrade !== fetchedRow.GRADE) {
+        Swal.fire({
+          icon: "warning",
+          title: "Cloth and grade not match for this barcode",
+          timer: 3000,
+          showConfirmButton: false,
+        });
+        setBarCode("");
+        setBarCodeInput("");
+        return;
+      }
+    }
+
     setPieceRows((prev) => {
       const existingIds = new Set(prev.map((r) => r.BARCODE));
       const newRows = barCodeData.data
@@ -356,7 +386,7 @@ const PackingSlip = () => {
     });
     setBarCode(""); // reset so next scan triggers fresh query
     setBarCodeInput(""); // clear input
-  }, [barCodeData]);
+  }, [barCodeData, barCode, pieceRows.length, clothName, clothGrade]);
 
   const handleAddPcs = (value) => {
     const val = typeof value === "string" ? value : barCodeInput;
