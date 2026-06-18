@@ -991,13 +991,12 @@ const NavbarHeader = ({ onLogout }) => {
                   </Menu>
                 </Box>
 
-                {/* Logout Button (mobile) */}
                 <IconButton
                   onClick={onLogout}
                   size="small"
                   sx={{
                     color: colors.textPrimary,
-                    display: { xs: "flex", md: "none" },
+                    display: { xs: "flex", xl: "none" },
                     "&:hover": {
                       backgroundColor: alpha(colors.primary, 0.08),
                     },
@@ -1016,9 +1015,9 @@ const NavbarHeader = ({ onLogout }) => {
           {darkMode ? SUN_ICON : MOON_ICON}
         </button> */}
 
-        <div className="flex-1 flex flex-col md:flex-row ">
+        <div className="flex-1 flex flex-col xl:flex-row ">
           <div
-            className={`hidden md:flex md:w-72 ${cardBg} shadow-lg flex-col space-y-1 p-4 h-full min-h-[88vh] max-h-[90vh] overflow-y-auto border-r ${borderColor} transition-all duration-300`}
+            className={`hidden xl:flex xl:w-72 ${cardBg} shadow-lg flex-col space-y-1 p-4 h-full min-h-[88vh] max-h-[90vh] overflow-y-auto border-r ${borderColor} transition-all duration-300`}
           >
             <div className="flex h-full  justify-between items-center px-3 mb-2 border-b border-gray-500/20 ">
               <div>
@@ -1087,7 +1086,7 @@ const NavbarHeader = ({ onLogout }) => {
             </div>
           </div>
           {showMobileMenu && (
-            <div className="fixed inset-0 z-[999999] bg-black/40 md:hidden backdrop-blur-sm py-16">
+            <div className="fixed inset-0 z-[999999] bg-black/40 xl:hidden backdrop-blur-sm py-16">
               <div
                 ref={ref}
                 className={`h-full w-4/5 max-w-sm ${darkMode ? "bg-gray-800/95" : "bg-white/95"} shadow-xl overflow-y-auto animate-slide-in backdrop-blur-xl`}
