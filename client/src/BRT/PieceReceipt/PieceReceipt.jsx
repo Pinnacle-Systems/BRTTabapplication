@@ -23,7 +23,7 @@ const translations = {
     lotNo: "Lot No",
     setNo: "Set No",
     selectLot: "Select Lot",
-    selectSetNo: "Select Set No",
+    selectSetNo: "Select Set",
     clothName: "Cloth Name",
     selectClothName: "Select Cloth Name",
     receiptPcs: "Receipt Pcs",
@@ -162,7 +162,7 @@ const PieceReceipt = ({
 
   setSelectedGridId,
   selectedGridId,
-  dispatchInvalidate
+  dispatchInvalidate,
 }) => {
   // ← Get language from global context (set by NavbarHeader)
   const { lang } = useLanguage();
@@ -179,7 +179,6 @@ const PieceReceipt = ({
   let CHK = 1;
 
   const { companyId } = getCommonParams();
-
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -234,8 +233,12 @@ const PieceReceipt = ({
     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   };
 
-  const { data: lots, error, isLoading } = useGetLotPieceReceiptQuery({
-    params : {companyId}
+  const {
+    data: lots,
+    error,
+    isLoading,
+  } = useGetLotPieceReceiptQuery({
+    params: { companyId },
   });
 
   const { data: setNoData } = useGetSetNoQuery(selectedLotId, {
@@ -270,7 +273,7 @@ const PieceReceipt = ({
         ?.filter((item) => item?.mtr !== null)
         ?.map((val) => ({
           pcNo: Number(val?.pcs),
-          meters: Number(val?.mtr || 0).toFixed(2),
+          meters: Number(val?.mtr || 0).toFixed(3),
           subgridId: val?.gtscheduleSunDetId,
           _isDbRow: true,
         })) || [];
@@ -311,7 +314,7 @@ const PieceReceipt = ({
   const handleSubmitCustom = async (callback, data) => {
     try {
       await callback(data).unwrap();
-      dispatchInvalidate()
+      dispatchInvalidate();
       Swal.fire({
         title: t.alertAddedSuccess,
         icon: "success",
@@ -484,7 +487,7 @@ const PieceReceipt = ({
       selectedGridId,
       pcNo: Number(pieceNo),
       subgridId: subgridId,
-      meters: Number(meter).toFixed(2),
+      meters: Number(meter).toFixed(3),
       _isDbRow: false,
     };
 
@@ -586,12 +589,12 @@ const PieceReceipt = ({
 
   const totalMetersTable = lotItems
     ?.reduce((sum, item) => sum + Number(item?.meters || 0), 0)
-    ?.toFixed(2);
+    ?.toFixed(3);
   const totalPieces = lotItems.length;
   const balancePcs = Number(receiptPcs || 0) - totalPieces;
   const balanceMeters = (
     Number(dcMeter || 0) - Number(totalMetersTable)
-  ).toFixed(2);
+  ).toFixed(3);
   const lotOptions = lots?.data?.map((lot) => ({
     value: lot?.GTFABRICRECEIPTID,
     label: lot?.DOCID,
@@ -625,7 +628,7 @@ const PieceReceipt = ({
           {/* Lot Details */}
           <div>
             <h2 className="text-lg font-semibold mb-2">{t.lotDetails}</h2>
-            <div className="grid grid-cols-4 lg:grid-cols-10 gap-4 text-sm">
+            <div className="grid grid-cols-6 lg:grid-cols-10 gap-4 text-sm">
               {/* Lot No */}
               <div className="col-span-2 lg:col-span-2">
                 <label className="block font-medium mb-1">{t.lotNo}</label>
@@ -649,8 +652,8 @@ const PieceReceipt = ({
                   menuPosition="fixed"
                 />
               </div>
-
-              <div className="col-span-2 lg:col-span-2">
+              {/* Set No  */}
+              <div className="col-span-1 lg:col-span-2">
                 <label className="block font-medium mb-1">{t.setNo}</label>
                 <Select
                   options={setOptions}
@@ -672,7 +675,7 @@ const PieceReceipt = ({
               </div>
 
               {/* Cloth Name */}
-              <div className="col-span-4 lg:col-span-4">
+              <div className="col-span-3 lg:col-span-4">
                 <label className="block font-medium mb-1">{t.clothName}</label>
                 <input
                   type="text"
@@ -698,7 +701,7 @@ const PieceReceipt = ({
                 <label className="block font-medium mb-1">{t.metersInDC}</label>
                 <input
                   type="number"
-                  value={Number(dcMeter || 0)?.toFixed(2)}
+                  value={Number(dcMeter || 0)?.toFixed(3)}
                   readOnly
                   className="w-full border rounded-lg px-1 py-1.5 text-right bg-gray-100"
                 />
@@ -723,9 +726,9 @@ const PieceReceipt = ({
                   value={
                     pieceNo
                       ? {
-                        value: subgridId,
-                        label: pieceNo,
-                      }
+                          value: subgridId,
+                          label: pieceNo,
+                        }
                       : null
                   }
                   onChange={(selectedOption) => {
@@ -733,7 +736,11 @@ const PieceReceipt = ({
                     setSubgridId(selectedOption?.value || "");
                   }}
                   placeholder="Select"
-                  styles={customSelectStyles}
+                  styles={{
+                    ...customSelectStyles,
+                    singleValue: (base) => ({ ...base, textAlign: "right" }),
+                    option: (base) => ({ ...base, textAlign: "right" }),
+                  }}
                   isDisabled={
                     !selectedGridId || lotItems.length === Number(receiptPcs)
                   }
@@ -756,7 +763,6 @@ const PieceReceipt = ({
              [appearance:textfield] 
              [&::-webkit-outer-spin-button]:appearance-none 
              [&::-webkit-inner-spin-button]:appearance-none"
-
                 />
               </div>
 
@@ -809,10 +815,11 @@ const PieceReceipt = ({
                             onChange={(e) =>
                               handleChange(index, e.target.value, "pcNo")
                             }
-                            className={`focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full ${item?._isDbRow
-                              ? "bg-gray-100 cursor-not-allowed"
-                              : ""
-                              }`}
+                            className={`focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full ${
+                              item?._isDbRow
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                            }`}
                           />
                         </td>
                         <td className="py-1 border text-right focus:ring-2 focus:border-2">
@@ -827,14 +834,15 @@ const PieceReceipt = ({
                             onBlur={(e) =>
                               handleChange(
                                 index,
-                                Number(e.target.value || 0).toFixed(2),
+                                Number(e.target.value || 0).toFixed(3),
                                 "meters",
                               )
                             }
-                            className={`focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full ${item?._isDbRow
-                              ? "bg-gray-100 cursor-not-allowed"
-                              : ""
-                              }`}
+                            className={`focus:border-none pr-1 bg-transparent focus:outline-none text-right w-full ${
+                              item?._isDbRow
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                            }`}
                           />
                         </td>
                         <td className="px-2 py-1 border text-center">

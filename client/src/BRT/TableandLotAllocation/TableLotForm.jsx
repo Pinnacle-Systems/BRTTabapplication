@@ -711,7 +711,7 @@ const TableLotForm = ({
               <div>
                 <p className="text-sm text-gray-500">{t.meters}</p>
                 <p className="font-semibold">
-                  {workingDetails?.meters?.toFixed(2)}
+                  {workingDetails?.meters?.toFixed(3)}
                 </p>
               </div>
               <div>
@@ -764,13 +764,15 @@ const TableLotForm = ({
       </div>
       <div className="h-[70vh] overflow-y-auto overflow-x-hidden bg-white shadow-lg rounded-xl mt-2">
         <form className=" p-2">
+          {/* Table Details */}
+
           <div>
             <h2 className="text-lg font-semibold">{t.tableDetails}</h2>
 
             <div className="flex items-end gap-4 mt-2 text-sm w-full">
               {/* Piece No */}
 
-              <div className="flex flex-col flex-1 max-w-[18rem]">
+              <div className="flex flex-col flex-1 max-w-[14rem]">
                 <label className="text-sm font-medium mb-1">
                   {t.checkingSection}
                 </label>
@@ -797,7 +799,7 @@ const TableLotForm = ({
                 />
               </div>
 
-              <div className="flex flex-col flex-1 max-w-[18rem]">
+              <div className="flex flex-col flex-1 max-w-[17rem]">
                 <label className="text-sm font-medium mb-1">
                   {t.checkerName}
                 </label>
@@ -844,6 +846,7 @@ const TableLotForm = ({
                   </>
                 )}
               </div>
+
               <div className="flex flex-col flex-1 max-w-[8rem]">
                 <label className="text-sm font-medium mb-1">
                   {t.tablesChoosed}
@@ -868,17 +871,15 @@ const TableLotForm = ({
     "
                 />
               </div>
-
-              {/* Button */}
             </div>
           </div>
           {/* Lot Details */}
           <div className="mt-2">
             <div>
               <h2 className="text-lg font-semibold">{t.lotDetails}</h2>
-              <div className="grid grid-cols-4 lg:grid-cols-10 gap-4 mt-2 text-sm">
+              <div className="grid grid-cols-9 lg:grid-cols-10 gap-4 mt-2 text-sm">
                 {/* Lot No */}
-                <div className="col-span-2 lg:col-span-2 z-999">
+                <div className="col-span-3 lg:col-span-2 z-999">
                   <label className="block font-medium mb-1">{t.lotNo}</label>
                   <Select
                     options={lotOptions}
@@ -925,7 +926,7 @@ const TableLotForm = ({
                 </div>
 
                 {/* Receipt Pcs */}
-                <div className="col-span-1 lg:col-span-1">
+                <div className="col-span-2 lg:col-span-1">
                   <label className="block font-medium mb-1">{t.pieceNo}</label>
                   <Select
                     options={pieceOptions}
@@ -950,16 +951,17 @@ const TableLotForm = ({
                 </div>
 
                 {/* Meters in DC */}
-                <div className="col-span-1 lg:col-span-1">
+                <div className="col-span-2 lg:col-span-1">
                   <label className="block font-medium mb-1">{t.meters}</label>
                   <input
                     type="number"
-                    value={Number(dcMeter || 0)?.toFixed(2)}
+                    value={Number(dcMeter || 0)?.toFixed(3)}
                     readOnly
                     className="w-full border rounded-lg px-1 py-[7px] text-right bg-gray-100"
                   />
                 </div>
-                <div className="col-span-1 lg:col-span-1">
+                {/* Weaver pc no */}
+                <div className="col-span-2 lg:col-span-1">
                   <label className="block font-medium mb-1">
                     {t.weaverPieceNo}
                   </label>
@@ -970,7 +972,8 @@ const TableLotForm = ({
                     className="w-full border rounded-lg px-1 py-[7px] text-right "
                   />
                 </div>
-                <div className="col-span-1 lg:col-span-1">
+                {/* Loom no */}
+                <div className="col-span-2 lg:col-span-1">
                   <label className="block font-medium mb-1">{t.loomNo}</label>
                   <input
                     type="text"
@@ -979,8 +982,9 @@ const TableLotForm = ({
                     className="w-full border rounded-lg px-1 py-[7px] text-right "
                   />
                 </div>
-                <div className="flex flex-col flex-1 lg:min-w-[8rem] ">
-                  <label className="text-sm font-medium mb-1">
+                {/* Multi Table */}
+                <div className="col-span-2 lg:col-span-1 ">
+                  <label className="text-sm font-medium mb-2">
                     {t.widerTable}
                   </label>
 
@@ -999,6 +1003,7 @@ const TableLotForm = ({
                     isSearchable={false}
                     menuPortalTarget={document.body}
                     menuPosition="fixed"
+                    className="mt-1"
                   />
                 </div>
               </div>

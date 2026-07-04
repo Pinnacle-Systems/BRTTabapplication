@@ -44,12 +44,14 @@ import {
   MdSettings,
   MdLanguage,
   MdMonitor, // ← NEW
+  MdTune,
 } from "react-icons/md";
 import { FaTableCells } from "react-icons/fa6";
 import { MdOutlinePendingActions } from "react-icons/md";
 import { GiRolledCloth } from "react-icons/gi";
 import { RiBillLine } from "react-icons/ri";
 import ActiveMonitor from "./UserDetails/ActiveMonitor";
+import FoldingRangeMaster from "./BRT/FoldingRangeMaster";
 import {
   Menu,
   MenuItem,
@@ -553,6 +555,7 @@ const NavbarHeader = ({ onLogout }) => {
     User: <OutlinedCard />,
     Role: <RoleManagement />,
     "Active Monitor": <ActiveMonitor />, // ← add
+    FoldingRangeMaster: <FoldingRangeMaster />, // ← add
   };
   const tabData = [
     {
@@ -959,6 +962,33 @@ const NavbarHeader = ({ onLogout }) => {
                             <ListItemText
                               primary={nt.activeMonitor ?? "Active Monitor"}
                               secondary="Workers & Tables"
+                            />
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              dispatch(
+                                push({
+                                  id: "FoldingRangeMaster",
+                                  name: "FoldingRangeMaster",
+                                  label: "Range Master",
+                                }),
+                              );
+                              handleUserMenuClose();
+                            }}
+                            sx={{
+                              borderRadius: "8px",
+                              py: 1.5,
+                              "&:hover": { backgroundColor: colors.hover },
+                            }}
+                          >
+                            <ListItemIcon>
+                              <MdTune
+                                fontSize="20px"
+                                color={colors.primary}
+                              />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary="Range Master"
                             />
                           </MenuItem>
                         </Box>
