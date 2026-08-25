@@ -209,14 +209,13 @@ const PackingSlip = () => {
     }
   }, [prefix, suffix, docNo]);
 
-  const { data: barCodeData, isFetching: isBarCodeFetching } = useGetBarCodeDataQuery(
-    { companyName, barCode },
-    { skip: !companyName || !barCode },
-  );
-  console.log(barCodeData, "barCodeData");
+  const { data: barCodeData, isFetching: isBarCodeFetching } =
+    useGetBarCodeDataQuery(
+      { companyName, barCode },
+      { skip: !companyName || !barCode },
+    );
 
   const { data: currentFinyear } = useGetCurrentFinyearQuery();
-  console.log(currentFinyear, docTime, "currentFinyear");
 
   const { data: clothData } = useGetClothDataQuery(
     { companyName },
@@ -262,18 +261,14 @@ const PackingSlip = () => {
       setSlipNo("");
     }
   };
-  console.log(clothName, "clothName");
-
-  console.log(clothOptions, "clothOptions");
 
   const { data: gradeData } = useGetGradeDataQuery(
     { companyName, clothName },
     { skip: !companyName || !clothName },
   );
-  console.log(gradeData, "gradeData");
 
   const { data: loomData } = useGetLoomDataQuery();
-  console.log(loomData, "loomData");
+
   const loomOoptions = loomData?.data?.map((val) => ({
     label: val?.LOOMTYNAME,
     value: val?.GTLOOMMASTID,
@@ -297,7 +292,6 @@ const PackingSlip = () => {
       label: val?.GRADEE,
     };
   });
-  console.log(gradeOptions, "gradeOptions");
 
   useEffect(() => {
     if (currentFinyear) {
@@ -307,7 +301,6 @@ const PackingSlip = () => {
           finYearId: va?.GTFINANCIALYEARID,
         };
       });
-      console.log(mappedData, "mappedData");
 
       SetFinyear(mappedData?.[0].finYearName);
       SetFinyearId(mappedData?.[0].finYearId);
@@ -339,18 +332,23 @@ const PackingSlip = () => {
     }
   }, [docData]);
 
-  console.log(docData, "docData");
   useEffect(() => {
     if (!barCodeData?.data?.length || !barCode || isBarCodeFetching) return;
-    
-    const fetchedRow = barCodeData.data[0];
 
+    const fetchedRow = barCodeData.data[0];
+    console.log(fetchedRow, "fetchedRow");
     if (fetchedRow.BARCODE !== barCode) return;
+    console.log(pieceRows.length, "pieceRows.length");
 
     if (pieceRows.length === 0) {
+      console.log("Hittted true");
+      console.log(fetchedRow.CLOTHNAME, clothOptions, "clothOptions");
+
       const matchedCloth = clothOptions?.find(
-        (opt) => opt.label === fetchedRow.CLOTHNAME
+        (opt) => opt.label === fetchedRow.CLOTHNAME,
       );
+      console.log(matchedCloth, "matchedCloth");
+
       if (matchedCloth) {
         handleClothChange(matchedCloth.value);
       } else {
@@ -359,7 +357,10 @@ const PackingSlip = () => {
       }
       setClothGrade(fetchedRow.GRADE);
     } else {
-      if (clothName !== fetchedRow.CLOTHNAME || clothGrade !== fetchedRow.GRADE) {
+      if (
+        clothName !== fetchedRow.CLOTHNAME ||
+        clothGrade !== fetchedRow.GRADE
+      ) {
         Swal.fire({
           icon: "warning",
           title: "Cloth and grade not match for this barcode",
@@ -386,7 +387,15 @@ const PackingSlip = () => {
     });
     setBarCode(""); // reset so next scan triggers fresh query
     setBarCodeInput(""); // clear input
-  }, [barCodeData, barCode, pieceRows.length, clothName, clothGrade]);
+  }, [
+    barCodeData,
+    barCode,
+    pieceRows.length,
+    clothName,
+    clothGrade,
+    clothOptions,
+    isBarCodeFetching,
+  ]);
 
   const handleAddPcs = (value) => {
     const val = typeof value === "string" ? value : barCodeInput;
@@ -536,7 +545,6 @@ const PackingSlip = () => {
 
     handleSubmitCustom(addData, payload);
   };
-  console.log(pieceRows, "pieceRows");
 
   return (
     <div className="h-full md:h-[75vh] pt-0">
