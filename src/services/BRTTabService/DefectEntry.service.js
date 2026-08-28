@@ -11,7 +11,7 @@ export async function getLotNo(req, res) {
 
   try {
     connection = await getConnection();
-    const sql = `SELECT C.AllocationID,C.LotID,L.DOCID FROM CheckerWorkingDetails C
+    const sql = `SELECT C.AllocationID,C.LotID,L.DOCID,L.CLOTHNAME1 FROM CheckerWorkingDetails C
 JOIN GTFABRICRECEIPT L ON L.GTFABRICRECEIPTID = C.LotID
  WHERE C.COMPANYID = ${companyId}
 `;
@@ -41,10 +41,10 @@ export async function getSavedLots(req, res) {
   try {
     connection = await getConnection();
     const sql = `
-      SELECT DISTINCT LOTID, DOCID FROM (
+      SELECT DISTINCT LOTID, DOCID,CLOTHNAME FROM (
         SELECT
           C.LOTID   AS LOTID,
-          R.DOCID   AS DOCID
+          R.DOCID   AS DOCID,R.CLOTHNAME1 AS CLOTHNAME
         FROM CheckerWorkingDetails C
         JOIN GTFABRICRECEIPT R ON R.GTFABRICRECEIPTID = C.LOTID
          WHERE C.COMPANYID = ${companyId}
@@ -54,7 +54,7 @@ export async function getSavedLots(req, res) {
        
         SELECT
           P.LOTNO   AS LOTID,
-          R.DOCID   AS DOCID
+          R.DOCID   AS DOCID,R.CLOTHNAME1 AS CLOTHNAME
         FROM Gtpiecesdefect P
         JOIN GTFABRICRECEIPT R ON R.GTFABRICRECEIPTID = P.LOTNO
         WHERE P.COMPCODE = ${companyId}

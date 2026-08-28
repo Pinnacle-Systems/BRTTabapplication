@@ -71,6 +71,8 @@ const translations = {
     setNo: "Set No",
     weaverPcsNo: "Weaver Pcs No",
     orderNo: "Order No",
+    fabricReceiptRate: "Fabric Receipt Rate",
+    costOfProduction: "Cost of Production",
   },
   ta: {
     title: "பேக்கிங் சீட்டு",
@@ -80,7 +82,7 @@ const translations = {
     compCode: "நிறுவன குறியீடு",
     finYear: "நிதியாண்டு",
     docId: "ஆவண எண்",
-    docDate: "ஆவண தேதி",
+    docDate: "தேதி",
     clothGrade: "துணி தரம்",
     loomName: "தறி பெயர்",
     prefix: "முன்னொட்டு",
@@ -121,6 +123,8 @@ const translations = {
     setNo: "செட் எண்",
     weaverPcsNo: "நெசவாளர் துண்டு எண்",
     orderNo: "ஆர்டர் எண்",
+    fabricReceiptRate: "துணி ரசீது விகிதம்",
+    costOfProduction: "உற்பத்தி செலவு",
   },
   hi: {
     title: "पैकिंग स्लिप",
@@ -130,7 +134,7 @@ const translations = {
     compCode: "कंपनी कोड",
     finYear: "वित्तीय वर्ष",
     docId: "दस्तावेज़ आईडी",
-    docDate: "दस्तावेज़ दिनांक",
+    docDate: "दिनांक",
     clothGrade: "कपड़े का ग्रेड",
     loomName: "लूम का नाम",
     prefix: "उपसर्ग",
@@ -171,6 +175,8 @@ const translations = {
     setNo: "सेट नं.",
     weaverPcsNo: "बुनकर पीस नं.",
     orderNo: "ऑर्डर नं.",
+    fabricReceiptRate: "कपड़ा रसीद दर",
+    costOfProduction: "उत्पादन लागत",
   },
 };
 
@@ -208,6 +214,20 @@ const PackingSlip = () => {
       setSlipNo("");
     }
   }, [prefix, suffix, docNo]);
+
+  const handleCostOfProductionChange = (value, index, field) => {
+    setPieceRows((prevRows) =>
+      prevRows.map((row) => {
+        if (row.BARCODE === pieceRows?.[index]?.BARCODE) {
+          return {
+            ...row,
+            [field]: Number(value),
+          };
+        }
+        return row;
+      }),
+    );
+  };
 
   const { data: barCodeData, isFetching: isBarCodeFetching } =
     useGetBarCodeDataQuery(
@@ -575,7 +595,7 @@ const PackingSlip = () => {
             <div className="grid grid-cols-6 md:grid-cols-12 gap-2 mb-2 items-end text-xs">
               {/* ROW 1 */}
               {/* Comp Code */}
-              <div className="col-span-1 md:col-span-4">
+              <div className="col-span-2 md:col-span-4">
                 <label className="block font-medium mb-1">
                   {t.compCode}
                   <span className="text-red-500">*</span>
@@ -613,6 +633,8 @@ const PackingSlip = () => {
                   className="w-full border rounded-lg px-2 py-1 text-xs text-left bg-gray-100 focus:outline-none"
                 />
               </div>
+
+              {/* ROW 2 */}
               {/* Doc Date */}
               <div className="col-span-1 md:col-span-4">
                 <label className="block font-medium mb-1">
@@ -626,11 +648,8 @@ const PackingSlip = () => {
                   className="w-full border rounded-lg px-2 py-1 text-xs text-left bg-gray-100 focus:outline-none"
                 />
               </div>
-
-              {/* ROW 2 */}
-
               {/* Cloth Name */}
-              <div className="col-span-3 md:col-span-4">
+              <div className="col-span-5 md:col-span-4">
                 <label className="block font-medium mb-1">
                   {t.clothName}
                   <span className="text-red-500">*</span>
@@ -649,8 +668,10 @@ const PackingSlip = () => {
                   ))}
                 </select>
               </div>
+
+              {/* ROW 3 */}
               {/* Cloth Grade */}
-              <div className="col-span-1 md:col-span-4">
+              <div className="col-span-2 md:col-span-4">
                 <label className="block font-medium mb-1">{t.clothGrade}</label>
                 <select
                   value={clothGrade}
@@ -665,8 +686,6 @@ const PackingSlip = () => {
                   ))}
                 </select>
               </div>
-
-              {/* ROW 3 */}
               {/* Loom Name */}
               <div className="col-span-2 md:col-span-3">
                 <label className="block font-medium mb-1">{t.loomName}</label>
@@ -699,8 +718,9 @@ const PackingSlip = () => {
                   <option value="BUNDLE">BUNDLE</option>
                 </select>
               </div>
+              {/* ROW 4 */}
               {/* Prefix */}
-              <div className="col-span-1 md:col-span-3">
+              <div className="col-span-2 md:col-span-3">
                 <label className="block font-medium mb-1">
                   {t.prefix}
                   <span className="text-red-500">*</span>
@@ -713,7 +733,7 @@ const PackingSlip = () => {
                 />
               </div>
               {/* Suffix */}
-              <div className="col-span-1 md:col-span-3">
+              <div className="col-span-2 md:col-span-3">
                 <label className="block font-medium mb-1">
                   {t.suffix}
                   <span className="text-red-500">*</span>
@@ -804,13 +824,13 @@ const PackingSlip = () => {
                     <th className="font-medium px-1 py-3 border-r text-center w-48">
                       {t.lotNo}
                     </th>
-                    <th className="font-medium px-1 py-3 border-r text-center w-16">
+                    <th className="font-medium px-1 py-3 border-r text-center w-20">
                       {t.setNo}
                     </th>
-                    <th className="font-medium px-1 py-3 border-r text-center w-16">
+                    <th className="font-medium px-1 py-3 border-r text-center w-24">
                       {t.pcsNo}
                     </th>
-                    <th className="font-medium px-1 py-3 border-r text-center w-36">
+                    <th className="font-medium px-1 py-3 border-r text-center w-44">
                       {t.weaverPcsNo}
                     </th>
                     <th className="font-medium px-1 py-3 border-r text-center w-[100px]">
@@ -825,6 +845,12 @@ const PackingSlip = () => {
                     </th>
                     <th className="font-medium px-1 py-3 border-r text-center w-[100px]">
                       {t.wgtMtr}
+                    </th>
+                    <th className="font-medium px-1 py-3 border-r text-center w-36">
+                      {t.fabricReceiptRate}
+                    </th>
+                    <th className="font-medium px-1 py-3 border-r text-center w-36">
+                      {t.costOfProduction}
                     </th>
                     <th className="font-medium px-1 py-3 border-r text-center w-60">
                       {t.clothName}
@@ -844,8 +870,8 @@ const PackingSlip = () => {
                   </tr>
                 </thead>
                 <tbody className="text-xs divide-y divide-gray-200">
-                  {pieceRows.length > 0 ? (
-                    pieceRows.map((row, index) => (
+                  {pieceRows?.length > 0 ? (
+                    pieceRows?.map((row, index) => (
                       <tr
                         key={row.BARCODE}
                         className="bg-white hover:bg-gray-50 transition-colors"
@@ -877,6 +903,23 @@ const PackingSlip = () => {
                         </td>
                         <td className=" py-2 border-r text-right pr-1">
                           {row.WGTMTR}
+                        </td>
+                        <td className=" py-2 border-r text-right pr-1">
+                          {row.FABRATE}
+                        </td>
+                        <td className=" py-2 border-r text-right pr-1">
+                          <input
+                            className="text-right pr-1"
+                            type="number"
+                            value={row.AVG_RATE}
+                            onChange={(e) =>
+                              handleCostOfProductionChange(
+                                e.target.value,
+                                index,
+                                "AVG_RATE",
+                              )
+                            }
+                          />
                         </td>
                         <td className=" py-2 border-r text-left pl-1">
                           {row.CLOTHNAME}
@@ -911,6 +954,35 @@ const PackingSlip = () => {
                     </tr>
                   )}
                 </tbody>
+                <tfoot className="bg-gray-100 font-bold text-xs sticky bottom-0 shadow-inner">
+                  <tr>
+                    <td colSpan="6" className="py-2 border-r text-right pr-4">
+                      Total:
+                    </td>
+                    <td className="py-2 border-r text-right pr-1">
+                      {pieceRows
+                        ?.reduce((sum, row) => sum + Number(row.STOCKMTRS || 0), 0)
+                        .toFixed(2)}
+                    </td>
+                    <td className="py-2 border-r text-right pr-1">
+                      {pieceRows
+                        ?.reduce((sum, row) => sum + Number(row.WEIGHTCALS || 0), 0)
+                        .toFixed(3)}
+                    </td>
+                    <td className="py-2 border-r"></td>
+                    <td className="py-2 border-r text-right pr-1">
+                      {pieceRows
+                        ?.reduce((sum, row) => sum + Number(row.FABRATE || 0), 0)
+                        .toFixed(2)}
+                    </td>
+                    <td className="py-2 border-r text-right pr-1">
+                      {pieceRows
+                        ?.reduce((sum, row) => sum + Number(row.AVG_RATE || 0), 0)
+                        .toFixed(2)}
+                    </td>
+                    <td colSpan="5"></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </div>

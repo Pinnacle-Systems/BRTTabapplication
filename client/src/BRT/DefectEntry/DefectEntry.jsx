@@ -91,6 +91,7 @@ const translations = {
     width: "Width",
     pleaseEnterPick: "Please enter Pick",
     pleaseEnterWidth: "Please enter Width",
+    clothName: "Cloth Name",
   },
   ta: {
     title: "குறைபாடு பதிவு",
@@ -147,6 +148,7 @@ const translations = {
     width: "அகலம்",
     pleaseEnterPick: "தயவுசெய்து பிக் உள்ளிடவும்",
     pleaseEnterWidth: "தயவுசெய்து அகலம் உள்ளிடவும்",
+    clothName: "துணி பெயர்",
   },
   hi: {
     title: "दोष प्रविष्टि",
@@ -202,6 +204,7 @@ const translations = {
     width: "चौड़ाई",
     pleaseEnterPick: "कृपया पिक दर्ज करें",
     pleaseEnterWidth: "कृपया चौड़ाई दर्ज करें",
+    clothName: "कपड़े का नाम",
   },
 };
 
@@ -233,6 +236,7 @@ const DefectEntry = () => {
   const [weaverPieceNo, setWeaverPieceNo] = useState("");
   const [pick, setPick] = useState("");
   const [width, setWidth] = useState("");
+  const [clothName, setClothName] = useState("");
   const storedUserId = Number(localStorage.getItem("userId"));
   const storedRoleId = Number(localStorage.getItem("roleId"));
   const { data: roles } = useGetRolesQuery();
@@ -264,6 +268,8 @@ const DefectEntry = () => {
   const { data: lots, refetch: refetchLots } = useGetLotsQuery({
     params: { companyId },
   });
+  console.log(lots, "recivinglotes");
+
   const { data: pieces } = useGetPiecesQuery({ lotId }, { skip: !lotId });
   const { data: setNoData } = useGetSetNOQuery(
     { lotId, pcNo: pieceNo },
@@ -288,7 +294,7 @@ const DefectEntry = () => {
     { lotId },
     { skip: !lotId || !canEditLot },
   );
-  console.log(savedPieces, "savedPieces");
+  console.log(savedLots, "savedLots");
 
   const { data: loomWeaver } = useGetloomWeaverByIdQuery(
     { lotId, pcno: pieceNo },
@@ -437,6 +443,7 @@ const DefectEntry = () => {
         .map((lot) => ({
           value: lot?.LOTID,
           label: lot?.DOCID,
+          clothName: lot?.CLOTHNAME,
         })) || []
     );
   }, [lots?.data, savedLots?.data, canEditLot]);
@@ -999,13 +1006,16 @@ const DefectEntry = () => {
             <p className="font-bold text-sm mb-2">{t.lotDetails}</p>
             <div className="grid grid-cols-12 gap-x-4 gap-y-4 text-sm">
               {/* Lot No */}
-              <div className="col-span-6 sm:col-span-4 lg:col-span-3 z-[999]">
+              <div className="col-span-6 sm:col-span-3 lg:col-span-3 z-[999]">
                 <label className="block font-medium mb-1">{t.lotNo}</label>
                 <Select
                   ref={lotIdRef}
                   options={lotOptions}
                   value={lotOptions?.find((o) => o.value === lotId) || null}
-                  onChange={(sel) => setLotId(sel?.value || "")}
+                  onChange={(sel) => {
+                    setLotId(sel?.value || "");
+                    setClothName(sel?.clothName || "");
+                  }}
                   placeholder={t.selectLot}
                   isClearable={false}
                   styles={customSelectStyles}
@@ -1013,7 +1023,18 @@ const DefectEntry = () => {
                   isDisabled={!canEditLot}
                 />
               </div>
-
+              {/* Cloth name*/}
+              <div className="col-span-6 sm:col-span-3 lg:col-span-3">
+                <label className="block font-medium mb-1 whitespace-nowrap">
+                  {t.clothName}
+                </label>
+                <input
+                  type="text"
+                  value={clothName}
+                  readOnly
+                  className="w-full border rounded-lg px-1 py-1.5 text-left bg-gray-50"
+                />
+              </div>
               {/* Piece No */}
               <div className="col-span-3 sm:col-span-2 lg:col-span-1 z-[998]">
                 <label className="block font-medium mb-1">{t.pieceNo}</label>
@@ -1124,7 +1145,8 @@ const DefectEntry = () => {
                   className="w-full border rounded-lg px-2 py-1.5 bg-gray-50"
                 />
               </div>
-              <div className="col-span-6 sm:col-span-4 lg:col-span-2">
+              {/* Pick */}
+              <div className="col-span-3 sm:col-span-2 lg:col-span-2">
                 <label className="block font-medium mb-1">{t.pick}</label>
                 <input
                   type="text"
@@ -1134,7 +1156,8 @@ const DefectEntry = () => {
                   className="w-full border rounded-lg px-2 py-1.5 text-right"
                 />
               </div>
-              <div className="col-span-6 sm:col-span-4 lg:col-span-2">
+              {/* Width */}
+              <div className="col-span-3 sm:col-span-2 lg:col-span-2">
                 <label className="block font-medium mb-1">{t.width}</label>
                 <input
                   type="text"
