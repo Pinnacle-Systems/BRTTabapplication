@@ -5,11 +5,9 @@ import { getSubscriptionDetails } from "../utils/subscriptionCall.js";
 import oracledb from "oracledb";
 
 export async function login(req, res) {
-
   let connection;
 
   try {
-
     console.log(req.body, "body");
 
     const { username, password } = req.body;
@@ -17,14 +15,14 @@ export async function login(req, res) {
     if (!username) {
       return res.json({
         statusCode: 1,
-        message: "Username is Required"
+        message: "Username is Required",
       });
     }
 
     if (!password) {
       return res.json({
         statusCode: 1,
-        message: "Password is Required"
+        message: "Password is Required",
       });
     }
 
@@ -36,13 +34,13 @@ export async function login(req, res) {
       FROM TABUSER
       WHERE UPPER(USERNAME) = UPPER(:username)
       `,
-      { username }
+      { username },
     );
 
     if (result.rows.length === 0) {
       return res.json({
         statusCode: 1,
-        message: "Username Doesn't Exist"
+        message: "Username Doesn't Exist",
       });
     }
 
@@ -58,15 +56,12 @@ export async function login(req, res) {
       return obj;
     });
 
-    const isMatched = await bcrypt.compare(
-      password,
-      storedPassword
-    );
+    const isMatched = await bcrypt.compare(password, storedPassword);
 
     if (!isMatched) {
       return res.json({
         statusCode: 1,
-        message: "Password Doesn't Match"
+        message: "Password Doesn't Match",
       });
     }
 
@@ -77,7 +72,7 @@ export async function login(req, res) {
       "RANDOM-TOKEN",
       {
         expiresIn: "24h",
-      }
+      },
     );
 
     return res.json({
@@ -86,33 +81,21 @@ export async function login(req, res) {
       token,
       user,
     });
-
   } catch (err) {
-
     console.error("LOGIN ERROR:", err);
 
     return res.status(500).json({
       statusCode: 1,
       message: err.message,
     });
-
   } finally {
-
     try {
-
       if (connection) {
         await connection.close();
       }
-
     } catch (closeErr) {
-
-      console.error(
-        "Connection close error:",
-        closeErr
-      );
-
+      console.error("Connection close error:", closeErr);
     }
-
   }
 }
 
@@ -169,7 +152,7 @@ export async function create(req, res) {
 
           const userCount = countResult.rows[0][0];
 
-          if (userCount >= 10) {
+          if (userCount >= 20) {
             await connection.close();
             return res.json({
               statusCode: 1,
