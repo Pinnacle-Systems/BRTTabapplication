@@ -2,7 +2,23 @@ import { useState, useEffect } from "react";
 import { useGetActiveUserDetailsQuery } from "../redux/services/userDetails.js";
 import socket from "../Utils/socket.js";
 
-const TAB = { ALL: "all", WORKERS: "workers", TABLES: "tables" };
+const TAB = {
+  ALL: "all",
+  WORKERS: "workers",
+  TABLES: "tables",
+  TABLE_CHART: "table_chart",
+};
+
+const guessGenderEmoji = (name) => {
+  if (!name) return "👨";
+  const upper = name.toUpperCase().trim();
+  // Common male names that might end in vowels
+  const maleKeywords = ["DURAI", "SIVA", "RAJA", "BALA", "MUTHU", "KUMAR", "RAJ", "RAM", "HARI", "MANI", "KARTHICK", "PRABHU"];
+  if (maleKeywords.some(k => upper.includes(k))) return "👨";
+  // Female names commonly end in A, I, E, or Y
+  if (/[AIEEYA]$/.test(upper)) return "👩";
+  return "👨"; // Default to man
+};
 
 const ActiveMonitor = () => {
   const [activeTab, setActiveTab] = useState(TAB.ALL);
@@ -65,11 +81,12 @@ const ActiveMonitor = () => {
       </div>
 
       {/* ── Tab Buttons ── */}
-      <div className="flex gap-2 mb-3">
+      <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
         {[
           { key: TAB.ALL, label: "All" },
           { key: TAB.WORKERS, label: "Active Workers" },
           { key: TAB.TABLES, label: "Locked Tables" },
+          { key: TAB.TABLE_CHART, label: "Table Chart" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -196,6 +213,82 @@ const ActiveMonitor = () => {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Table Chart ── */}
+        {activeTab === TAB.TABLE_CHART && (
+          <div>
+            <p className="text-sm font-bold text-gray-700 mb-4">
+              Table Chart (1 - 20)
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
+              {Array.from({ length: 20 }, (_, i) => i + 1).map((tableNum) => {
+                // Find worker for this table (handling comma separated if multiple)
+                const worker = workers.find((w) => {
+                  if (!w.TABLENOS) return false;
+                  const assignedTables = String(w.TABLENOS)
+                    .split(",")
+                    .map((t) => t.trim());
+                  return assignedTables.includes(String(tableNum));
+                });
+                return (
+                  <div
+                    key={tableNum}
+                    className="flex flex-col items-center p-2 border rounded-xl bg-white shadow-sm hover:shadow-md transition"
+                  >
+                    {worker ? (
+                      <>
+                        <div className="relative mb-2 mt-2">
+                          <div className="text-5xl leading-none relative z-10">
+                            {guessGenderEmoji(worker.CHECKERNAME)}
+                          </div>
+                          <div className="absolute bottom-0 -right-2 text-3xl z-20">
+                            👕
+                          </div>
+                          <div className="absolute -top-3 -right-4 bg-yellow-100 text-yellow-800 text-[10px] font-bold px-1.5 py-0.5 rounded shadow border border-yellow-300 transform rotate-12 z-30 whitespace-nowrap">
+                            Pc: {worker.PIECENO || "-"}
+                          </div>
+                        </div>
+                        <div className="w-full bg-amber-600 rounded-t-lg h-12 flex flex-col items-center justify-center text-white shadow-inner relative overflow-hidden px-1">
+                          <div className="text-[10px] opacity-80 uppercase tracking-widest leading-tight mt-0.5">
+                            Table {tableNum}
+                          </div>
+                          <div className="text-xs font-bold truncate w-full text-center leading-tight">
+                            Lot: {worker.LOTDOCID || "-"}
+                          </div>
+                        </div>
+                        <div className="flex w-full justify-between px-3">
+                          <div className="w-1.5 h-4 bg-amber-800 rounded-b-sm"></div>
+                          <div className="w-1.5 h-4 bg-amber-800 rounded-b-sm"></div>
+                        </div>
+                        <div className="mt-2 text-[10px] font-bold uppercase text-gray-700 text-center truncate w-full px-1">
+                          {worker.CHECKERNAME || "Unknown"}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="relative mb-2 mt-2 opacity-30 grayscale">
+                          <div className="text-5xl leading-none">👨</div>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-t-lg h-12 flex flex-col items-center justify-center text-gray-400 shadow-inner px-1">
+                          <div className="text-[10px] uppercase tracking-widest">
+                            Table {tableNum}
+                          </div>
+                        </div>
+                        <div className="flex w-full justify-between px-3 opacity-50">
+                          <div className="w-1.5 h-4 bg-gray-300 rounded-b-sm"></div>
+                          <div className="w-1.5 h-4 bg-gray-300 rounded-b-sm"></div>
+                        </div>
+                        <div className="mt-2 text-[10px] font-bold text-gray-400 text-center px-1">
+                          Empty
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
